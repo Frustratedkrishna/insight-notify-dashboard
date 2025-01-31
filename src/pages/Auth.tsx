@@ -38,7 +38,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // 1. Sign up the user
+      // 1. Sign up the user with all metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -52,6 +52,7 @@ const Auth = () => {
             section,
             aadhar_number: aadharNumber,
             abc_id: abcId,
+            role: 'student'
           },
         },
       });
@@ -73,7 +74,7 @@ const Auth = () => {
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
-            profile_image_url: `${filePath}`,
+            profile_image_url: filePath,
           })
           .eq('id', authData.user.id);
 
