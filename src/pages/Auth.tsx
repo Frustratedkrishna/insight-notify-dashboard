@@ -100,7 +100,7 @@ const Auth = () => {
         description: "Please check your email to verify your account.",
       });
 
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
@@ -125,7 +125,7 @@ const Auth = () => {
 
       if (error) throw error;
 
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         title: "Error",
