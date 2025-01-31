@@ -24,23 +24,39 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-
+    const fetchProfile = async () => {
       try {
-        const { data, error } = await supabase
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+        
+        if (!session) {
+          navigate("/auth");
+          return;
+        }
+
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", session.user.id)
           .maybeSingle();
 
-        if (error) throw error;
-        setProfile(data);
+        if (profileError) throw profileError;
+        
+        if (!profileData) {
+          toast({
+            title: "Profile not found",
+            description: "Please try logging in again",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          navigate("/auth");
+          return;
+        }
+
+        setProfile(profileData);
       } catch (error: any) {
+        console.error("Error:", error);
         toast({
           title: "Error loading profile",
           description: error.message,
@@ -51,7 +67,18 @@ export default function Dashboard() {
       }
     };
 
-    checkSession();
+    fetchProfile();
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate("/auth");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate, toast]);
 
   const getProfileImageUrl = (imageUrl: string | null) => {
