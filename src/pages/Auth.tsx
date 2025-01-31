@@ -38,7 +38,12 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // 1. Sign up the user with all metadata
+      // Validate required fields
+      if (!firstName || !lastName || !email || !password || !enrollmentNumber) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      // 1. Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -48,7 +53,7 @@ const Auth = () => {
             last_name: lastName,
             enrollment_number: enrollmentNumber,
             course_name: course,
-            year: parseInt(year),
+            year: year ? parseInt(year) : null,
             section,
             aadhar_number: aadharNumber,
             abc_id: abcId,
@@ -68,7 +73,14 @@ const Auth = () => {
           .from('profile-images')
           .upload(filePath, profileImage);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          toast({
+            title: "Warning",
+            description: "Account created but failed to upload profile image. You can try uploading it later.",
+            variant: "destructive",
+          });
+        }
 
         // Update profile with image URL
         const { error: updateError } = await supabase
@@ -78,7 +90,9 @@ const Auth = () => {
           })
           .eq('id', authData.user.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating profile with image:', updateError);
+        }
       }
 
       toast({
@@ -88,9 +102,10 @@ const Auth = () => {
 
       navigate("/");
     } catch (error: any) {
+      console.error('Signup error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
