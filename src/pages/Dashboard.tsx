@@ -54,6 +54,14 @@ export default function Dashboard() {
     checkSession();
   }, [navigate, toast]);
 
+  const getProfileImageUrl = (imageUrl: string | null) => {
+    if (!imageUrl) return "";
+    const { data } = supabase.storage
+      .from("profile-images")
+      .getPublicUrl(imageUrl);
+    return data.publicUrl;
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -74,10 +82,7 @@ export default function Dashboard() {
             <div className="flex items-center space-x-4">
               <Avatar className="h-24 w-24">
                 <AvatarImage 
-                  src={profile.profile_image_url 
-                    ? `https://oimjhwhxxzuiqtxvxcrs.supabase.co/storage/v1/object/public/profile-images/${profile.profile_image_url}`
-                    : ""
-                  } 
+                  src={getProfileImageUrl(profile.profile_image_url)}
                   alt="Profile" 
                 />
                 <AvatarFallback>
