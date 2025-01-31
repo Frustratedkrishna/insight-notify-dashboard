@@ -90,6 +90,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          aadhar_number: string | null
+          abc_id: string | null
           course_name: string | null
           created_at: string
           department: string | null
@@ -106,6 +108,8 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          aadhar_number?: string | null
+          abc_id?: string | null
           course_name?: string | null
           created_at?: string
           department?: string | null
@@ -122,6 +126,8 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          aadhar_number?: string | null
+          abc_id?: string | null
           course_name?: string | null
           created_at?: string
           department?: string | null
