@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LogOut, User } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -42,6 +42,14 @@ export function DashboardSidebar() {
                   <button onClick={() => navigate("/dashboard")}>
                     <User className="h-4 w-4" />
                     <span>Profile</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <button onClick={() => navigate("/dashboard/notifications")}>
+                    <Bell className="h-4 w-4" />
+                    <span>Notifications</span>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>

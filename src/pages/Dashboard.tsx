@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardNav } from "@/components/DashboardNav";
 import { useToast } from "@/components/ui/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { NotificationCard } from "@/components/NotificationCard";
 
 interface Profile {
   id: string;
@@ -18,10 +19,21 @@ interface Profile {
   profile_image_url: string;
 }
 
+interface Notification {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  department?: string;
+  semester?: number;
+  created_at: string;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,10 +68,21 @@ export default function Dashboard() {
         }
 
         setProfile(profileData);
+
+        // Fetch notifications
+        const { data: notificationsData, error: notificationsError } = await supabase
+          .from("notifications")
+          .select("*")
+          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${profileData.year * 2})`)
+          .order("created_at", { ascending: false });
+
+        if (notificationsError) throw notificationsError;
+
+        setNotifications(notificationsData);
       } catch (error: any) {
         console.error("Error:", error);
         toast({
-          title: "Error loading profile",
+          title: "Error loading data",
           description: error.message,
           variant: "destructive",
         });
@@ -102,7 +125,7 @@ export default function Dashboard() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <DashboardNav />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Student Profile</CardTitle>
@@ -142,6 +165,29 @@ export default function Dashboard() {
                   <p>{profile.section}</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Notifications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {notifications.length === 0 ? (
+                <p className="text-muted-foreground">No notifications to display</p>
+              ) : (
+                notifications.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    title={notification.title}
+                    content={notification.content}
+                    createdAt={notification.created_at}
+                    type={notification.type}
+                    department={notification.department}
+                    semester={notification.semester}
+                  />
+                ))
+              )}
             </CardContent>
           </Card>
         </main>
