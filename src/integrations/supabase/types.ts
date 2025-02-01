@@ -100,6 +100,7 @@ export type Database = {
           id: string
           is_approved: boolean | null
           last_name: string
+          password: string | null
           profile_image_url: string | null
           role: Database["public"]["Enums"]["user_role"]
           section: string | null
@@ -118,6 +119,7 @@ export type Database = {
           id: string
           is_approved?: boolean | null
           last_name: string
+          password?: string | null
           profile_image_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           section?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           last_name?: string
+          password?: string | null
           profile_image_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           section?: string | null
@@ -197,7 +200,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_password: {
+        Args: {
+          p_enrollment_number: string
+          p_password: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       user_role: "student" | "faculty" | "admin"

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,11 +12,10 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [enrollmentNumber, setEnrollmentNumber] = useState("");
+  const [password, setPassword] = useState("");
   const [course, setCourse] = useState("");
   const [year, setYear] = useState("");
   const [section, setSection] = useState("");
@@ -39,35 +38,24 @@ const Auth = () => {
 
     try {
       // Validate required fields
-      if (!firstName || !lastName || !email || !password || !enrollmentNumber) {
+      if (!firstName || !lastName || !enrollmentNumber || !password) {
         throw new Error("Please fill in all required fields");
       }
 
-      // 1. Sign up the user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            enrollment_number: enrollmentNumber,
-            course_name: course,
-            year: year ? parseInt(year) : null,
-            section,
-            aadhar_number: aadharNumber,
-            abc_id: abcId,
-            role: 'student'
-          },
-        },
+      // Generate a UUID for the new user
+      const { data: { user }, error: authError } = await supabase.auth.signUp({
+        email: `${enrollmentNumber}@temp.com`,
+        password: password
       });
 
       if (authError) throw authError;
+      if (!user?.id) throw new Error("Failed to create user");
 
-      // 2. Upload profile image if selected
-      if (profileImage && authData.user) {
+      // Upload profile image if selected
+      let profileImageUrl = null;
+      if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
-        const filePath = `${authData.user.id}/profile.${fileExt}`;
+        const filePath = `${user.id}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
@@ -77,30 +65,52 @@ const Auth = () => {
           console.error('Error uploading image:', uploadError);
           toast({
             title: "Warning",
-            description: "Account created but failed to upload profile image. You can try uploading it later.",
+            description: "Failed to upload profile image. You can try uploading it later.",
             variant: "destructive",
           });
-        }
-
-        // Update profile with image URL
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            profile_image_url: filePath,
-          })
-          .eq('id', authData.user.id);
-
-        if (updateError) {
-          console.error('Error updating profile with image:', updateError);
+        } else {
+          profileImageUrl = filePath;
         }
       }
 
+      // Create profile entry
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          first_name: firstName,
+          last_name: lastName,
+          enrollment_number: enrollmentNumber,
+          password: password,
+          course_name: course,
+          year: year ? parseInt(year) : null,
+          section,
+          aadhar_number: aadharNumber,
+          abc_id: abcId,
+          profile_image_url: profileImageUrl,
+          role: 'student'
+        });
+
+      if (profileError) throw profileError;
+
       toast({
         title: "Registration successful!",
-        description: "Please check your email to verify your account.",
+        description: "You can now login with your enrollment number and password.",
       });
 
-      navigate("/dashboard");
+      // Clear form
+      setFirstName("");
+      setLastName("");
+      setEnrollmentNumber("");
+      setPassword("");
+      setCourse("");
+      setYear("");
+      setSection("");
+      setAadharNumber("");
+      setAbcId("");
+      setProfileImage(null);
+      setImagePreview(null);
+
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
@@ -118,18 +128,44 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data: userId, error: checkError } = await supabase
+        .rpc('check_password', {
+          p_enrollment_number: enrollmentNumber,
+          p_password: password
+        });
+
+      if (checkError) throw checkError;
+      if (!userId) throw new Error("Invalid enrollment number or password");
+
+      // Get the user's profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+      if (!profile) throw new Error("Profile not found");
+
+      // Sign in with Supabase Auth using the temporary email
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: `${enrollmentNumber}@temp.com`,
+        password: password
       });
 
-      if (error) throw error;
+      if (signInError) throw signInError;
+
+      toast({
+        title: "Welcome back!",
+        description: `Logged in as ${profile.first_name} ${profile.last_name}`,
+      });
 
       navigate("/dashboard");
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Invalid credentials",
         variant: "destructive",
       });
     } finally {
@@ -155,12 +191,11 @@ const Auth = () => {
           <TabsContent value="login">
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
-                <Label htmlFor="login-email">Email</Label>
+                <Label htmlFor="login-enrollment">Enrollment Number</Label>
                 <Input
-                  id="login-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="login-enrollment"
+                  value={enrollmentNumber}
+                  onChange={(e) => setEnrollmentNumber(e.target.value)}
                   required
                 />
               </div>
@@ -219,12 +254,11 @@ const Auth = () => {
               </div>
 
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="enrollmentNumber">Enrollment Number</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="enrollmentNumber"
+                  value={enrollmentNumber}
+                  onChange={(e) => setEnrollmentNumber(e.target.value)}
                   required
                 />
               </div>
@@ -241,22 +275,11 @@ const Auth = () => {
               </div>
 
               <div>
-                <Label htmlFor="enrollmentNumber">Enrollment Number</Label>
-                <Input
-                  id="enrollmentNumber"
-                  value={enrollmentNumber}
-                  onChange={(e) => setEnrollmentNumber(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
                 <Label htmlFor="course">Course</Label>
                 <Input
                   id="course"
                   value={course}
                   onChange={(e) => setCourse(e.target.value)}
-                  required
                 />
               </div>
 
@@ -270,7 +293,6 @@ const Auth = () => {
                     max="4"
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
-                    required
                   />
                 </div>
                 <div>
@@ -279,7 +301,6 @@ const Auth = () => {
                     id="section"
                     value={section}
                     onChange={(e) => setSection(e.target.value)}
-                    required
                   />
                 </div>
               </div>
@@ -290,7 +311,6 @@ const Auth = () => {
                   id="aadharNumber"
                   value={aadharNumber}
                   onChange={(e) => setAadharNumber(e.target.value)}
-                  required
                 />
               </div>
 
@@ -300,7 +320,6 @@ const Auth = () => {
                   id="abcId"
                   value={abcId}
                   onChange={(e) => setAbcId(e.target.value)}
-                  required
                 />
               </div>
 
