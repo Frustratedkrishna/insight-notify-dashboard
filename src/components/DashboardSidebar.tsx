@@ -47,7 +47,7 @@ export function DashboardSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <button onClick={() => navigate("/dashboard/notifications")}>
+                  <button onClick={() => navigate("/notifications")}>
                     <Bell className="h-4 w-4" />
                     <span>Notifications</span>
                   </button>
