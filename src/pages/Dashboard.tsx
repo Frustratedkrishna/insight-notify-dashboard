@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardNav } from "@/components/DashboardNav";
 import { useToast } from "@/components/ui/use-toast";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface Profile {
   id: string;
@@ -98,51 +99,53 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex w-full">
-      <DashboardNav />
-      <main className="flex-1 p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Student Profile</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-24 w-24">
-                <AvatarImage 
-                  src={getProfileImageUrl(profile.profile_image_url)}
-                  alt="Profile" 
-                />
-                <AvatarFallback>
-                  {profile.first_name[0]}
-                  {profile.last_name[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="text-2xl font-bold">
-                  {profile.first_name} {profile.last_name}
-                </h2>
-                <p className="text-gray-500">
-                  Enrollment: {profile.enrollment_number}
-                </p>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <DashboardNav />
+        <main className="flex-1 p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Student Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage 
+                    src={getProfileImageUrl(profile.profile_image_url)}
+                    alt="Profile" 
+                  />
+                  <AvatarFallback>
+                    {profile.first_name[0]}
+                    {profile.last_name[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    {profile.first_name} {profile.last_name}
+                  </h2>
+                  <p className="text-gray-500">
+                    Enrollment: {profile.enrollment_number}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <h3 className="font-semibold">Course</h3>
-                <p>{profile.course_name}</p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <h3 className="font-semibold">Course</h3>
+                  <p>{profile.course_name}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold">Year</h3>
+                  <p>{profile.year}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold">Section</h3>
+                  <p>{profile.section}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold">Year</h3>
-                <p>{profile.year}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold">Section</h3>
-                <p>{profile.section}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }
