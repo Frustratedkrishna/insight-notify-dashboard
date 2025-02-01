@@ -38,7 +38,10 @@ export function DashboardSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                >
                   <button onClick={() => navigate("/dashboard")}>
                     <User className="h-4 w-4" />
                     <span>Profile</span>
@@ -46,7 +49,10 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                >
                   <button onClick={() => navigate("/notifications")}>
                     <Bell className="h-4 w-4" />
                     <span>Notifications</span>
@@ -54,7 +60,10 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                >
                   <button onClick={handleSignOut}>
                     <LogOut className="h-4 w-4" />
                     <span>Sign Out</span>
