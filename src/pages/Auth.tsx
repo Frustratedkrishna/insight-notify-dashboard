@@ -98,11 +98,14 @@ const Auth = () => {
       }
 
       if (!isStudent) {
+        // Ensure facultyRole is of the correct type
+        const validFacultyRole = facultyRole as "admin" | "chairman" | "director" | "hod" | "class_coordinator";
+        
         const { error: facultyError } = await supabase
           .from('faculty_profiles')
           .insert({
             id: user.id,
-            role: facultyRole,
+            role: validFacultyRole,
             department,
             designation,
             qualification,
