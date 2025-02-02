@@ -5,8 +5,6 @@ import { DashboardNav } from "@/components/DashboardNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
@@ -17,6 +15,7 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -88,9 +87,7 @@ export default function Marks() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="subject" />
                         <YAxis />
-                        <ChartTooltip>
-                          <ChartTooltipContent />
-                        </ChartTooltip>
+                        <Tooltip />
                         <ChartLegend>
                           <ChartLegendContent />
                         </ChartLegend>

@@ -5,8 +5,6 @@ import { DashboardNav } from "@/components/DashboardNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
@@ -15,6 +13,7 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -91,9 +90,7 @@ export default function Attendance() {
                             <Cell key={index} fill={entry.color} />
                           ))}
                         </Pie>
-                        <ChartTooltip>
-                          <ChartTooltipContent />
-                        </ChartTooltip>
+                        <Tooltip />
                         <ChartLegend>
                           <ChartLegendContent />
                         </ChartLegend>
