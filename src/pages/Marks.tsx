@@ -31,9 +31,16 @@ export default function Marks() {
   const { data: marks, isLoading } = useQuery({
     queryKey: ["marks"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       const { data, error } = await supabase
         .from("marks")
         .select("subject, marks, exam_type")
+        .eq('student_id', user.id)
         .order("subject");
 
       if (error) {
@@ -74,6 +81,8 @@ export default function Marks() {
             <CardContent>
               {isLoading ? (
                 <div>Loading marks data...</div>
+              ) : marks?.length === 0 ? (
+                <div>No marks data available</div>
               ) : (
                 <div className="h-[400px]">
                   <ChartContainer

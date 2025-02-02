@@ -28,9 +28,16 @@ export default function Attendance() {
   const { data: attendance, isLoading } = useQuery({
     queryKey: ["attendance"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       const { data, error } = await supabase
         .from("attendance")
-        .select("subject, status");
+        .select("subject, status")
+        .eq('student_id', user.id);
 
       if (error) {
         toast({
@@ -72,6 +79,8 @@ export default function Attendance() {
             <CardContent>
               {isLoading ? (
                 <div>Loading attendance data...</div>
+              ) : attendance?.length === 0 ? (
+                <div>No attendance data available</div>
               ) : (
                 <div className="h-[400px]">
                   <ChartContainer config={{}}>
