@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, User } from "lucide-react";
+import { Bell, LogOut, User, BookOpen, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -56,6 +56,28 @@ export function DashboardSidebar() {
                   <button onClick={() => navigate("/notifications")}>
                     <Bell className="h-4 w-4" />
                     <span>Notifications</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                >
+                  <button onClick={() => navigate("/marks")}>
+                    <BookOpen className="h-4 w-4" />
+                    <span>Marks</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                >
+                  <button onClick={() => navigate("/attendance")}>
+                    <Calendar className="h-4 w-4" />
+                    <span>Attendance</span>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
