@@ -31,16 +31,31 @@ export default function Marks() {
   const { data: marks, isLoading } = useQuery({
     queryKey: ["marks"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("User not authenticated");
+      // First get the profile with enrollment number
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq('enrollment_number', 'abhirajtawar8@gmail.com')
+        .single();
+
+      if (profileError) {
+        toast({
+          title: "Error fetching profile",
+          description: profileError.message,
+          variant: "destructive",
+        });
+        throw profileError;
       }
 
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+
+      // Then get marks using the profile id
       const { data, error } = await supabase
         .from("marks")
         .select("subject, marks, exam_type")
-        .eq('student_id', user.id)
+        .eq('student_id', profile.id)
         .order("subject");
 
       if (error) {

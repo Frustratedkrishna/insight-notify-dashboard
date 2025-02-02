@@ -28,16 +28,31 @@ export default function Attendance() {
   const { data: attendance, isLoading } = useQuery({
     queryKey: ["attendance"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("User not authenticated");
+      // First get the profile with enrollment number
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq('enrollment_number', 'abhirajtawar8@gmail.com')
+        .single();
+
+      if (profileError) {
+        toast({
+          title: "Error fetching profile",
+          description: profileError.message,
+          variant: "destructive",
+        });
+        throw profileError;
       }
 
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+
+      // Then get attendance using the profile id
       const { data, error } = await supabase
         .from("attendance")
         .select("subject, status")
-        .eq('student_id', user.id);
+        .eq('student_id', profile.id);
 
       if (error) {
         toast({
@@ -52,20 +67,22 @@ export default function Attendance() {
     },
   });
 
-  const processedData = attendance?.reduce((acc: any, record) => {
-    const key = `${record.subject}-${record.status}`;
-    const existingRecord = acc.find((item: any) => item.name === key);
-    if (existingRecord) {
-      existingRecord.value += 1;
+  const processedData = attendance?.reduce((acc: any[], record) => {
+    const existingSubject = acc.find((item) => item.subject === record.subject);
+    if (existingSubject) {
+      existingSubject.value += record.status === "present" ? 1 : 0;
+      existingSubject.total += 1;
     } else {
       acc.push({
-        name: key,
-        value: 1,
-        color: record.status === "present" ? "#22c55e" : "#ef4444",
+        subject: record.subject,
+        value: record.status === "present" ? 1 : 0,
+        total: 1,
       });
     }
     return acc;
   }, []);
+
+  const COLORS = ["#4f46e5", "#06b6d4", "#10b981"];
 
   return (
     <SidebarProvider>
@@ -89,14 +106,17 @@ export default function Attendance() {
                         <Pie
                           data={processedData}
                           dataKey="value"
-                          nameKey="name"
+                          nameKey="subject"
                           cx="50%"
                           cy="50%"
-                          outerRadius={150}
+                          outerRadius={80}
                           label
                         >
                           {processedData?.map((entry: any, index: number) => (
-                            <Cell key={index} fill={entry.color} />
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
                           ))}
                         </Pie>
                         <Tooltip />
