@@ -15,7 +15,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface AttendanceData {
   subject: string;
@@ -33,7 +33,7 @@ export default function Attendance() {
         .from("profiles")
         .select("id")
         .eq('enrollment_number', 'abhirajtawar8@gmail.com')
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         toast({
@@ -45,7 +45,12 @@ export default function Attendance() {
       }
 
       if (!profile) {
-        throw new Error("Profile not found");
+        toast({
+          title: "Profile not found",
+          description: "No profile found with the given enrollment number",
+          variant: "destructive",
+        });
+        return [];
       }
 
       // Then get attendance using the profile id
@@ -96,7 +101,7 @@ export default function Attendance() {
             <CardContent>
               {isLoading ? (
                 <div>Loading attendance data...</div>
-              ) : attendance?.length === 0 ? (
+              ) : !attendance?.length ? (
                 <div>No attendance data available</div>
               ) : (
                 <div className="h-[400px]">

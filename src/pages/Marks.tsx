@@ -17,7 +17,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface Mark {
   subject: string;
@@ -36,7 +36,7 @@ export default function Marks() {
         .from("profiles")
         .select("id")
         .eq('enrollment_number', 'abhirajtawar8@gmail.com')
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         toast({
@@ -48,7 +48,12 @@ export default function Marks() {
       }
 
       if (!profile) {
-        throw new Error("Profile not found");
+        toast({
+          title: "Profile not found",
+          description: "No profile found with the given enrollment number",
+          variant: "destructive",
+        });
+        return [];
       }
 
       // Then get marks using the profile id
@@ -96,7 +101,7 @@ export default function Marks() {
             <CardContent>
               {isLoading ? (
                 <div>Loading marks data...</div>
-              ) : marks?.length === 0 ? (
+              ) : !marks?.length ? (
                 <div>No marks data available</div>
               ) : (
                 <div className="h-[400px]">
