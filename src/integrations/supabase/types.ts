@@ -44,6 +44,50 @@ export type Database = {
           },
         ]
       }
+      faculty_profiles: {
+        Row: {
+          created_at: string
+          department: string | null
+          designation: string | null
+          experience_years: number | null
+          id: string
+          qualification: string | null
+          role: Database["public"]["Enums"]["faculty_role"]
+          specialization: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          experience_years?: number | null
+          id: string
+          qualification?: string | null
+          role: Database["public"]["Enums"]["faculty_role"]
+          specialization?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          experience_years?: number | null
+          id?: string
+          qualification?: string | null
+          role?: Database["public"]["Enums"]["faculty_role"]
+          specialization?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faculty_profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marks: {
         Row: {
           created_at: string
@@ -244,6 +288,12 @@ export type Database = {
       }
     }
     Enums: {
+      faculty_role:
+        | "admin"
+        | "chairman"
+        | "director"
+        | "hod"
+        | "class_coordinator"
       user_role: "student" | "faculty" | "admin"
     }
     CompositeTypes: {
