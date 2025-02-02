@@ -4,27 +4,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const Auth = () => {
+const FacultyAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
-  // Student fields
+  // Faculty fields
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [enrollmentNumber, setEnrollmentNumber] = useState("");
   const [password, setPassword] = useState("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [course, setCourse] = useState("");
-  const [year, setYear] = useState("");
-  const [section, setSection] = useState("");
-  const [aadharNumber, setAadharNumber] = useState("");
-  const [abcId, setAbcId] = useState("");
+  const [facultyRole, setFacultyRole] = useState<string>("");
+  const [department, setDepartment] = useState("");
+  const [designation, setDesignation] = useState("");
+  const [qualification, setQualification] = useState("");
+  const [experienceYears, setExperienceYears] = useState("");
+  const [specialization, setSpecialization] = useState("");
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -51,12 +53,7 @@ const Auth = () => {
             first_name: firstName,
             last_name: lastName,
             enrollment_number: enrollmentNumber,
-            role: 'student',
-            course_name: course,
-            year: year ? parseInt(year) : null,
-            section,
-            aadhar_number: aadharNumber,
-            abc_id: abcId,
+            role: 'faculty'
           }
         }
       });
@@ -85,6 +82,23 @@ const Auth = () => {
         }
       }
 
+      // Ensure facultyRole is of the correct type
+      const validFacultyRole = facultyRole as "admin" | "chairman" | "director" | "hod" | "class_coordinator";
+      
+      const { error: facultyError } = await supabase
+        .from('faculty_profiles')
+        .insert({
+          id: user.id,
+          role: validFacultyRole,
+          department,
+          designation,
+          qualification,
+          experience_years: experienceYears ? parseInt(experienceYears) : null,
+          specialization
+        });
+
+      if (facultyError) throw facultyError;
+
       toast({
         title: "Registration successful!",
         description: "You can now login with your enrollment number and password.",
@@ -95,13 +109,14 @@ const Auth = () => {
       setLastName("");
       setEnrollmentNumber("");
       setPassword("");
-      setCourse("");
-      setYear("");
-      setSection("");
-      setAadharNumber("");
-      setAbcId("");
       setProfileImage(null);
       setImagePreview(null);
+      setFacultyRole("");
+      setDepartment("");
+      setDesignation("");
+      setQualification("");
+      setExperienceYears("");
+      setSpecialization("");
 
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -131,13 +146,13 @@ const Auth = () => {
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, faculty_profiles(*)')
         .eq('id', userId)
         .single();
 
       if (profileError) throw profileError;
       if (!profile) throw new Error("Profile not found");
-      if (profile.role !== 'student') throw new Error("This login is for students only");
+      if (profile.role !== 'faculty') throw new Error("This login is for faculty only");
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: `${enrollmentNumber}@temp.com`,
@@ -169,11 +184,8 @@ const Auth = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Student Portal - DBIT SIMS
+            Faculty Portal - DBIT SIMS
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Faculty? <a href="/faculty-auth" className="font-medium text-indigo-600 hover:text-indigo-500">Login here</a>
-          </p>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
@@ -185,7 +197,7 @@ const Auth = () => {
           <TabsContent value="login">
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
-                <Label htmlFor="login-enrollment">Enrollment Number</Label>
+                <Label htmlFor="login-enrollment">Employee Number</Label>
                 <Input
                   id="login-enrollment"
                   value={enrollmentNumber}
@@ -248,7 +260,7 @@ const Auth = () => {
               </div>
 
               <div>
-                <Label htmlFor="enrollmentNumber">Enrollment Number</Label>
+                <Label htmlFor="enrollmentNumber">Employee Number</Label>
                 <Input
                   id="enrollmentNumber"
                   value={enrollmentNumber}
@@ -269,51 +281,66 @@ const Auth = () => {
               </div>
 
               <div>
-                <Label htmlFor="course">Course</Label>
-                <Input
-                  id="course"
-                  value={course}
-                  onChange={(e) => setCourse(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="year">Year</Label>
-                  <Input
-                    id="year"
-                    type="number"
-                    min="1"
-                    max="4"
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="section">Section</Label>
-                  <Input
-                    id="section"
-                    value={section}
-                    onChange={(e) => setSection(e.target.value)}
-                  />
-                </div>
+                <Label htmlFor="facultyRole">Role</Label>
+                <Select value={facultyRole} onValueChange={setFacultyRole}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="chairman">Chairman</SelectItem>
+                    <SelectItem value="director">Director</SelectItem>
+                    <SelectItem value="hod">HOD</SelectItem>
+                    <SelectItem value="class_coordinator">Class Coordinator</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
-                <Label htmlFor="aadharNumber">Aadhar Number</Label>
+                <Label htmlFor="department">Department</Label>
                 <Input
-                  id="aadharNumber"
-                  value={aadharNumber}
-                  onChange={(e) => setAadharNumber(e.target.value)}
+                  id="department"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  required
                 />
               </div>
 
               <div>
-                <Label htmlFor="abcId">ABC ID</Label>
+                <Label htmlFor="designation">Designation</Label>
                 <Input
-                  id="abcId"
-                  value={abcId}
-                  onChange={(e) => setAbcId(e.target.value)}
+                  id="designation"
+                  value={designation}
+                  onChange={(e) => setDesignation(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="qualification">Qualification</Label>
+                <Input
+                  id="qualification"
+                  value={qualification}
+                  onChange={(e) => setQualification(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="experienceYears">Years of Experience</Label>
+                <Input
+                  id="experienceYears"
+                  type="number"
+                  min="0"
+                  value={experienceYears}
+                  onChange={(e) => setExperienceYears(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="specialization">Specialization</Label>
+                <Input
+                  id="specialization"
+                  value={specialization}
+                  onChange={(e) => setSpecialization(e.target.value)}
                 />
               </div>
 
@@ -328,4 +355,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default FacultyAuth;

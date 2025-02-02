@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import FacultyAuth from "./pages/FacultyAuth";
 import Dashboard from "./pages/Dashboard";
 import Attendance from "./pages/Attendance";
 import Marks from "./pages/Marks";
@@ -21,6 +22,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/faculty-auth" element={<FacultyAuth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/marks" element={<Marks />} />
