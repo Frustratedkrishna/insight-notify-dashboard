@@ -36,13 +36,31 @@ const FacultyAuth = () => {
     }
   };
 
+  const validatePassword = (password: string): string | null => {
+    if (password.length < 6) {
+      return "Password must be at least 6 characters long";
+    }
+    return null;
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (!firstName || !lastName || !enrollmentNumber || !password) {
+      if (!firstName || !lastName || !enrollmentNumber || !password || !facultyRole) {
         throw new Error("Please fill in all required fields");
+      }
+
+      const passwordError = validatePassword(password);
+      if (passwordError) {
+        throw new Error(passwordError);
+      }
+
+      // Validate faculty role type
+      const validFacultyRole = facultyRole as "admin" | "chairman" | "director" | "hod" | "class_coordinator";
+      if (!["admin", "chairman", "director", "hod", "class_coordinator"].includes(validFacultyRole)) {
+        throw new Error("Invalid faculty role selected");
       }
 
       const { data: { user }, error: authError } = await supabase.auth.signUp({
@@ -82,9 +100,6 @@ const FacultyAuth = () => {
         }
       }
 
-      // Ensure facultyRole is of the correct type
-      const validFacultyRole = facultyRole as "admin" | "chairman" | "director" | "hod" | "class_coordinator";
-      
       const { error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
@@ -101,7 +116,7 @@ const FacultyAuth = () => {
 
       toast({
         title: "Registration successful!",
-        description: "You can now login with your enrollment number and password.",
+        description: "You can now login with your employee ID and password.",
       });
 
       // Clear form
@@ -197,7 +212,7 @@ const FacultyAuth = () => {
           <TabsContent value="login">
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
-                <Label htmlFor="login-enrollment">Employee Number</Label>
+                <Label htmlFor="login-enrollment">Employee ID</Label>
                 <Input
                   id="login-enrollment"
                   value={enrollmentNumber}
@@ -260,7 +275,7 @@ const FacultyAuth = () => {
               </div>
 
               <div>
-                <Label htmlFor="enrollmentNumber">Employee Number</Label>
+                <Label htmlFor="enrollmentNumber">Employee ID</Label>
                 <Input
                   id="enrollmentNumber"
                   value={enrollmentNumber}
@@ -270,13 +285,14 @@ const FacultyAuth = () => {
               </div>
 
               <div>
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Password (min. 6 characters)</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  minLength={6}
                 />
               </div>
 
