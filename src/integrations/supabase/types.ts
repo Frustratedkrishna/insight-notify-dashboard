@@ -46,43 +46,58 @@ export type Database = {
       }
       faculty_profiles: {
         Row: {
+          course_name: string | null
           created_at: string
           department: string | null
           designation: string | null
           employee_id: string
           experience_years: number | null
+          first_name: string
           id: string
+          last_name: string
           password: string
           qualification: string | null
           role: Database["public"]["Enums"]["faculty_role"]
+          section: string | null
           specialization: string | null
           updated_at: string
+          year: number | null
         }
         Insert: {
+          course_name?: string | null
           created_at?: string
           department?: string | null
           designation?: string | null
           employee_id: string
           experience_years?: number | null
+          first_name: string
           id: string
+          last_name: string
           password: string
           qualification?: string | null
           role: Database["public"]["Enums"]["faculty_role"]
+          section?: string | null
           specialization?: string | null
           updated_at?: string
+          year?: number | null
         }
         Update: {
+          course_name?: string | null
           created_at?: string
           department?: string | null
           designation?: string | null
           employee_id?: string
           experience_years?: number | null
+          first_name?: string
           id?: string
+          last_name?: string
           password?: string
           qualification?: string | null
           role?: Database["public"]["Enums"]["faculty_role"]
+          section?: string | null
           specialization?: string | null
           updated_at?: string
+          year?: number | null
         }
         Relationships: [
           {
