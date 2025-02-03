@@ -56,16 +56,37 @@ const FacultyAuth = () => {
         throw new Error(passwordError);
       }
 
-      // Validate faculty role type
-      const validFacultyRole = facultyRole as "admin" | "chairman" | "director" | "hod" | "class_coordinator";
-      if (!["admin", "chairman", "director", "hod", "class_coordinator"].includes(validFacultyRole)) {
-        throw new Error("Invalid faculty role selected");
-      }
+      // First, create the auth user
+      const { data: { user }, error: authError } = await supabase.auth.signUp({
+        email: `${employeeId}@temp.com`,
+        password: password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            role: 'faculty',
+            employee_id: employeeId,
+            password: password,
+            faculty_role: facultyRole,
+            department: department,
+            course_name: course,
+            year: year ? parseInt(year) : null,
+            section: section,
+          }
+        }
+      });
 
+      if (authError) throw authError;
+      if (!user?.id) throw new Error("Failed to create user");
+
+      // Wait a moment for the trigger to create the profile
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Upload profile image if provided
       let profileImageUrl = null;
       if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
-        const filePath = `${employeeId}/profile.${fileExt}`;
+        const filePath = `${user.id}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
@@ -81,50 +102,6 @@ const FacultyAuth = () => {
         } else {
           profileImageUrl = filePath;
         }
-      }
-
-      // First, create the profile record
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: crypto.randomUUID(),
-          first_name: firstName,
-          last_name: lastName,
-          role: 'faculty',
-        })
-        .select()
-        .single();
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        throw new Error('Failed to create profile');
-      }
-
-      // Then create the faculty profile
-      const { error: facultyError } = await supabase
-        .from('faculty_profiles')
-        .insert({
-          id: profileData.id, // Use the same ID as the profile
-          employee_id: employeeId,
-          password: password,
-          role: validFacultyRole,
-          department: facultyRole === 'hod' ? department : null,
-          course_name: facultyRole === 'class_coordinator' ? course : null,
-          year: facultyRole === 'class_coordinator' ? parseInt(year) : null,
-          section: facultyRole === 'class_coordinator' ? section : null,
-          first_name: firstName,
-          last_name: lastName,
-          profile_image_url: profileImageUrl
-        });
-
-      if (facultyError) {
-        console.error('Faculty profile creation error:', facultyError);
-        // If faculty profile creation fails, clean up the profile
-        await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', profileData.id);
-        throw facultyError;
       }
 
       toast({
@@ -179,6 +156,13 @@ const FacultyAuth = () => {
 
       if (profileError) throw profileError;
       if (!profile) throw new Error("Profile not found");
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: `${employeeId}@temp.com`,
+        password: password
+      });
+
+      if (signInError) throw signInError;
 
       toast({
         title: "Welcome back!",
@@ -373,7 +357,52 @@ const FacultyAuth = () => {
                 </Select>
               </div>
 
-              {renderRoleSpecificFields()}
+              {facultyRole === 'hod' && (
+                <div>
+                  <Label htmlFor="department">Department</Label>
+                  <Input
+                    id="department"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              {facultyRole === 'class_coordinator' && (
+                <>
+                  <div>
+                    <Label htmlFor="course">Course</Label>
+                    <Input
+                      id="course"
+                      value={course}
+                      onChange={(e) => setCourse(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="year">Year</Label>
+                    <Input
+                      id="year"
+                      type="number"
+                      min="1"
+                      max="4"
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="section">Section</Label>
+                    <Input
+                      id="section"
+                      value={section}
+                      onChange={(e) => setSection(e.target.value)}
+                      required
+                    />
+                  </div>
+                </>
+              )}
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Loading..." : "Sign Up"}
