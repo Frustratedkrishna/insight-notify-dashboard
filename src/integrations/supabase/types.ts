@@ -49,8 +49,10 @@ export type Database = {
           created_at: string
           department: string | null
           designation: string | null
+          employee_id: string
           experience_years: number | null
           id: string
+          password: string
           qualification: string | null
           role: Database["public"]["Enums"]["faculty_role"]
           specialization: string | null
@@ -60,8 +62,10 @@ export type Database = {
           created_at?: string
           department?: string | null
           designation?: string | null
+          employee_id: string
           experience_years?: number | null
           id: string
+          password: string
           qualification?: string | null
           role: Database["public"]["Enums"]["faculty_role"]
           specialization?: string | null
@@ -71,8 +75,10 @@ export type Database = {
           created_at?: string
           department?: string | null
           designation?: string | null
+          employee_id?: string
           experience_years?: number | null
           id?: string
+          password?: string
           qualification?: string | null
           role?: Database["public"]["Enums"]["faculty_role"]
           specialization?: string | null
@@ -279,6 +285,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_faculty_password: {
+        Args: {
+          p_employee_id: string
+          p_password: string
+        }
+        Returns: string
+      }
       check_password: {
         Args: {
           p_enrollment_number: string
