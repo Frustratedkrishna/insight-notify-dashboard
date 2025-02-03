@@ -83,10 +83,28 @@ const FacultyAuth = () => {
         }
       }
 
+      // First, create the profile record
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: crypto.randomUUID(),
+          first_name: firstName,
+          last_name: lastName,
+          role: 'faculty',
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        throw new Error('Failed to create profile');
+      }
+
+      // Then create the faculty profile
       const { error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
-          id: crypto.randomUUID(),
+          id: profileData.id, // Use the same ID as the profile
           employee_id: employeeId,
           password: password,
           role: validFacultyRole,
@@ -99,7 +117,15 @@ const FacultyAuth = () => {
           profile_image_url: profileImageUrl
         });
 
-      if (facultyError) throw facultyError;
+      if (facultyError) {
+        console.error('Faculty profile creation error:', facultyError);
+        // If faculty profile creation fails, clean up the profile
+        await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', profileData.id);
+        throw facultyError;
+      }
 
       toast({
         title: "Registration successful!",
