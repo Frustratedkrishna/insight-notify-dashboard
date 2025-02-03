@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import FacultyAuth from "./pages/FacultyAuth";
 import Dashboard from "./pages/Dashboard";
+import FacultyDashboard from "./pages/faculty/Dashboard";
 import Attendance from "./pages/Attendance";
 import Marks from "./pages/Marks";
 import Notifications from "./pages/Notifications";
@@ -24,6 +25,7 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/faculty-auth" element={<FacultyAuth />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/marks" element={<Marks />} />
           <Route path="/notifications" element={<Notifications />} />

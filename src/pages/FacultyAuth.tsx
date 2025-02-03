@@ -142,7 +142,7 @@ const FacultyAuth = () => {
         });
 
       if (checkError) throw checkError;
-      if (!userId) throw new Error("Invalid enrollment number or password");
+      if (!userId) throw new Error("Invalid employee ID or password");
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -166,7 +166,7 @@ const FacultyAuth = () => {
         description: `Logged in as ${profile.first_name} ${profile.last_name}`,
       });
 
-      navigate("/dashboard");
+      navigate("/faculty/dashboard");
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
