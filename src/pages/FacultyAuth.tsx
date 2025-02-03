@@ -86,6 +86,7 @@ const FacultyAuth = () => {
       const { error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
+          id: crypto.randomUUID(),
           employee_id: employeeId,
           password: password,
           role: validFacultyRole,
