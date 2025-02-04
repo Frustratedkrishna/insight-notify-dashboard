@@ -27,7 +27,7 @@ const FacultyAuth = () => {
   const [year, setYear] = useState("");
   const [section, setSection] = useState("");
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setProfileImage(file);
@@ -56,37 +56,31 @@ const FacultyAuth = () => {
         throw new Error(passwordError);
       }
 
-      // First, create the auth user
-      const { data: { user }, error: authError } = await supabase.auth.signUp({
-        email: `${employeeId}@temp.com`,
-        password: password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            role: 'faculty',
+      // First, directly insert into faculty_profiles
+      const { data: facultyData, error: facultyError } = await supabase
+        .from('faculty_profiles')
+        .insert([
+          {
             employee_id: employeeId,
             password: password,
-            faculty_role: facultyRole,
+            first_name: firstName,
+            last_name: lastName,
+            role: facultyRole,
             department: department,
             course_name: course,
             year: year ? parseInt(year) : null,
             section: section,
           }
-        }
-      });
+        ])
+        .select()
+        .single();
 
-      if (authError) throw authError;
-      if (!user?.id) throw new Error("Failed to create user");
-
-      // Wait a moment for the trigger to create the profile
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (facultyError) throw facultyError;
 
       // Upload profile image if provided
-      let profileImageUrl = null;
       if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
-        const filePath = `${user.id}/profile.${fileExt}`;
+        const filePath = `${employeeId}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
@@ -100,7 +94,15 @@ const FacultyAuth = () => {
             variant: "destructive",
           });
         } else {
-          profileImageUrl = filePath;
+          // Update faculty profile with image URL
+          const { error: updateError } = await supabase
+            .from('faculty_profiles')
+            .update({ profile_image_url: filePath })
+            .eq('employee_id', employeeId);
+
+          if (updateError) {
+            console.error('Error updating profile with image:', updateError);
+          }
         }
       }
 
@@ -151,18 +153,11 @@ const FacultyAuth = () => {
       const { data: profile, error: profileError } = await supabase
         .from('faculty_profiles')
         .select('*')
-        .eq('id', facultyId)
+        .eq('employee_id', employeeId)
         .single();
 
       if (profileError) throw profileError;
       if (!profile) throw new Error("Profile not found");
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: `${employeeId}@temp.com`,
-        password: password
-      });
-
-      if (signInError) throw signInError;
 
       toast({
         title: "Welcome back!",
@@ -180,63 +175,6 @@ const FacultyAuth = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const renderRoleSpecificFields = () => {
-    if (!facultyRole) return null;
-
-    if (facultyRole === 'hod') {
-      return (
-        <div>
-          <Label htmlFor="department">Department</Label>
-          <Input
-            id="department"
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            required
-          />
-        </div>
-      );
-    }
-
-    if (facultyRole === 'class_coordinator') {
-      return (
-        <>
-          <div>
-            <Label htmlFor="course">Course</Label>
-            <Input
-              id="course"
-              value={course}
-              onChange={(e) => setCourse(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="year">Year</Label>
-            <Input
-              id="year"
-              type="number"
-              min="1"
-              max="4"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="section">Section</Label>
-            <Input
-              id="section"
-              value={section}
-              onChange={(e) => setSection(e.target.value)}
-              required
-            />
-          </div>
-        </>
-      );
-    }
-
-    return null;
   };
 
   return (
