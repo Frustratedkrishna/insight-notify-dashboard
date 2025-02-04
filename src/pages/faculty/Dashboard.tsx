@@ -47,7 +47,7 @@ export default function FacultyDashboard() {
           .from('faculty_profiles')
           .select('*')
           .eq('id', session.user.id)
-          .maybeSingle();
+          .single();
 
         if (profileError) throw profileError;
         
