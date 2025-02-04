@@ -44,36 +44,10 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      // First create the auth user
-      const { data: { user }, error: authError } = await supabase.auth.signUp({
-        email: `${employeeId}@faculty.temp.com`,
-        password: password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            role: 'faculty',
-            employee_id: employeeId,
-            faculty_role: facultyRole,
-            department: department,
-            course_name: course,
-            year: year ? parseInt(year) : null,
-            section: section,
-          }
-        }
-      });
-
-      if (authError) throw authError;
-      if (!user) throw new Error("Failed to create user");
-
-      // Wait for the trigger to create the profile
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Then create the faculty profile
-      const { error: facultyError } = await supabase
+      // Create the faculty profile
+      const { data: facultyData, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
-          id: user.id,
           employee_id: employeeId,
           password: password,
           first_name: firstName,
@@ -83,7 +57,9 @@ const FacultyAuth = () => {
           course_name: course,
           year: year ? parseInt(year) : null,
           section: section,
-        });
+        })
+        .select()
+        .single();
 
       if (facultyError) {
         console.error('Faculty profile creation error:', facultyError);
@@ -91,9 +67,9 @@ const FacultyAuth = () => {
       }
 
       // Upload profile image if provided
-      if (profileImage) {
+      if (profileImage && facultyData) {
         const fileExt = profileImage.name.split('.').pop();
-        const filePath = `${user.id}/profile.${fileExt}`;
+        const filePath = `${facultyData.id}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
@@ -107,16 +83,11 @@ const FacultyAuth = () => {
             variant: "destructive",
           });
         } else {
-          // Update both profiles with image URL
-          await supabase
-            .from('profiles')
-            .update({ profile_image_url: filePath })
-            .eq('id', user.id);
-
+          // Update faculty profile with image URL
           await supabase
             .from('faculty_profiles')
             .update({ profile_image_url: filePath })
-            .eq('id', user.id);
+            .eq('id', facultyData.id);
         }
       }
 
