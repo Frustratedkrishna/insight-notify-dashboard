@@ -49,8 +49,9 @@ const FacultyAuth = () => {
         .from('faculty_profiles')
         .select('employee_id')
         .eq('employee_id', employeeId)
-        .single();
+        .maybeSingle();
 
+      if (checkError) throw checkError;
       if (existingFaculty) {
         throw new Error("Employee ID already exists");
       }
@@ -159,7 +160,7 @@ const FacultyAuth = () => {
         .from('faculty_profiles')
         .select('*')
         .eq('employee_id', employeeId)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
       if (!profile) throw new Error("Profile not found");
