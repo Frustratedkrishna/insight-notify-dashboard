@@ -41,7 +41,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       faculty_profiles: {
@@ -72,7 +72,7 @@ export type Database = {
           employee_id: string
           experience_years?: number | null
           first_name: string
-          id: string
+          id?: string
           last_name: string
           password: string
           profile_image_url?: string | null
@@ -102,15 +102,7 @@ export type Database = {
           updated_at?: string
           year?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "faculty_profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       marks: {
         Row: {
