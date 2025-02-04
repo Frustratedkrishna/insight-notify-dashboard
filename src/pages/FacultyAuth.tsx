@@ -35,13 +35,6 @@ const FacultyAuth = () => {
     }
   };
 
-  const validatePassword = (password: string): string | null => {
-    if (password.length < 6) {
-      return "Password must be at least 6 characters long";
-    }
-    return null;
-  };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -51,42 +44,36 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      const passwordError = validatePassword(password);
-      if (passwordError) {
-        throw new Error(passwordError);
-      }
+      // First create the auth user
+      const { data: { user }, error: authError } = await supabase.auth.signUp({
+        email: `${employeeId}@faculty.temp.com`,
+        password: password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            role: 'faculty',
+            employee_id: employeeId,
+            faculty_role: facultyRole,
+            department: department,
+            course_name: course,
+            year: year ? parseInt(year) : null,
+            section: section,
+          }
+        }
+      });
 
-      // Generate a UUID for both profile and faculty profile
-      const id = crypto.randomUUID();
+      if (authError) throw authError;
+      if (!user) throw new Error("Failed to create user");
 
-      // First create the profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: id,
-          first_name: firstName,
-          last_name: lastName,
-          role: 'faculty',
-          password: password,
-          department: department,
-          course_name: course,
-          year: year ? parseInt(year) : null,
-          section: section
-        });
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        throw profileError;
-      }
-
-      // Wait a moment to ensure the profile is created
+      // Wait for the trigger to create the profile
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Then create the faculty profile
       const { error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
-          id: id,
+          id: user.id,
           employee_id: employeeId,
           password: password,
           first_name: firstName,
@@ -106,7 +93,7 @@ const FacultyAuth = () => {
       // Upload profile image if provided
       if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
-        const filePath = `${employeeId}/profile.${fileExt}`;
+        const filePath = `${user.id}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
@@ -121,17 +108,15 @@ const FacultyAuth = () => {
           });
         } else {
           // Update both profiles with image URL
-          const { error: updateError } = await supabase
+          await supabase
             .from('profiles')
             .update({ profile_image_url: filePath })
-            .eq('id', id);
+            .eq('id', user.id);
 
-          if (!updateError) {
-            await supabase
-              .from('faculty_profiles')
-              .update({ profile_image_url: filePath })
-              .eq('id', id);
-          }
+          await supabase
+            .from('faculty_profiles')
+            .update({ profile_image_url: filePath })
+            .eq('id', user.id);
         }
       }
 
@@ -145,13 +130,13 @@ const FacultyAuth = () => {
       setLastName("");
       setEmployeeId("");
       setPassword("");
-      setProfileImage(null);
-      setImagePreview(null);
       setFacultyRole("");
       setDepartment("");
       setCourse("");
       setYear("");
       setSection("");
+      setProfileImage(null);
+      setImagePreview(null);
 
     } catch (error: any) {
       console.error('Signup error:', error);
