@@ -8,11 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const FacultyAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [showAdminMessage, setShowAdminMessage] = useState(false);
   
   // Faculty fields
   const [firstName, setFirstName] = useState("");
@@ -145,15 +147,35 @@ const FacultyAuth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setShowAdminMessage(false);
 
     try {
-      const { data: facultyId, error: checkError } = await supabase
+      // First check if faculty profile exists
+      const { data: facultyProfile, error: checkError } = await supabase
+        .from('faculty_profiles')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+      
+      if (!facultyProfile) {
+        setShowAdminMessage(true);
+        toast({
+          title: "Profile Not Found",
+          description: "Please contact your administrator to set up your faculty profile.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: facultyId, error: loginError } = await supabase
         .rpc('check_faculty_password', {
           p_employee_id: employeeId,
           p_password: password
         });
 
-      if (checkError) throw checkError;
+      if (loginError) throw loginError;
       if (!facultyId) throw new Error("Invalid employee ID or password");
 
       const { data: profile, error: profileError } = await supabase
@@ -200,6 +222,13 @@ const FacultyAuth = () => {
 
           <TabsContent value="login">
             <form onSubmit={handleSignIn} className="space-y-4">
+              {showAdminMessage && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    Your faculty profile has not been set up yet. Please contact the administrator to get your profile created.
+                  </AlertDescription>
+                </Alert>
+              )}
               <div>
                 <Label htmlFor="login-employee-id">Employee ID</Label>
                 <Input
