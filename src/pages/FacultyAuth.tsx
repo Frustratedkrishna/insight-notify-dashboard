@@ -44,10 +44,15 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
+      // Generate a UUID for the faculty profile
+      const { data: { id: newId }, error: idError } = await supabase.rpc('generate_uuid');
+      if (idError) throw idError;
+
       // Create the faculty profile
       const { data: facultyData, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
+          id: newId,
           employee_id: employeeId,
           password: password,
           first_name: firstName,
