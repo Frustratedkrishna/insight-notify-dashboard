@@ -74,10 +74,16 @@ const FacultyAuth = () => {
           section: section
         });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        throw profileError;
+      }
+
+      // Wait a moment to ensure the profile is created
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Then create the faculty profile
-      const { data: facultyData, error: facultyError } = await supabase
+      const { error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
           id: id,
@@ -90,11 +96,12 @@ const FacultyAuth = () => {
           course_name: course,
           year: year ? parseInt(year) : null,
           section: section,
-        })
-        .select()
-        .single();
+        });
 
-      if (facultyError) throw facultyError;
+      if (facultyError) {
+        console.error('Faculty profile creation error:', facultyError);
+        throw facultyError;
+      }
 
       // Upload profile image if provided
       if (profileImage) {
