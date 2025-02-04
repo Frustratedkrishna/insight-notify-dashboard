@@ -56,22 +56,24 @@ const FacultyAuth = () => {
         throw new Error(passwordError);
       }
 
-      // First, directly insert into faculty_profiles
+      // Generate a UUID for the faculty profile
+      const id = crypto.randomUUID();
+
+      // Insert into faculty_profiles with the generated id
       const { data: facultyData, error: facultyError } = await supabase
         .from('faculty_profiles')
-        .insert([
-          {
-            employee_id: employeeId,
-            password: password,
-            first_name: firstName,
-            last_name: lastName,
-            role: facultyRole,
-            department: department,
-            course_name: course,
-            year: year ? parseInt(year) : null,
-            section: section,
-          }
-        ])
+        .insert({
+          id: id,
+          employee_id: employeeId,
+          password: password,
+          first_name: firstName,
+          last_name: lastName,
+          role: facultyRole as "admin" | "chairman" | "director" | "hod" | "class_coordinator",
+          department: department,
+          course_name: course,
+          year: year ? parseInt(year) : null,
+          section: section,
+        })
         .select()
         .single();
 
