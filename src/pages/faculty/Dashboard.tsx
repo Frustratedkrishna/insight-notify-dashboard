@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardNav } from "@/components/DashboardNav";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface FacultyProfile {
   id: string;
@@ -18,6 +19,9 @@ interface FacultyProfile {
   last_name: string;
   employee_id: string;
   profile_image_url: string | null;
+  course_name: string | null;
+  year: number | null;
+  section: string | null;
 }
 
 export default function FacultyDashboard() {
@@ -27,21 +31,24 @@ export default function FacultyDashboard() {
   const [facultyProfile, setFacultyProfile] = useState<FacultyProfile | null>(null);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/faculty-auth");
-        return;
-      }
-
+    const checkSessionAndFetchProfile = async () => {
       try {
-        const { data: profile, error } = await supabase
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+        
+        if (!session) {
+          navigate("/faculty-auth");
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
           .from('faculty_profiles')
           .select('*')
           .eq('id', session.user.id)
           .maybeSingle();
 
-        if (error) throw error;
+        if (profileError) throw profileError;
         
         if (!profile) {
           toast({
@@ -55,10 +62,10 @@ export default function FacultyDashboard() {
 
         setFacultyProfile(profile as FacultyProfile);
       } catch (error: any) {
-        console.error('Error fetching profile:', error);
+        console.error('Error:', error);
         toast({
           title: "Error",
-          description: error.message,
+          description: error.message || "An error occurred while fetching your profile",
           variant: "destructive",
         });
         navigate("/faculty-auth");
@@ -67,15 +74,45 @@ export default function FacultyDashboard() {
       }
     };
 
-    checkSession();
+    checkSessionAndFetchProfile();
   }, [navigate, toast]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <DashboardNav />
+        <main className="container mx-auto px-4 py-8">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </CardHeader>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   if (!facultyProfile) {
-    return <div>No profile data available</div>;
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <Card className="w-96">
+          <CardHeader>
+            <CardTitle className="text-center">Profile Not Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-muted-foreground">
+              Please contact administrator to set up your faculty profile
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -124,6 +161,18 @@ export default function FacultyDashboard() {
                   <p className="text-sm font-medium text-gray-500">Designation</p>
                   <p>{facultyProfile.designation || 'Not specified'}</p>
                 </div>
+                {facultyProfile.course_name && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Course</p>
+                    <p>{facultyProfile.course_name}</p>
+                  </div>
+                )}
+                {facultyProfile.section && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Section</p>
+                    <p>{facultyProfile.section}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -144,6 +193,12 @@ export default function FacultyDashboard() {
                   <p className="text-sm font-medium text-gray-500">Specialization</p>
                   <p>{facultyProfile.specialization || 'Not specified'}</p>
                 </div>
+                {facultyProfile.year && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Year</p>
+                    <p>{facultyProfile.year}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
