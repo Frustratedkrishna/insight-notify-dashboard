@@ -39,15 +39,17 @@ export default function FacultyDashboard() {
           .from('faculty_profiles')
           .select('*')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
+        
         if (!profile) {
           toast({
             title: "Profile not found",
-            description: "Please contact administrator",
+            description: "Please contact administrator to set up your faculty profile",
             variant: "destructive",
           });
+          navigate("/faculty-auth");
           return;
         }
 
@@ -59,6 +61,7 @@ export default function FacultyDashboard() {
           description: error.message,
           variant: "destructive",
         });
+        navigate("/faculty-auth");
       } finally {
         setLoading(false);
       }
