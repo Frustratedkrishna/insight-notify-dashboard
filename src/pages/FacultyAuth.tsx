@@ -56,10 +56,27 @@ const FacultyAuth = () => {
         throw new Error(passwordError);
       }
 
-      // Generate a UUID for the faculty profile
+      // Generate a UUID for both profile and faculty profile
       const id = crypto.randomUUID();
 
-      // Insert into faculty_profiles with the generated id
+      // First create the profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: id,
+          first_name: firstName,
+          last_name: lastName,
+          role: 'faculty',
+          password: password,
+          department: department,
+          course_name: course,
+          year: year ? parseInt(year) : null,
+          section: section
+        });
+
+      if (profileError) throw profileError;
+
+      // Then create the faculty profile
       const { data: facultyData, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
@@ -96,14 +113,17 @@ const FacultyAuth = () => {
             variant: "destructive",
           });
         } else {
-          // Update faculty profile with image URL
+          // Update both profiles with image URL
           const { error: updateError } = await supabase
-            .from('faculty_profiles')
+            .from('profiles')
             .update({ profile_image_url: filePath })
-            .eq('employee_id', employeeId);
+            .eq('id', id);
 
-          if (updateError) {
-            console.error('Error updating profile with image:', updateError);
+          if (!updateError) {
+            await supabase
+              .from('faculty_profiles')
+              .update({ profile_image_url: filePath })
+              .eq('id', id);
           }
         }
       }
