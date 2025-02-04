@@ -14,12 +14,10 @@ interface FacultyProfile {
   qualification: string | null;
   experience_years: number | null;
   specialization: string | null;
-  profiles: {
-    first_name: string;
-    last_name: string;
-    enrollment_number: string | null;
-    profile_image_url: string | null;
-  };
+  first_name: string;
+  last_name: string;
+  employee_id: string;
+  profile_image_url: string | null;
 }
 
 export default function FacultyDashboard() {
@@ -39,15 +37,7 @@ export default function FacultyDashboard() {
       try {
         const { data: profile, error } = await supabase
           .from('faculty_profiles')
-          .select(`
-            *,
-            profiles (
-              first_name,
-              last_name,
-              enrollment_number,
-              profile_image_url
-            )
-          `)
+          .select('*')
           .eq('id', session.user.id)
           .single();
 
@@ -94,20 +84,20 @@ export default function FacultyDashboard() {
             <CardHeader className="flex flex-row items-center gap-4">
               <Avatar className="h-16 w-16">
                 <AvatarImage 
-                  src={facultyProfile.profiles.profile_image_url || ''} 
-                  alt={`${facultyProfile.profiles.first_name} ${facultyProfile.profiles.last_name}`} 
+                  src={facultyProfile.profile_image_url || ''} 
+                  alt={`${facultyProfile.first_name} ${facultyProfile.last_name}`} 
                 />
                 <AvatarFallback>
-                  {facultyProfile.profiles.first_name[0]}
-                  {facultyProfile.profiles.last_name[0]}
+                  {facultyProfile.first_name[0]}
+                  {facultyProfile.last_name[0]}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <CardTitle>
-                  {facultyProfile.profiles.first_name} {facultyProfile.profiles.last_name}
+                  {facultyProfile.first_name} {facultyProfile.last_name}
                 </CardTitle>
                 <p className="text-sm text-gray-500">
-                  Employee ID: {facultyProfile.profiles.enrollment_number}
+                  Employee ID: {facultyProfile.employee_id}
                 </p>
               </div>
             </CardHeader>

@@ -44,6 +44,17 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
+      // Check if employee ID already exists
+      const { data: existingFaculty, error: checkError } = await supabase
+        .from('faculty_profiles')
+        .select('employee_id')
+        .eq('employee_id', employeeId)
+        .single();
+
+      if (existingFaculty) {
+        throw new Error("Employee ID already exists");
+      }
+
       // Generate a UUID for the faculty profile
       const { data: uuidResult, error: idError } = await supabase
         .rpc('generate_uuid')
