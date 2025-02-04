@@ -317,6 +317,12 @@ export type Database = {
         }
         Returns: string
       }
+      generate_uuid: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+        }[]
+      }
     }
     Enums: {
       faculty_role:

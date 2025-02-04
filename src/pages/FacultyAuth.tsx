@@ -45,14 +45,18 @@ const FacultyAuth = () => {
       }
 
       // Generate a UUID for the faculty profile
-      const { data: { id: newId }, error: idError } = await supabase.rpc('generate_uuid');
+      const { data: uuidData, error: idError } = await supabase
+        .rpc('generate_uuid')
+        .single();
+        
       if (idError) throw idError;
+      if (!uuidData) throw new Error("Failed to generate UUID");
 
       // Create the faculty profile
       const { data: facultyData, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
-          id: newId,
+          id: uuidData.id,
           employee_id: employeeId,
           password: password,
           first_name: firstName,
