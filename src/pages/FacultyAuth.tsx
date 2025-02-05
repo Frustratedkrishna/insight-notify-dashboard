@@ -169,6 +169,7 @@ const FacultyAuth = () => {
         return;
       }
 
+      // Verify password using the database function
       const { data: facultyId, error: loginError } = await supabase
         .rpc('check_faculty_password', {
           p_employee_id: employeeId,
@@ -178,13 +179,25 @@ const FacultyAuth = () => {
       if (loginError) throw loginError;
       if (!facultyId) throw new Error("Invalid employee ID or password");
 
-      // Create a session with custom data
-      const { data: { session }, error: sessionError } = await supabase.auth.signInWithPassword({
-        email: `${employeeId}@faculty.dbit.com`, // Using a consistent email format
+      // First try to sign up the user if they don't exist
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: `${employeeId}@faculty.dbit.com`,
+        password: password,
+        options: {
+          data: {
+            employee_id: employeeId,
+            role: 'faculty'
+          }
+        }
+      });
+
+      // If user already exists or after creating, sign in
+      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+        email: `${employeeId}@faculty.dbit.com`,
         password: password,
       });
 
-      if (sessionError) throw sessionError;
+      if (signInError) throw signInError;
 
       // Update session with employee_id
       if (session) {
