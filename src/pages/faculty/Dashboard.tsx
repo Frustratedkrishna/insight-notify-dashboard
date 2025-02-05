@@ -41,23 +41,17 @@ export default function FacultyDashboard() {
           return;
         }
 
-        // First get the employee_id from profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('enrollment_number')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        if (profileError) throw profileError;
-        if (!profileData?.enrollment_number) {
-          throw new Error("Employee ID not found in profile");
+        const employeeId = session.user.user_metadata.employee_id;
+        
+        if (!employeeId) {
+          throw new Error("Employee ID not found in session");
         }
 
-        // Then use the employee_id to fetch faculty profile
+        // Fetch faculty profile directly using employee_id
         const { data: facultyData, error: facultyError } = await supabase
           .from('faculty_profiles')
           .select('*')
-          .eq('employee_id', profileData.enrollment_number)
+          .eq('employee_id', employeeId)
           .maybeSingle();
 
         if (facultyError) throw facultyError;

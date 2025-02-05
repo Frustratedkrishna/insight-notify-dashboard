@@ -178,18 +178,24 @@ const FacultyAuth = () => {
       if (loginError) throw loginError;
       if (!facultyId) throw new Error("Invalid employee ID or password");
 
-      const { data: profile, error: profileError } = await supabase
-        .from('faculty_profiles')
-        .select('*')
-        .eq('employee_id', employeeId)
-        .maybeSingle();
+      // Create a session with custom data
+      const { data: { session }, error: sessionError } = await supabase.auth.signInWithPassword({
+        email: `${employeeId}@faculty.dbit.com`, // Using a consistent email format
+        password: password,
+      });
 
-      if (profileError) throw profileError;
-      if (!profile) throw new Error("Profile not found");
+      if (sessionError) throw sessionError;
+
+      // Update session with employee_id
+      if (session) {
+        await supabase.auth.updateUser({
+          data: { employee_id: employeeId }
+        });
+      }
 
       toast({
         title: "Welcome back!",
-        description: `Logged in as ${profile.first_name} ${profile.last_name}`,
+        description: `Logged in as ${facultyProfile.first_name} ${facultyProfile.last_name}`,
       });
 
       navigate("/faculty/dashboard");
