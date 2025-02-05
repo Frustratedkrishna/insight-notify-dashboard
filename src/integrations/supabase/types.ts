@@ -49,18 +49,14 @@ export type Database = {
           course_name: string | null
           created_at: string
           department: string | null
-          designation: string | null
           employee_id: string
-          experience_years: number | null
           first_name: string
           id: string
           last_name: string
           password: string
           profile_image_url: string | null
-          qualification: string | null
           role: Database["public"]["Enums"]["faculty_role"]
           section: string | null
-          specialization: string | null
           updated_at: string
           year: number | null
         }
@@ -68,18 +64,14 @@ export type Database = {
           course_name?: string | null
           created_at?: string
           department?: string | null
-          designation?: string | null
           employee_id: string
-          experience_years?: number | null
           first_name: string
           id?: string
           last_name: string
           password: string
           profile_image_url?: string | null
-          qualification?: string | null
           role: Database["public"]["Enums"]["faculty_role"]
           section?: string | null
-          specialization?: string | null
           updated_at?: string
           year?: number | null
         }
@@ -87,18 +79,14 @@ export type Database = {
           course_name?: string | null
           created_at?: string
           department?: string | null
-          designation?: string | null
           employee_id?: string
-          experience_years?: number | null
           first_name?: string
           id?: string
           last_name?: string
           password?: string
           profile_image_url?: string | null
-          qualification?: string | null
           role?: Database["public"]["Enums"]["faculty_role"]
           section?: string | null
-          specialization?: string | null
           updated_at?: string
           year?: number | null
         }

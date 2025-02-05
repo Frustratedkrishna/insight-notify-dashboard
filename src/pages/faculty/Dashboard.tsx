@@ -34,20 +34,22 @@ export default function FacultyDashboard() {
   useEffect(() => {
     const checkSessionAndFetchProfile = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // First check if we have a session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) throw sessionError;
         
-        if (!session) {
+        if (!sessionData.session) {
           navigate("/faculty-auth");
           return;
         }
 
+        // Then fetch the faculty profile using the session user's ID
         const { data: profile, error: profileError } = await supabase
           .from('faculty_profiles')
           .select('*')
-          .eq('id', session.user.id)
-          .single();
+          .eq('id', sessionData.session.user.id)
+          .maybeSingle();
 
         if (profileError) throw profileError;
         
