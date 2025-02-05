@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { DashboardNav } from "@/components/DashboardNav";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface FacultyProfile {
@@ -26,77 +25,84 @@ interface FacultyProfile {
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [facultyProfile, setFacultyProfile] = useState<FacultyProfile | null>(null);
 
   useEffect(() => {
-    const checkSessionAndFetchProfile = async () => {
+    const fetchFacultyProfile = async () => {
       try {
-        // First check if we have a session
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) throw sessionError;
         
-        if (!sessionData.session) {
+        if (!session) {
           navigate("/faculty-auth");
           return;
         }
 
-        // Then fetch the faculty profile using the session user's ID
-        const { data: profile, error: profileError } = await supabase
-          .from('faculty_profiles')
-          .select('*')
-          .eq('id', sessionData.session.user.id)
-          .maybeSingle();
+        // First get the employee_id from profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('enrollment_number')
+          .eq('id', session.user.id)
+          .single();
 
         if (profileError) throw profileError;
-        
-        if (!profile) {
-          toast({
-            title: "Profile not found",
-            description: "Please contact administrator to set up your faculty profile",
-            variant: "destructive",
-          });
-          navigate("/faculty-auth");
-          return;
+        if (!profileData?.enrollment_number) {
+          throw new Error("Employee ID not found in profile");
         }
 
-        setFacultyProfile(profile as FacultyProfile);
+        // Then use the employee_id to fetch faculty profile
+        const { data: facultyData, error: facultyError } = await supabase
+          .from('faculty_profiles')
+          .select('*')
+          .eq('employee_id', profileData.enrollment_number)
+          .single();
+
+        if (facultyError) throw facultyError;
+        if (!facultyData) {
+          throw new Error("Faculty profile not found");
+        }
+
+        setFacultyProfile(facultyData as FacultyProfile);
       } catch (error: any) {
-        console.error('Error:', error);
-        toast({
-          title: "Error",
-          description: error.message || "An error occurred while fetching your profile",
-          variant: "destructive",
-        });
-        navigate("/faculty-auth");
+        console.error('Error fetching faculty profile:', error);
+        setError(error.message);
+        if (error.message.includes("profile not found")) {
+          navigate("/faculty-auth");
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    checkSessionAndFetchProfile();
-  }, [navigate, toast]);
+    fetchFacultyProfile();
+  }, [navigate]);
 
   if (loading) {
     return (
       <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <DashboardNav />
-          <main className="container mx-auto px-4 py-8">
-            <div className="grid gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-4">
-                  <Skeleton className="h-16 w-16 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                </CardHeader>
-              </Card>
-            </div>
-          </main>
+        <div className="p-8">
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+            <Skeleton className="h-4 w-[150px]" />
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <SidebarProvider>
+        <div className="p-8">
+          <Alert variant="destructive">
+            <AlertDescription>
+              {error}. Please contact administrator to set up your faculty profile.
+            </AlertDescription>
+          </Alert>
         </div>
       </SidebarProvider>
     );
@@ -105,19 +111,12 @@ export default function FacultyDashboard() {
   if (!facultyProfile) {
     return (
       <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <Card className="w-96">
-              <CardHeader>
-                <CardTitle className="text-center">Profile Not Found</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-muted-foreground">
-                  Please contact administrator to set up your faculty profile
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+        <div className="p-8">
+          <Alert>
+            <AlertDescription>
+              No faculty profile found. Please contact administrator to set up your profile.
+            </AlertDescription>
+          </Alert>
         </div>
       </SidebarProvider>
     );
@@ -125,16 +124,18 @@ export default function FacultyDashboard() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <DashboardNav />
-        <main className="container mx-auto px-4 py-8">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage 
-                    src={facultyProfile.profile_image_url || ''} 
-                    alt={`${facultyProfile.first_name} ${facultyProfile.last_name}`} 
+      <div className="p-8">
+        <div className="grid gap-8 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Personal Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage
+                    src={facultyProfile.profile_image_url || ""}
+                    alt={`${facultyProfile.first_name} ${facultyProfile.last_name}`}
                   />
                   <AvatarFallback>
                     {facultyProfile.first_name[0]}
@@ -142,69 +143,59 @@ export default function FacultyDashboard() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle>
+                  <h2 className="text-2xl font-bold">
                     {facultyProfile.first_name} {facultyProfile.last_name}
-                  </CardTitle>
-                  <p className="text-sm text-gray-500">
-                    Employee ID: {facultyProfile.employee_id}
-                  </p>
+                  </h2>
+                  <p className="text-sm text-gray-500">Employee ID: {facultyProfile.employee_id}</p>
                 </div>
-              </CardHeader>
-            </Card>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Role</p>
+                  <p className="capitalize">{facultyProfile.role.replace('_', ' ')}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Department</p>
+                  <p>{facultyProfile.department || 'Not specified'}</p>
+                </div>
+                {facultyProfile.course_name && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Course</p>
+                    <p>{facultyProfile.course_name}</p>
+                  </div>
+                )}
+                {facultyProfile.section && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Section</p>
+                    <p>{facultyProfile.section}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Faculty Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Role</p>
-                    <p className="capitalize">{facultyProfile.role}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Department</p>
-                    <p>{facultyProfile.department || 'Not specified'}</p>
-                  </div>
-                  {facultyProfile.course_name && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Course</p>
-                      <p>{facultyProfile.course_name}</p>
-                    </div>
-                  )}
-                  {facultyProfile.section && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Section</p>
-                      <p>{facultyProfile.section}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Academic Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {facultyProfile.year && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Year</p>
-                      <p>{facultyProfile.year}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Created At</p>
-                    <p>{new Date(facultyProfile.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Last Updated</p>
-                    <p>{new Date(facultyProfile.updated_at).toLocaleDateString()}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </main>
+          <Card>
+            <CardHeader>
+              <CardTitle>Academic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {facultyProfile.year && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Year</p>
+                  <p>{facultyProfile.year}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium text-gray-500">Created At</p>
+                <p>{new Date(facultyProfile.created_at).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Last Updated</p>
+                <p>{new Date(facultyProfile.updated_at).toLocaleDateString()}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </SidebarProvider>
   );
