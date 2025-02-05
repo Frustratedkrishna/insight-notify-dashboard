@@ -47,7 +47,7 @@ export default function FacultyDashboard() {
           throw new Error("Employee ID not found in session");
         }
 
-        // Fetch faculty profile directly using employee_id
+        // Fetch complete faculty profile using employee_id
         const { data: facultyData, error: facultyError } = await supabase
           .from('faculty_profiles')
           .select('*')
@@ -57,6 +57,16 @@ export default function FacultyDashboard() {
         if (facultyError) throw facultyError;
         if (!facultyData) {
           throw new Error("Faculty profile not found");
+        }
+
+        // If profile image URL exists but doesn't start with http, get the full URL
+        if (facultyData.profile_image_url && !facultyData.profile_image_url.startsWith('http')) {
+          const { data: imageUrl } = await supabase
+            .storage
+            .from('profile-images')
+            .getPublicUrl(facultyData.profile_image_url);
+          
+          facultyData.profile_image_url = imageUrl.publicUrl;
         }
 
         setFacultyProfile(facultyData as FacultyProfile);
