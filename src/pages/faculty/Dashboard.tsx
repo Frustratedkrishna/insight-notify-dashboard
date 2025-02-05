@@ -10,19 +10,18 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface FacultyProfile {
   id: string;
-  role: string;
+  role: "admin" | "chairman" | "director" | "hod" | "class_coordinator";
   department: string | null;
-  designation: string | null;
-  qualification: string | null;
-  experience_years: number | null;
-  specialization: string | null;
+  created_at: string;
+  updated_at: string;
+  employee_id: string;
+  password: string;
   first_name: string;
   last_name: string;
-  employee_id: string;
-  profile_image_url: string | null;
   course_name: string | null;
   year: number | null;
   section: string | null;
+  profile_image_url: string | null;
 }
 
 export default function FacultyDashboard() {
@@ -167,10 +166,6 @@ export default function FacultyDashboard() {
                     <p className="text-sm font-medium text-gray-500">Department</p>
                     <p>{facultyProfile.department || 'Not specified'}</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Designation</p>
-                    <p>{facultyProfile.designation || 'Not specified'}</p>
-                  </div>
                   {facultyProfile.course_name && (
                     <div>
                       <p className="text-sm font-medium text-gray-500">Course</p>
@@ -191,24 +186,20 @@ export default function FacultyDashboard() {
                   <CardTitle>Academic Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Qualification</p>
-                    <p>{facultyProfile.qualification || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Experience</p>
-                    <p>{facultyProfile.experience_years ? `${facultyProfile.experience_years} years` : 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Specialization</p>
-                    <p>{facultyProfile.specialization || 'Not specified'}</p>
-                  </div>
                   {facultyProfile.year && (
                     <div>
                       <p className="text-sm font-medium text-gray-500">Year</p>
                       <p>{facultyProfile.year}</p>
                     </div>
                   )}
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Created At</p>
+                    <p>{new Date(facultyProfile.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Last Updated</p>
+                    <p>{new Date(facultyProfile.updated_at).toLocaleDateString()}</p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
