@@ -46,7 +46,7 @@ export default function FacultyDashboard() {
           .from('profiles')
           .select('enrollment_number')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) throw profileError;
         if (!profileData?.enrollment_number) {
@@ -58,7 +58,7 @@ export default function FacultyDashboard() {
           .from('faculty_profiles')
           .select('*')
           .eq('employee_id', profileData.enrollment_number)
-          .single();
+          .maybeSingle();
 
         if (facultyError) throw facultyError;
         if (!facultyData) {
