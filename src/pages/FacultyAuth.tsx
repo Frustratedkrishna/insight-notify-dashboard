@@ -179,32 +179,41 @@ const FacultyAuth = () => {
       if (loginError) throw loginError;
       if (!facultyId) throw new Error("Invalid employee ID or password");
 
-      // First try to sign up the user if they don't exist
-      const { error: signUpError } = await supabase.auth.signUp({
+      // Try to sign in directly first
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: `${employeeId}@faculty.dbit.com`,
         password: password,
-        options: {
-          data: {
-            employee_id: employeeId,
-            role: 'faculty'
+      });
+
+      // If sign in fails because user doesn't exist, create the user
+      if (signInError && signInError.message.includes("Invalid login credentials")) {
+        // Create the user
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: `${employeeId}@faculty.dbit.com`,
+          password: password,
+          options: {
+            data: {
+              employee_id: employeeId,
+              role: 'faculty'
+            }
           }
-        }
-      });
+        });
 
-      // If user already exists or after creating, sign in
-      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
-        email: `${employeeId}@faculty.dbit.com`,
-        password: password,
-      });
+        if (signUpError) throw signUpError;
 
-      if (signInError) throw signInError;
+        // Try signing in again
+        const { data: { session }, error: finalSignInError } = await supabase.auth.signInWithPassword({
+          email: `${employeeId}@faculty.dbit.com`,
+          password: password,
+        });
+
+        if (finalSignInError) throw finalSignInError;
+      }
 
       // Update session with employee_id
-      if (session) {
-        await supabase.auth.updateUser({
-          data: { employee_id: employeeId }
-        });
-      }
+      await supabase.auth.updateUser({
+        data: { employee_id: employeeId }
+      });
 
       toast({
         title: "Welcome back!",

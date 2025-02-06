@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { FacultyNav } from "@/components/FacultyNav";
+import { FacultyNavbar } from "@/components/FacultyNavbar";
 import { NotificationCard } from "@/components/NotificationCard";
 import { useToast } from "@/hooks/use-toast";
 
@@ -96,34 +96,32 @@ export default function FacultyNotifications() {
   }, [navigate, toast]);
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <FacultyNav role={facultyProfile?.role} />
-        <main className="flex-1 p-6">
-          <h1 className="text-2xl font-bold mb-6">Notifications</h1>
-          {loading ? (
-            <div>Loading...</div>
-          ) : (
-            <div className="space-y-4">
-              {notifications.length === 0 ? (
-                <p className="text-muted-foreground">No notifications to display</p>
-              ) : (
-                notifications.map((notification) => (
-                  <NotificationCard
-                    key={notification.id}
-                    title={notification.title}
-                    content={notification.content}
-                    createdAt={notification.created_at}
-                    type={notification.type}
-                    department={notification.department}
-                    semester={notification.semester}
-                  />
-                ))
-              )}
-            </div>
-          )}
-        </main>
-      </div>
-    </SidebarProvider>
+    <div className="min-h-screen flex flex-col w-full">
+      <FacultyNavbar role={facultyProfile?.role} />
+      <main className="flex-1 container mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">Notifications</h1>
+        {loading ? (
+          <div>Loading...</div>
+        ) : (
+          <div className="space-y-4">
+            {notifications.length === 0 ? (
+              <p className="text-muted-foreground">No notifications to display</p>
+            ) : (
+              notifications.map((notification) => (
+                <NotificationCard
+                  key={notification.id}
+                  title={notification.title}
+                  content={notification.content}
+                  createdAt={notification.created_at}
+                  type={notification.type}
+                  department={notification.department}
+                  semester={notification.semester}
+                />
+              ))
+            )}
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
