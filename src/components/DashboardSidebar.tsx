@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Bell, LogOut, User, BookOpen, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
+import { Button } from "./ui/button";
 
 export function DashboardSidebar() {
   const navigate = useNavigate();
