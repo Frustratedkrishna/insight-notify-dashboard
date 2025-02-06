@@ -1,39 +1,25 @@
-import { BrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "./App.css";
-import { Toaster } from "@/components/ui/toaster";
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import FacultyAuth from "./pages/FacultyAuth";
 import Dashboard from "./pages/Dashboard";
-import FacultyDashboard from "./pages/faculty/Dashboard";
-import Attendance from "./pages/Attendance";
-import Marks from "./pages/Marks";
-import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
-
-// Create a client
-const queryClient = new QueryClient();
+import FacultyAuth from "./pages/FacultyAuth";
+import FacultyDashboard from "./pages/faculty/Dashboard";
+import FacultyNotifications from "./pages/faculty/Notifications";
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/faculty-auth" element={<FacultyAuth />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/marks" element={<Marks />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/faculty-auth" element={<FacultyAuth />} />
+        <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
+        <Route path="/faculty/notifications" element={<FacultyNotifications />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
   );
 }
 
