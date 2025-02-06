@@ -1,10 +1,30 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { FacultyNavbar } from "@/components/FacultyNavbar";
 import { NotificationCard } from "@/components/NotificationCard";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 interface Notification {
   id: string;
@@ -20,7 +40,13 @@ interface FacultyProfile {
   role: string;
   course_name?: string;
   section?: string;
+  department?: string;
 }
+
+const notificationSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  content: z.string().min(1, "Content is required"),
+});
 
 export default function FacultyNotifications() {
   const navigate = useNavigate();
@@ -28,6 +54,15 @@ export default function FacultyNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [facultyProfile, setFacultyProfile] = useState<FacultyProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const form = useForm<z.infer<typeof notificationSchema>>({
+    resolver: zodResolver(notificationSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+    },
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,7 +85,7 @@ export default function FacultyNotifications() {
         // Fetch faculty profile
         const { data: facultyData, error: facultyError } = await supabase
           .from('faculty_profiles')
-          .select('role, course_name, section')
+          .select('role, course_name, section, department')
           .eq('employee_id', employeeId)
           .maybeSingle();
 
@@ -95,11 +130,104 @@ export default function FacultyNotifications() {
     fetchData();
   }, [navigate, toast]);
 
+  const onSubmit = async (values: z.infer<typeof notificationSchema>) => {
+    try {
+      if (!facultyProfile) return;
+
+      const notificationData = {
+        title: values.title,
+        content: values.content,
+        type: 'course_specific',
+        department: facultyProfile.course_name,
+        semester: facultyProfile.role === 'class_coordinator' ? parseInt(facultyProfile.section || '0') : null,
+        created_by: (await supabase.auth.getSession()).data.session?.user.id,
+      };
+
+      const { error } = await supabase
+        .from('notifications')
+        .insert(notificationData);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Announcement created successfully",
+      });
+
+      form.reset();
+      setIsDialogOpen(false);
+
+      // Refresh notifications
+      const { data: newNotifications, error: fetchError } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+      setNotifications(newNotifications);
+
+    } catch (error: any) {
+      console.error("Error:", error);
+      toast({
+        title: "Error creating announcement",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const canCreateAnnouncements = facultyProfile?.role === 'class_coordinator' || facultyProfile?.role === 'hod';
+
   return (
     <div className="min-h-screen flex flex-col w-full">
       <FacultyNavbar role={facultyProfile?.role} />
       <main className="flex-1 container mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Notifications</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Notifications</h1>
+          {canCreateAnnouncements && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>Create Announcement</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Announcement</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Content</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit">Create</Button>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
         {loading ? (
           <div>Loading...</div>
         ) : (
