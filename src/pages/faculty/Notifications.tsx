@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -192,6 +193,11 @@ export default function FacultyNotifications() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Create New Announcement</DialogTitle>
+                  <DialogDescription>
+                    {facultyProfile?.role === 'class_coordinator' 
+                      ? `This announcement will be visible to ${facultyProfile.course_name} - Section ${facultyProfile.section}`
+                      : `This announcement will be visible to all ${facultyProfile?.course_name} students`}
+                  </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
