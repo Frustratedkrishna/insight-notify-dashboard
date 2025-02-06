@@ -1,16 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Bell, LogOut, User, BookOpen, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
 import { useToast } from "./ui/use-toast";
 
 export function DashboardSidebar() {
@@ -30,72 +20,50 @@ export function DashboardSidebar() {
     }
   };
 
+  const navItems = [
+    {
+      icon: <User className="h-4 w-4" />,
+      label: "Profile",
+      href: "/dashboard",
+    },
+    {
+      icon: <Bell className="h-4 w-4" />,
+      label: "Notifications",
+      href: "/notifications",
+    },
+    {
+      icon: <BookOpen className="h-4 w-4" />,
+      label: "Marks",
+      href: "/marks",
+    },
+    {
+      icon: <Calendar className="h-4 w-4" />,
+      label: "Attendance",
+      href: "/attendance",
+    },
+  ];
+
   return (
-    <Sidebar>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                >
-                  <button onClick={() => navigate("/dashboard")}>
-                    <User className="h-4 w-4" />
-                    <span>Profile</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                >
-                  <button onClick={() => navigate("/notifications")}>
-                    <Bell className="h-4 w-4" />
-                    <span>Notifications</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                >
-                  <button onClick={() => navigate("/marks")}>
-                    <BookOpen className="h-4 w-4" />
-                    <span>Marks</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                >
-                  <button onClick={() => navigate("/attendance")}>
-                    <Calendar className="h-4 w-4" />
-                    <span>Attendance</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                >
-                  <button onClick={handleSignOut}>
-                    <LogOut className="h-4 w-4" />
-                    <span>Sign Out</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <div className="flex h-14 items-center gap-4 md:gap-6">
+      {navItems.map((item) => (
+        <Button
+          key={item.href}
+          variant="ghost"
+          className="h-8 w-full justify-start md:w-auto"
+          onClick={() => navigate(item.href)}
+        >
+          {item.icon}
+          <span className="ml-2">{item.label}</span>
+        </Button>
+      ))}
+      <Button
+        variant="ghost"
+        className="h-8 w-full justify-start md:w-auto"
+        onClick={handleSignOut}
+      >
+        <LogOut className="h-4 w-4" />
+        <span className="ml-2">Sign Out</span>
+      </Button>
+    </div>
   );
 }
