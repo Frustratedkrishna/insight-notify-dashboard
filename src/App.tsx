@@ -18,7 +18,7 @@ function App() {
         <Route path="/faculty-auth" element={<FacultyAuth />} />
         <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
         <Route path="/faculty/notifications" element={<FacultyNotifications />} />
-        <Route path="/faculty/viewstudent" element={<viewstudent />} />
+        <Route path="/faculty/viewstudent" element={<ViewStudent/>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

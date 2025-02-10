@@ -1,22 +1,30 @@
-// src/components/ViewStudents.jsx
-import React, { useEffect, useState } from 'react';
+// src/components/ViewStudents.tsx
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FacultyNavbar } from "@/components/FacultyNavbar";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const ViewStudents = () => {
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
+interface Student {
+  id: string;
+  name: string;
+  email: string;
+  enrollment_number: string;
+  course: string;
+}
+
+const ViewStudents: React.FC = () => {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchStudents = async () => {
-      const { data, error } = await supabase.from('profiles').select('*');
+      const { data, error } = await supabase.from("profiles").select("*");
 
       if (error) {
-        console.error('Error fetching students:', error);
+        console.error("Error fetching students:", error);
       } else {
-        setStudents(data);
+        setStudents(data as Student[]);
       }
       setLoading(false);
     };
