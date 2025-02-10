@@ -47,18 +47,24 @@ const ViewStudents: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Course</TableHead>
+                <TableHead>Year</TableHead>
+                <TableHead>Section</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Enrollment No.</TableHead>
-                <TableHead>Course</TableHead>
+             
               </TableRow>
             </TableHeader>
             <TableBody>
               {students.map((student) => (
                 <TableRow key={student.id}>
-                  <TableCell>{student.name}</TableCell>
+                  <TableCell>{student.first_name}</TableCell>
+                  <TableCell>{student.course_name}</TableCell>
+                  <TableCell>{student.year}</TableCell>
+                  <TableCell>{student.section}</TableCell>
                   <TableCell>{student.email}</TableCell>
                   <TableCell>{student.enrollment_number}</TableCell>
-                  <TableCell>{student.course}</TableCell>
+                  
                 </TableRow>
               ))}
             </TableBody>
