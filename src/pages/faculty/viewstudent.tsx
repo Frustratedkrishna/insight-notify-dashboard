@@ -1,6 +1,6 @@
 // src/components/ViewStudents.jsx
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from "@/integrations/supabase/client";
 import { FacultyNavbar } from "@/components/FacultyNavbar";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,7 @@ const ViewStudents = () => {
 
   useEffect(() => {
     const fetchStudents = async () => {
-      const { data, error } = await supabase.from('students').select('*');
+      const { data, error } = await supabase.from('profiles').select('*');
 
       if (error) {
         console.error('Error fetching students:', error);
