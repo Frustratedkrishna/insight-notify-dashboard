@@ -6,7 +6,7 @@ import NotFound from "./pages/NotFound";
 import FacultyAuth from "./pages/FacultyAuth";
 import FacultyDashboard from "./pages/faculty/Dashboard";
 import FacultyNotifications from "./pages/faculty/Notifications";
-import viewstudent from "./pages/faculty/viewstudent";
+import ViewStudent from "./pages/faculty/viewstudent";
 
 function App() {
   return (
