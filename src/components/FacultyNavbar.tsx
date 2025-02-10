@@ -64,7 +64,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
       <Button
         variant="ghost"
         className="w-full md:w-auto justify-start"
-        onClick={() => navigate("/faculty/viewstudents")}
+        onClick={() => navigate("/faculty/viewstudent")}
       >
         <Users className="h-4 w-4" />
         <span className="ml-2">Students</span>

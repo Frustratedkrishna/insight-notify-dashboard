@@ -6,7 +6,7 @@ import NotFound from "./pages/NotFound";
 import FacultyAuth from "./pages/FacultyAuth";
 import FacultyDashboard from "./pages/faculty/Dashboard";
 import FacultyNotifications from "./pages/faculty/Notifications";
-import viewstudents from "./pages/faculty/viewstudent";
+import viewstudent from "./pages/faculty/viewstudent";
 
 function App() {
   return (
@@ -18,7 +18,7 @@ function App() {
         <Route path="/faculty-auth" element={<FacultyAuth />} />
         <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
         <Route path="/faculty/notifications" element={<FacultyNotifications />} />
-        <Route path="/faculty/viewstudent" element={<viewstudents />} />
+        <Route path="/faculty/viewstudent" element={<viewstudent />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
