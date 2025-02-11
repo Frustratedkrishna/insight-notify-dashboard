@@ -33,45 +33,46 @@ const ViewStudents: React.FC = () => {
   }, []);
 
   return (
-    <Card className="mx-auto w-full max-w-4xl mt-10">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Students List</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <p className="text-center text-gray-500">Loading students...</p>
-        ) : students.length === 0 ? (
-          <p className="text-center text-gray-500">No students found.</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Section</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Enrollment No.</TableHead>
-             
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {students.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell>{student.first_name}</TableCell>
-                  <TableCell>{student.course_name}</TableCell>
-                  <TableCell>{student.year}</TableCell>
-                  <TableCell>{student.section}</TableCell>
-                  <TableCell>{student.email}</TableCell>
-                  <TableCell>{student.enrollment_number}</TableCell>
-                  
+    <>
+      <FacultyNavbar />
+      <Card className="mx-auto w-full max-w-4xl mt-10">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Students List</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-center text-gray-500">Loading students...</p>
+          ) : students.length === 0 ? (
+            <p className="text-center text-gray-500">No students found.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Year</TableHead>
+                  <TableHead>Section</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Enrollment No.</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {students.map((student) => (
+                  <TableRow key={student.id}>
+                    <TableCell>{student.first_name}</TableCell>
+                    <TableCell>{student.course_name}</TableCell>
+                    <TableCell>{student.year}</TableCell>
+                    <TableCell>{student.section}</TableCell>
+                    <TableCell>{student.email}</TableCell>
+                    <TableCell>{student.enrollment_number}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 };
 
