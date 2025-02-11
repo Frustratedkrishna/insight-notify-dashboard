@@ -69,7 +69,14 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         <Users className="h-4 w-4" />
         <span className="ml-2">Students</span>
       </Button>
-
+      <Button
+        variant="ghost"
+        className="w-full md:w-auto justify-start"
+        onClick={() => navigate("/faculty/viewstudent")}
+      >
+        <Users className="h-4 w-4" />
+        <span className="ml-2">Feedbacks</span>
+      </Button>
       {(role === 'class_coordinator' || role === 'hod') && (
         <Button
           variant="ghost"
