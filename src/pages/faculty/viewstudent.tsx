@@ -50,7 +50,7 @@ const ViewStudents: React.FC = () => {
         // Admin, Director, Chairman, and Dean can see all students
       } else if (userData.role === "hod") {
         query = query.eq("department", userData.department);
-      } else if (userData.role === "class_coordinator") {
+      } else if (userData.role === "classcoordinator") {
         query = query.eq("course_name", userData.course_name)
                       .eq("year", userData.year)
                       .eq("section", userData.section);
