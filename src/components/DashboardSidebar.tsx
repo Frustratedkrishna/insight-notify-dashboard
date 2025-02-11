@@ -1,12 +1,23 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, User, BookOpen, Calendar } from "lucide-react";
+import { Bell, LogOut, User, Calendar, Users, Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "./ui/use-toast";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-export function DashboardSidebar() {
+interface FacultyNavbarProps {
+  role?: string;
+}
+
+export function FacultyNavbar({ role }: FacultyNavbarProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
     try {
@@ -21,50 +32,96 @@ export function DashboardSidebar() {
     }
   };
 
-  const navItems = [
-    {
-      icon: <User className="h-4 w-4" />,
-      label: "Profile",
-      href: "/dashboard",
-    },
-    {
-      icon: <Bell className="h-4 w-4" />,
-      label: "Notifications",
-      href: "/notifications",
-    },
-    {
-      icon: <BookOpen className="h-4 w-4" />,
-      label: "Marks",
-      href: "/marks",
-    },
-    {
-      icon: <Calendar className="h-4 w-4" />,
-      label: "Attendance",
-      href: "/attendance",
-    },
-  ];
-
-  return (
-    <div className="flex h-14 items-center gap-4 md:gap-6">
-      {navItems.map((item) => (
-        <Button
-          key={item.href}
-          variant="ghost"
-          className="h-8 w-full justify-start md:w-auto"
-          onClick={() => navigate(item.href)}
-        >
-          {item.icon}
-          <span className="ml-2">{item.label}</span>
-        </Button>
-      ))}
+  const NavContent = () => (
+    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 md:p-0">
       <Button
         variant="ghost"
-        className="h-8 w-full justify-start md:w-auto"
+        className="w-full md:w-auto justify-start"
+        onClick={() => navigate("/faculty/dashboard")}
+      >
+        <User className="h-4 w-4" />
+        <span className="ml-2">Profile</span>
+      </Button>
+
+      <Button
+        variant="ghost"
+        className="w-full md:w-auto justify-start"
+        onClick={() => navigate("/notifications")}
+      >
+        <Bell className="h-4 w-4" />
+        <span className="ml-2">Notifications</span>
+      </Button>
+
+      <Button
+        variant="ghost"
+        className="w-full md:w-auto justify-start"
+        onClick={() => navigate("/faculty/attendance")}
+      >
+        <Calendar className="h-4 w-4" />
+        <span className="ml-2">Attendance</span>
+      </Button>
+
+      <Button
+        variant="ghost"
+        className="w-full md:w-auto justify-start"
+        onClick={() => navigate("/faculty/viewstudent")}
+      >
+        <Users className="h-4 w-4" />
+        <span className="ml-2">Students</span>
+      </Button>
+      <Button
+        variant="ghost"
+        className="w-full md:w-auto justify-start"
+        onClick={() => navigate("/faculty/viewfeedbacks")}
+      >
+        <Users className="h-4 w-4" />
+        <span className="ml-2">Feedbacks</span>
+      </Button>
+      {(role === 'class_coordinator' || role === 'hod') && (
+        <Button
+          variant="ghost"
+          className="w-full md:w-auto justify-start"
+          onClick={() => navigate("/faculty/announcements")}
+        >
+          <Bell className="h-4 w-4" />
+          <span className="ml-2">Announcements</span>
+        </Button>
+      )}
+
+      <Button
+        variant="ghost"
+        className="w-full md:w-auto justify-start"
         onClick={handleSignOut}
       >
         <LogOut className="h-4 w-4" />
         <span className="ml-2">Sign Out</span>
       </Button>
     </div>
+  );
+
+  return (
+    <nav className="border-b">
+      <div className="container mx-auto">
+        <div className="flex h-16 items-center justify-between">
+          <div className="font-semibold">Faculty Dashboard</div>
+          
+          {isMobile ? (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-64">
+                <NavContent />
+              </SheetContent>
+            </Sheet>
+          ) : (
+            <NavContent />
+          )}
+        </div>
+      </div>
+    </nav>
   );
 }

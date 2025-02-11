@@ -7,6 +7,7 @@ import FacultyAuth from "./pages/FacultyAuth";
 import FacultyDashboard from "./pages/faculty/Dashboard";
 import FacultyNotifications from "./pages/faculty/Notifications";
 import ViewStudent from "./pages/faculty/viewstudent";
+import ViewFeedbacks from "./pages/faculty/viewfeedbacks";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
         <Route path="/faculty/notifications" element={<FacultyNotifications />} />
         <Route path="/faculty/viewstudent" element={<ViewStudent/>} />
+        <Route path="/faculty/viewfeedbacks" element={<ViewFeedbacks/>}/>
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
