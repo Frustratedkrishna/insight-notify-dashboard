@@ -1,17 +1,10 @@
-// src/components/ViewStudents.tsx
+
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FacultyNavbar } from "@/components/FacultyNavbar";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface Student {
-  id: string;
-  name: string;
-  email: string;
-  enrollment_number: string;
-  course: string;
-}
+import { Student } from "@/types/supabase";
 
 const ViewStudents: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -19,14 +12,32 @@ const ViewStudents: React.FC = () => {
 
   useEffect(() => {
     const fetchStudents = async () => {
-      const { data, error } = await supabase.from("profiles").select("*");
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("role", "student");
 
-      if (error) {
+        if (error) throw error;
+        
+        if (data) {
+          const formattedStudents: Student[] = data.map(item => ({
+            id: item.id,
+            first_name: item.first_name,
+            last_name: item.last_name,
+            email: item.email,
+            enrollment_number: item.enrollment_number,
+            course_name: item.course_name,
+            year: item.year,
+            section: item.section
+          }));
+          setStudents(formattedStudents);
+        }
+      } catch (error) {
         console.error("Error fetching students:", error);
-      } else {
-        setStudents(data as Student[]);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchStudents();
@@ -59,7 +70,7 @@ const ViewStudents: React.FC = () => {
               <TableBody>
                 {students.map((student) => (
                   <TableRow key={student.id}>
-                    <TableCell>{student.first_name}</TableCell>
+                    <TableCell>{`${student.first_name} ${student.last_name}`}</TableCell>
                     <TableCell>{student.course_name}</TableCell>
                     <TableCell>{student.year}</TableCell>
                     <TableCell>{student.section}</TableCell>

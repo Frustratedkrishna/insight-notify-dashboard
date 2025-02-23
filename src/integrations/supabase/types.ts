@@ -9,6 +9,87 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      faculty_profiles: {
+        Row: {
+          course_name: string | null
+          created_at: string | null
+          department: string | null
+          employee_id: string
+          first_name: string
+          id: string
+          last_name: string
+          password: string
+          profile_image_url: string | null
+          role: Database["public"]["Enums"]["faculty_role"]
+          section: string | null
+          updated_at: string | null
+          year: number | null
+        }
+        Insert: {
+          course_name?: string | null
+          created_at?: string | null
+          department?: string | null
+          employee_id: string
+          first_name: string
+          id?: string
+          last_name: string
+          password: string
+          profile_image_url?: string | null
+          role: Database["public"]["Enums"]["faculty_role"]
+          section?: string | null
+          updated_at?: string | null
+          year?: number | null
+        }
+        Update: {
+          course_name?: string | null
+          created_at?: string | null
+          department?: string | null
+          employee_id?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          password?: string
+          profile_image_url?: string | null
+          role?: Database["public"]["Enums"]["faculty_role"]
+          section?: string | null
+          updated_at?: string | null
+          year?: number | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          department: string | null
+          id: string
+          semester: number | null
+          title: string
+          type: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          semester?: number | null
+          title: string
+          type: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          semester?: number | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       User: {
         Row: {
           aadharNumber: string
@@ -65,6 +146,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      faculty_role:
+        | "admin"
+        | "chairman"
+        | "director"
+        | "hod"
+        | "class_coordinator"
       UserRole: "STUDENT" | "FACULTY" | "HOD" | "CHAIRMAN" | "ADMIN"
     }
     CompositeTypes: {
