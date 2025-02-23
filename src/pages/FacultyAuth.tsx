@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,7 @@ const FacultyAuth = () => {
           course_name: course,
           year: year ? parseInt(year) : null,
           section
-        }])
+        }] as any)
         .select()
         .single();
 
@@ -102,6 +103,7 @@ const FacultyAuth = () => {
         description: "You can now login with your employee ID and password.",
       });
 
+      // Clear form
       setFirstName("");
       setLastName("");
       setEmployeeId("");

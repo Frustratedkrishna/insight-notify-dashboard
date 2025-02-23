@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -67,7 +68,7 @@ const Auth = () => {
         year: year ? parseInt(year) : null,
         section,
         role: 'student'
-      }]);
+      }] as any);
 
       if (profileError) throw profileError;
 
