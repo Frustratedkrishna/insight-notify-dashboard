@@ -9,309 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      attendance: {
+      User: {
         Row: {
-          created_at: string
-          date: string
+          aadharNumber: string
+          abcId: string | null
+          address: string | null
+          createdAt: string
+          email: string
+          enrollmentNumber: string
           id: string
-          status: string
-          student_id: string | null
-          subject: string
+          name: string
+          password: string
+          phone: string | null
+          profileImage: string | null
+          role: Database["public"]["Enums"]["UserRole"]
+          updatedAt: string
         }
         Insert: {
-          created_at?: string
-          date: string
-          id?: string
-          status: string
-          student_id?: string | null
-          subject: string
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          id?: string
-          status?: string
-          student_id?: string | null
-          subject?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "attendance_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      faculty_profiles: {
-        Row: {
-          course_name: string | null
-          created_at: string
-          department: string | null
-          employee_id: string
-          first_name: string
+          aadharNumber: string
+          abcId?: string | null
+          address?: string | null
+          createdAt?: string
+          email: string
+          enrollmentNumber: string
           id: string
-          last_name: string
+          name: string
           password: string
-          profile_image_url: string | null
-          role: Database["public"]["Enums"]["faculty_role"]
-          section: string | null
-          updated_at: string
-          year: number | null
-        }
-        Insert: {
-          course_name?: string | null
-          created_at?: string
-          department?: string | null
-          employee_id: string
-          first_name: string
-          id?: string
-          last_name: string
-          password: string
-          profile_image_url?: string | null
-          role: Database["public"]["Enums"]["faculty_role"]
-          section?: string | null
-          updated_at?: string
-          year?: number | null
+          phone?: string | null
+          profileImage?: string | null
+          role?: Database["public"]["Enums"]["UserRole"]
+          updatedAt: string
         }
         Update: {
-          course_name?: string | null
-          created_at?: string
-          department?: string | null
-          employee_id?: string
-          first_name?: string
+          aadharNumber?: string
+          abcId?: string | null
+          address?: string | null
+          createdAt?: string
+          email?: string
+          enrollmentNumber?: string
           id?: string
-          last_name?: string
+          name?: string
           password?: string
-          profile_image_url?: string | null
-          role?: Database["public"]["Enums"]["faculty_role"]
-          section?: string | null
-          updated_at?: string
-          year?: number | null
+          phone?: string | null
+          profileImage?: string | null
+          role?: Database["public"]["Enums"]["UserRole"]
+          updatedAt?: string
         }
         Relationships: []
-      }
-      marks: {
-        Row: {
-          created_at: string
-          exam_type: string
-          id: string
-          marks: number | null
-          semester: number | null
-          student_id: string | null
-          subject: string
-        }
-        Insert: {
-          created_at?: string
-          exam_type: string
-          id?: string
-          marks?: number | null
-          semester?: number | null
-          student_id?: string | null
-          subject: string
-        }
-        Update: {
-          created_at?: string
-          exam_type?: string
-          id?: string
-          marks?: number | null
-          semester?: number | null
-          student_id?: string | null
-          subject?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "marks_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      notifications: {
-        Row: {
-          content: string
-          created_at: string
-          created_by: string | null
-          department: string | null
-          id: string
-          semester: number | null
-          title: string
-          type: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          created_by?: string | null
-          department?: string | null
-          id?: string
-          semester?: number | null
-          title: string
-          type: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          created_by?: string | null
-          department?: string | null
-          id?: string
-          semester?: number | null
-          title?: string
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          aadhar_number: string | null
-          abc_id: string | null
-          course_name: string | null
-          created_at: string
-          department: string | null
-          enrollment_number: string | null
-          first_name: string
-          id: string
-          is_approved: boolean | null
-          last_name: string
-          password: string | null
-          profile_image_url: string | null
-          role: Database["public"]["Enums"]["user_role"]
-          section: string | null
-          semester: number | null
-          updated_at: string
-          year: number | null
-        }
-        Insert: {
-          aadhar_number?: string | null
-          abc_id?: string | null
-          course_name?: string | null
-          created_at?: string
-          department?: string | null
-          enrollment_number?: string | null
-          first_name: string
-          id: string
-          is_approved?: boolean | null
-          last_name: string
-          password?: string | null
-          profile_image_url?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          section?: string | null
-          semester?: number | null
-          updated_at?: string
-          year?: number | null
-        }
-        Update: {
-          aadhar_number?: string | null
-          abc_id?: string | null
-          course_name?: string | null
-          created_at?: string
-          department?: string | null
-          enrollment_number?: string | null
-          first_name?: string
-          id?: string
-          is_approved?: boolean | null
-          last_name?: string
-          password?: string | null
-          profile_image_url?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          section?: string | null
-          semester?: number | null
-          updated_at?: string
-          year?: number | null
-        }
-        Relationships: []
-      }
-      timetable: {
-        Row: {
-          created_at: string
-          day_of_week: string
-          department: string
-          end_time: string
-          faculty_id: string | null
-          id: string
-          room_number: string | null
-          semester: number | null
-          start_time: string
-          subject: string
-        }
-        Insert: {
-          created_at?: string
-          day_of_week: string
-          department: string
-          end_time: string
-          faculty_id?: string | null
-          id?: string
-          room_number?: string | null
-          semester?: number | null
-          start_time: string
-          subject: string
-        }
-        Update: {
-          created_at?: string
-          day_of_week?: string
-          department?: string
-          end_time?: string
-          faculty_id?: string | null
-          id?: string
-          room_number?: string | null
-          semester?: number | null
-          start_time?: string
-          subject?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "timetable_faculty_id_fkey"
-            columns: ["faculty_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      check_faculty_password: {
-        Args: {
-          p_employee_id: string
-          p_password: string
-        }
-        Returns: string
-      }
-      check_password: {
-        Args: {
-          p_enrollment_number: string
-          p_password: string
-        }
-        Returns: string
-      }
-      generate_uuid: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
-      faculty_role:
-        | "admin"
-        | "chairman"
-        | "director"
-        | "hod"
-        | "class_coordinator"
-      user_role: "student" | "faculty" | "admin"
+      UserRole: "STUDENT" | "FACULTY" | "HOD" | "CHAIRMAN" | "ADMIN"
     }
     CompositeTypes: {
       [_ in never]: never
