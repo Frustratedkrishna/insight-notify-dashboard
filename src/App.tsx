@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -7,7 +8,7 @@ import FacultyAuth from "./pages/FacultyAuth";
 import FacultyDashboard from "./pages/faculty/Dashboard";
 import FacultyNotifications from "./pages/faculty/Notifications";
 import ViewStudent from "./pages/faculty/viewstudent";
-import ViewFeedbacks from "./pages/faculty/viewfeedbacks";
+import ViewFeedbacks from "./pages/faculty/Viewfeedbacks";
 
 function App() {
   return (
