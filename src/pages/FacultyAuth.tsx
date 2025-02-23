@@ -58,24 +58,21 @@ const FacultyAuth = () => {
 
       const { data: facultyData, error: facultyError } = await supabase
         .from('faculty_profiles')
-        .insert({
+        .insert([{
           employee_id: employeeId,
-          password: password,
+          password,
           first_name: firstName,
           last_name: lastName,
           role: facultyRole as "admin" | "chairman" | "director" | "hod" | "class_coordinator",
-          department: department,
+          department,
           course_name: course,
           year: year ? parseInt(year) : null,
-          section: section,
-        })
+          section
+        }])
         .select()
         .single();
 
-      if (facultyError) {
-        console.error('Faculty profile creation error:', facultyError);
-        throw facultyError;
-      }
+      if (facultyError) throw facultyError;
 
       if (profileImage && facultyData) {
         const fileExt = profileImage.name.split('.').pop();

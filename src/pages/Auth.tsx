@@ -45,12 +45,20 @@ const Auth = () => {
       const { data: { user }, error: authError } = await supabase.auth.signUp({
         email: `${enrollmentNumber}@temp.com`,
         password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            enrollment_number: enrollmentNumber,
+            role: 'student'
+          }
+        }
       });
 
       if (authError) throw authError;
       if (!user?.id) throw new Error("Failed to create user");
 
-      const { error: profileError } = await supabase.from('profiles').insert({
+      const { error: profileError } = await supabase.from('profiles').insert([{
         id: user.id,
         first_name: firstName,
         last_name: lastName,
@@ -58,8 +66,8 @@ const Auth = () => {
         course_name: course,
         year: year ? parseInt(year) : null,
         section,
-        role: 'student',
-      });
+        role: 'student'
+      }]);
 
       if (profileError) throw profileError;
 
