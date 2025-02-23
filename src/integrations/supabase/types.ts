@@ -90,54 +90,6 @@ export type Database = {
         }
         Relationships: []
       }
-      User: {
-        Row: {
-          aadharNumber: string
-          abcId: string | null
-          address: string | null
-          createdAt: string
-          email: string
-          enrollmentNumber: string
-          id: string
-          name: string
-          password: string
-          phone: string | null
-          profileImage: string | null
-          role: Database["public"]["Enums"]["UserRole"]
-          updatedAt: string
-        }
-        Insert: {
-          aadharNumber: string
-          abcId?: string | null
-          address?: string | null
-          createdAt?: string
-          email: string
-          enrollmentNumber: string
-          id: string
-          name: string
-          password: string
-          phone?: string | null
-          profileImage?: string | null
-          role?: Database["public"]["Enums"]["UserRole"]
-          updatedAt: string
-        }
-        Update: {
-          aadharNumber?: string
-          abcId?: string | null
-          address?: string | null
-          createdAt?: string
-          email?: string
-          enrollmentNumber?: string
-          id?: string
-          name?: string
-          password?: string
-          phone?: string | null
-          profileImage?: string | null
-          role?: Database["public"]["Enums"]["UserRole"]
-          updatedAt?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
