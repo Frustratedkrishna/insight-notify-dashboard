@@ -51,7 +51,7 @@ const Auth = () => {
             first_name: firstName,
             last_name: lastName,
             enrollment_number: enrollmentNumber,
-            role: 'student',
+            role: 'student' as const,
             course_name: course,
             year: year ? parseInt(year) : null,
             section,

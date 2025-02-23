@@ -16,7 +16,6 @@ const FacultyAuth = () => {
   const [loading, setLoading] = useState(false);
   const [showAdminMessage, setShowAdminMessage] = useState(false);
   
-  // Faculty fields
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [employeeId, setEmployeeId] = useState("");
@@ -46,7 +45,6 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      // Check if employee ID already exists
       const { data: existingFaculty, error: checkError } = await supabase
         .from('faculty_profiles')
         .select('employee_id')
@@ -58,19 +56,19 @@ const FacultyAuth = () => {
         throw new Error("Employee ID already exists");
       }
 
-      // Generate a UUID for the faculty profile
-      const { data: uuidResult, error: idError } = await supabase
-        .rpc('generate_uuid')
-        .single();
+      const { data, error: idError } = await supabase
+        .rpc('generate_uuid');
         
       if (idError) throw idError;
-      if (!uuidResult?.id) throw new Error("Failed to generate UUID");
+      if (!data) throw new Error("Failed to generate UUID");
 
-      // Create the faculty profile
+      const uuid = data.id;
+      if (!uuid) throw new Error("Invalid UUID generated");
+
       const { data: facultyData, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
-          id: uuidResult.id,
+          id: uuid,
           employee_id: employeeId,
           password: password,
           first_name: firstName,
@@ -89,7 +87,6 @@ const FacultyAuth = () => {
         throw facultyError;
       }
 
-      // Upload profile image if provided
       if (profileImage && facultyData) {
         const fileExt = profileImage.name.split('.').pop();
         const filePath = `${facultyData.id}/profile.${fileExt}`;
@@ -106,7 +103,6 @@ const FacultyAuth = () => {
             variant: "destructive",
           });
         } else {
-          // Update faculty profile with image URL
           await supabase
             .from('faculty_profiles')
             .update({ profile_image_url: filePath })
@@ -119,7 +115,6 @@ const FacultyAuth = () => {
         description: "You can now login with your employee ID and password.",
       });
 
-      // Clear form
       setFirstName("");
       setLastName("");
       setEmployeeId("");
@@ -150,7 +145,6 @@ const FacultyAuth = () => {
     setShowAdminMessage(false);
 
     try {
-      // First check if faculty profile exists
       const { data: facultyProfile, error: checkError } = await supabase
         .from('faculty_profiles')
         .select('*')
@@ -169,7 +163,6 @@ const FacultyAuth = () => {
         return;
       }
 
-      // Verify password using the database function
       const { data: facultyId, error: loginError } = await supabase
         .rpc('check_faculty_password', {
           p_employee_id: employeeId,
@@ -179,15 +172,12 @@ const FacultyAuth = () => {
       if (loginError) throw loginError;
       if (!facultyId) throw new Error("Invalid employee ID or password");
 
-      // Try to sign in directly first
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: `${employeeId}@faculty.dbit.com`,
         password: password,
       });
 
-      // If sign in fails because user doesn't exist, create the user
       if (signInError && signInError.message.includes("Invalid login credentials")) {
-        // Create the user
         const { error: signUpError } = await supabase.auth.signUp({
           email: `${employeeId}@faculty.dbit.com`,
           password: password,
@@ -201,7 +191,6 @@ const FacultyAuth = () => {
 
         if (signUpError) throw signUpError;
 
-        // Try signing in again
         const { data: { session }, error: finalSignInError } = await supabase.auth.signInWithPassword({
           email: `${employeeId}@faculty.dbit.com`,
           password: password,
@@ -210,7 +199,6 @@ const FacultyAuth = () => {
         if (finalSignInError) throw finalSignInError;
       }
 
-      // Update session with employee_id
       await supabase.auth.updateUser({
         data: { employee_id: employeeId }
       });
