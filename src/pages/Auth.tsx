@@ -13,7 +13,6 @@ const Auth = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
-  // Student fields
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [enrollmentNumber, setEnrollmentNumber] = useState("");
@@ -45,24 +44,24 @@ const Auth = () => {
 
       const { data: { user }, error: authError } = await supabase.auth.signUp({
         email: `${enrollmentNumber}@temp.com`,
-        password: password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            enrollment_number: enrollmentNumber,
-            role: 'student' as const,
-            course_name: course,
-            year: year ? parseInt(year) : null,
-            section,
-            aadhar_number: aadharNumber,
-            abc_id: abcId,
-          }
-        }
+        password,
       });
 
       if (authError) throw authError;
       if (!user?.id) throw new Error("Failed to create user");
+
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: user.id,
+        first_name: firstName,
+        last_name: lastName,
+        enrollment_number: enrollmentNumber,
+        course_name: course,
+        year: year ? parseInt(year) : null,
+        section,
+        role: 'student',
+      });
+
+      if (profileError) throw profileError;
 
       let profileImageUrl = null;
       if (profileImage) {
@@ -90,7 +89,6 @@ const Auth = () => {
         description: "You can now login with your enrollment number and password.",
       });
 
-      // Clear form
       setFirstName("");
       setLastName("");
       setEnrollmentNumber("");
