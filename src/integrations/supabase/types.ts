@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          created_at: string | null
+          date: string
+          faculty_id: string
+          id: string
+          status: string
+          student_id: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          faculty_id: string
+          id?: string
+          status: string
+          student_id: string
+          subject: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          faculty_id?: string
+          id?: string
+          status?: string
+          student_id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_faculty_id_fkey"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "faculty_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faculty_profiles: {
         Row: {
           course_name: string | null
@@ -57,6 +102,51 @@ export type Database = {
         }
         Relationships: []
       }
+      marks: {
+        Row: {
+          created_at: string | null
+          exam_type: string
+          faculty_id: string
+          id: string
+          marks: number
+          student_id: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string | null
+          exam_type: string
+          faculty_id: string
+          id?: string
+          marks: number
+          student_id: string
+          subject: string
+        }
+        Update: {
+          created_at?: string | null
+          exam_type?: string
+          faculty_id?: string
+          id?: string
+          marks?: number
+          student_id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marks_faculty_id_fkey"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "faculty_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marks_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           content: string
@@ -88,6 +178,59 @@ export type Database = {
           title?: string
           type?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          course_name: string | null
+          created_at: string | null
+          email: string | null
+          enrollment_number: string | null
+          first_name: string
+          id: string
+          last_name: string
+          profile_image_url: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          section: string | null
+          updated_at: string | null
+          year: number | null
+        }
+        Insert: {
+          course_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          enrollment_number?: string | null
+          first_name: string
+          id: string
+          last_name: string
+          profile_image_url?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          section?: string | null
+          updated_at?: string | null
+          year?: number | null
+        }
+        Update: {
+          course_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          enrollment_number?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          profile_image_url?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          section?: string | null
+          updated_at?: string | null
+          year?: number | null
+        }
         Relationships: []
       }
     }
@@ -104,6 +247,7 @@ export type Database = {
         | "director"
         | "hod"
         | "class_coordinator"
+      user_role: "student" | "faculty"
       UserRole: "STUDENT" | "FACULTY" | "HOD" | "CHAIRMAN" | "ADMIN"
     }
     CompositeTypes: {
