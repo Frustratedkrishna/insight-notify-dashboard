@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,15 +13,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 type FacultyRole = "admin" | "chairman" | "director" | "hod" | "class_coordinator";
 
 type FacultyProfile = {
+  id?: string;
   employee_id: string;
   password: string;
   first_name: string;
   last_name: string;
   role: FacultyRole;
-  department?: string;
-  course_name?: string;
+  department?: string | null;
+  course_name?: string | null;
   year?: number | null;
-  section?: string;
+  section?: string | null;
+  profile_image_url?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
 const FacultyAuth = () => {
@@ -77,15 +80,16 @@ const FacultyAuth = () => {
         first_name: firstName,
         last_name: lastName,
         role: facultyRole as FacultyRole,
-        department,
-        course_name: course,
+        department: department || null,
+        course_name: course || null,
         year: year ? parseInt(year) : null,
-        section
+        section: section || null,
+        profile_image_url: null
       };
 
       const { data: facultyData, error: facultyError } = await supabase
         .from('faculty_profiles')
-        .insert([facultyProfile])
+        .insert(facultyProfile)
         .select()
         .single();
 
@@ -241,14 +245,14 @@ const FacultyAuth = () => {
           </TabsList>
 
           <TabsContent value="login">
+            {showAdminMessage && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Your faculty profile has not been set up yet. Please contact the administrator to get your profile created.
+                </AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleSignIn} className="space-y-4">
-              {showAdminMessage && (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    Your faculty profile has not been set up yet. Please contact the administrator to get your profile created.
-                  </AlertDescription>
-                </Alert>
-              )}
               <div>
                 <Label htmlFor="login-employee-id">Employee ID</Label>
                 <Input
@@ -336,7 +340,10 @@ const FacultyAuth = () => {
 
               <div>
                 <Label htmlFor="facultyRole">Role</Label>
-                <Select value={facultyRole} onValueChange={setFacultyRole}>
+                <Select 
+                  value={facultyRole} 
+                  onValueChange={(value: FacultyRole | "") => setFacultyRole(value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,10 +13,12 @@ type Profile = {
   first_name: string;
   last_name: string;
   enrollment_number: string;
-  course_name?: string;
+  course_name?: string | null;
   year?: number | null;
-  section?: string;
+  section?: string | null;
   role: 'student';
+  email?: string | null;
+  profile_image_url?: string | null;
 };
 
 const Auth = () => {
@@ -75,13 +76,17 @@ const Auth = () => {
         first_name: firstName,
         last_name: lastName,
         enrollment_number: enrollmentNumber,
-        course_name: course,
+        course_name: course || null,
         year: year ? parseInt(year) : null,
-        section,
-        role: 'student'
+        section: section || null,
+        role: 'student',
+        email: `${enrollmentNumber}@temp.com`,
+        profile_image_url: null
       };
 
-      const { error: profileError } = await supabase.from('profiles').insert([profile]);
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert(profile);
 
       if (profileError) throw profileError;
 
