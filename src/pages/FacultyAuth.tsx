@@ -62,15 +62,36 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
+      // First check if a faculty with this employee ID already exists
       const email = `${employeeId}@faculty.dbit.com`;
+      const { data: existingFaculty } = await supabase
+        .from('faculty_profiles')
+        .select('employee_id')
+        .eq('employee_id', employeeId)
+        .maybeSingle();
+
+      if (existingFaculty) {
+        throw new Error("A faculty member with this employee ID already exists");
+      }
 
       // Create auth user
       const { data: { user }, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            role: 'faculty'
+          }
+        }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message.includes("User already registered")) {
+          throw new Error("This employee ID is already registered. Please try logging in instead.");
+        }
+        throw authError;
+      }
+
       if (!user?.id) throw new Error("Failed to create user");
 
       // Create faculty profile
@@ -86,28 +107,41 @@ const FacultyAuth = () => {
           department: department || null,
           course_name: course || null,
           year: year ? parseInt(year) : null,
-          section: section || null,
-          profile_image_url: null
+          section: section || null
         });
 
-      if (facultyError) throw facultyError;
+      if (facultyError) {
+        // If profile creation fails, we should clean up the auth user
+        await supabase.auth.admin.deleteUser(user.id);
+        throw facultyError;
+      }
 
       // Handle profile image upload if provided
       if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
-        const filePath = `${user.id}/profile.${fileExt}`;
+        const fileName = `${user.id}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
-          .upload(filePath, profileImage);
+          .upload(fileName, profileImage);
 
         if (uploadError) {
           console.error('Error uploading image:', uploadError);
           toast({
             title: "Warning",
-            description: "Failed to upload profile image. You can try uploading it later.",
+            description: "Profile created but failed to upload profile image. You can try uploading it later.",
             variant: "destructive",
           });
+        } else {
+          // Update profile with image URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-images')
+            .getPublicUrl(fileName);
+
+          await supabase
+            .from('faculty_profiles')
+            .update({ profile_image_url: publicUrl })
+            .eq('id', user.id);
         }
       }
 
