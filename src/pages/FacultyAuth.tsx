@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 type FacultyRole = "admin" | "chairman" | "director" | "hod" | "class_coordinator";
 
 type FacultyProfile = {
-  id?: string;
+  id: string;
   employee_id: string;
   password: string;
   first_name: string;
@@ -44,7 +45,7 @@ const FacultyAuth = () => {
   const [year, setYear] = useState("");
   const [section, setSection] = useState("");
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setProfileImage(file);
@@ -63,23 +64,19 @@ const FacultyAuth = () => {
 
       const email = `${employeeId}@faculty.dbit.com`;
 
+      // Create auth user
       const { data: { user }, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            employee_id: employeeId,
-            role: 'faculty'
-          }
-        }
       });
 
       if (authError) throw authError;
       if (!user?.id) throw new Error("Failed to create user");
 
+      // Create faculty profile
       const { error: facultyError } = await supabase
         .from('faculty_profiles')
-        .upsert({
+        .insert({
           id: user.id,
           employee_id: employeeId,
           password: password,
@@ -95,6 +92,7 @@ const FacultyAuth = () => {
 
       if (facultyError) throw facultyError;
 
+      // Handle profile image upload if provided
       if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
         const filePath = `${user.id}/profile.${fileExt}`;
@@ -118,6 +116,7 @@ const FacultyAuth = () => {
         description: "You can now login with your employee ID and password.",
       });
 
+      // Clear form
       setFirstName("");
       setLastName("");
       setEmployeeId("");
@@ -148,6 +147,10 @@ const FacultyAuth = () => {
     setShowAdminMessage(false);
 
     try {
+      if (!employeeId || !password) {
+        throw new Error("Please fill in all required fields");
+      }
+
       const email = `${employeeId}@faculty.dbit.com`;
       
       const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
@@ -162,7 +165,7 @@ const FacultyAuth = () => {
         .from('faculty_profiles')
         .select('*')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
       if (!facultyProfile) {
@@ -195,6 +198,9 @@ const FacultyAuth = () => {
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             Faculty Portal - DBIT SIMS
           </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Student? <a href="/" className="font-medium text-indigo-600 hover:text-indigo-500">Login here</a>
+          </p>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
@@ -301,7 +307,7 @@ const FacultyAuth = () => {
                 <Label htmlFor="facultyRole">Role</Label>
                 <Select 
                   value={facultyRole} 
-                  onValueChange={(value: FacultyRole | "") => setFacultyRole(value)}
+                  onValueChange={(value: FacultyRole) => setFacultyRole(value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
