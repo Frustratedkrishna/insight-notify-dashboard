@@ -12,13 +12,13 @@ type Profile = {
   id: string;
   first_name: string;
   last_name: string;
-  enrollment_number: string;
-  course_name?: string | null;
-  year?: number | null;
-  section?: string | null;
+  enrollment_number: string | null;
+  course_name: string | null;
+  year: number | null;
+  section: string | null;
   role: 'student';
-  email?: string | null;
-  profile_image_url?: string | null;
+  email: string | null;
+  profile_image_url: string | null;
 };
 
 const Auth = () => {
@@ -55,15 +55,16 @@ const Auth = () => {
         throw new Error("Please fill in all required fields");
       }
 
+      const email = `${enrollmentNumber}@temp.com`;
+
       const { data: { user }, error: authError } = await supabase.auth.signUp({
-        email: `${enrollmentNumber}@temp.com`,
+        email,
         password,
         options: {
           data: {
             first_name: firstName,
             last_name: lastName,
-            enrollment_number: enrollmentNumber,
-            role: 'student'
+            enrollment_number: enrollmentNumber
           }
         }
       });
@@ -71,26 +72,23 @@ const Auth = () => {
       if (authError) throw authError;
       if (!user?.id) throw new Error("Failed to create user");
 
-      const profile: Profile = {
-        id: user.id,
-        first_name: firstName,
-        last_name: lastName,
-        enrollment_number: enrollmentNumber,
-        course_name: course || null,
-        year: year ? parseInt(year) : null,
-        section: section || null,
-        role: 'student',
-        email: `${enrollmentNumber}@temp.com`,
-        profile_image_url: null
-      };
-
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert(profile);
+        .upsert({
+          id: user.id,
+          first_name: firstName,
+          last_name: lastName,
+          enrollment_number: enrollmentNumber,
+          course_name: course || null,
+          year: year ? parseInt(year) : null,
+          section: section || null,
+          role: 'student',
+          email: email,
+          profile_image_url: null
+        });
 
       if (profileError) throw profileError;
 
-      let profileImageUrl = null;
       if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
         const filePath = `${user.id}/profile.${fileExt}`;
@@ -106,8 +104,6 @@ const Auth = () => {
             description: "Failed to upload profile image. You can try uploading it later.",
             variant: "destructive",
           });
-        } else {
-          profileImageUrl = filePath;
         }
       }
 
@@ -145,31 +141,25 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { data: userId, error: checkError } = await supabase
-        .rpc('check_password', {
-          p_enrollment_number: enrollmentNumber,
-          p_password: password
-        });
+      const email = `${enrollmentNumber}@temp.com`;
+      
+      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-      if (checkError) throw checkError;
-      if (!userId) throw new Error("Invalid enrollment number or password");
+      if (signInError) throw signInError;
+      if (!session) throw new Error("Failed to sign in");
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', session.user.id)
         .single();
 
       if (profileError) throw profileError;
       if (!profile) throw new Error("Profile not found");
       if (profile.role !== 'student') throw new Error("This login is for students only");
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: `${enrollmentNumber}@temp.com`,
-        password: password
-      });
-
-      if (signInError) throw signInError;
 
       toast({
         title: "Welcome back!",

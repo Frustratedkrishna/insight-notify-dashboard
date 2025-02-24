@@ -19,13 +19,11 @@ type FacultyProfile = {
   first_name: string;
   last_name: string;
   role: FacultyRole;
-  department?: string | null;
-  course_name?: string | null;
-  year?: number | null;
-  section?: string | null;
-  profile_image_url?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
+  department: string | null;
+  course_name: string | null;
+  year: number | null;
+  section: string | null;
+  profile_image_url: string | null;
 };
 
 const FacultyAuth = () => {
@@ -63,41 +61,43 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      const { data: existingFaculty, error: checkError } = await supabase
-        .from('faculty_profiles')
-        .select('employee_id')
-        .eq('employee_id', employeeId)
-        .maybeSingle();
+      const email = `${employeeId}@faculty.dbit.com`;
 
-      if (checkError) throw checkError;
-      if (existingFaculty) {
-        throw new Error("Employee ID already exists");
-      }
-
-      const facultyProfile: FacultyProfile = {
-        employee_id: employeeId,
+      const { data: { user }, error: authError } = await supabase.auth.signUp({
+        email,
         password,
-        first_name: firstName,
-        last_name: lastName,
-        role: facultyRole as FacultyRole,
-        department: department || null,
-        course_name: course || null,
-        year: year ? parseInt(year) : null,
-        section: section || null,
-        profile_image_url: null
-      };
+        options: {
+          data: {
+            employee_id: employeeId,
+            role: 'faculty'
+          }
+        }
+      });
 
-      const { data: facultyData, error: facultyError } = await supabase
+      if (authError) throw authError;
+      if (!user?.id) throw new Error("Failed to create user");
+
+      const { error: facultyError } = await supabase
         .from('faculty_profiles')
-        .insert(facultyProfile)
-        .select()
-        .single();
+        .upsert({
+          id: user.id,
+          employee_id: employeeId,
+          password: password,
+          first_name: firstName,
+          last_name: lastName,
+          role: facultyRole as FacultyRole,
+          department: department || null,
+          course_name: course || null,
+          year: year ? parseInt(year) : null,
+          section: section || null,
+          profile_image_url: null
+        });
 
       if (facultyError) throw facultyError;
 
-      if (profileImage && facultyData) {
+      if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
-        const filePath = `${facultyData.id}/profile.${fileExt}`;
+        const filePath = `${user.id}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
@@ -110,11 +110,6 @@ const FacultyAuth = () => {
             description: "Failed to upload profile image. You can try uploading it later.",
             variant: "destructive",
           });
-        } else {
-          await supabase
-            .from('faculty_profiles')
-            .update({ profile_image_url: filePath })
-            .eq('id', facultyData.id);
         }
       }
 
@@ -153,63 +148,27 @@ const FacultyAuth = () => {
     setShowAdminMessage(false);
 
     try {
-      const { data: facultyProfile, error: checkError } = await supabase
+      const email = `${employeeId}@faculty.dbit.com`;
+      
+      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) throw signInError;
+      if (!session) throw new Error("Failed to sign in");
+
+      const { data: facultyProfile, error: profileError } = await supabase
         .from('faculty_profiles')
         .select('*')
-        .eq('employee_id', employeeId)
-        .maybeSingle();
+        .eq('id', session.user.id)
+        .single();
 
-      if (checkError) throw checkError;
-      
+      if (profileError) throw profileError;
       if (!facultyProfile) {
         setShowAdminMessage(true);
-        toast({
-          title: "Profile Not Found",
-          description: "Please contact your administrator to set up your faculty profile.",
-          variant: "destructive",
-        });
-        return;
+        throw new Error("Faculty profile not found");
       }
-
-      const { data: facultyId, error: loginError } = await supabase
-        .rpc('check_faculty_password', {
-          p_employee_id: employeeId,
-          p_password: password
-        });
-
-      if (loginError) throw loginError;
-      if (!facultyId) throw new Error("Invalid employee ID or password");
-
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: `${employeeId}@faculty.dbit.com`,
-        password: password,
-      });
-
-      if (signInError && signInError.message.includes("Invalid login credentials")) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: `${employeeId}@faculty.dbit.com`,
-          password: password,
-          options: {
-            data: {
-              employee_id: employeeId,
-              role: 'faculty'
-            }
-          }
-        });
-
-        if (signUpError) throw signUpError;
-
-        const { data: { session }, error: finalSignInError } = await supabase.auth.signInWithPassword({
-          email: `${employeeId}@faculty.dbit.com`,
-          password: password,
-        });
-
-        if (finalSignInError) throw finalSignInError;
-      }
-
-      await supabase.auth.updateUser({
-        data: { employee_id: employeeId }
-      });
 
       toast({
         title: "Welcome back!",
