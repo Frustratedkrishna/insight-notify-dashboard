@@ -11,6 +11,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+type FacultyRole = "admin" | "chairman" | "director" | "hod" | "class_coordinator";
+
+type FacultyProfile = {
+  employee_id: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  role: FacultyRole;
+  department?: string;
+  course_name?: string;
+  year?: number | null;
+  section?: string;
+};
+
 const FacultyAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -23,7 +37,7 @@ const FacultyAuth = () => {
   const [password, setPassword] = useState("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [facultyRole, setFacultyRole] = useState<string>("");
+  const [facultyRole, setFacultyRole] = useState<FacultyRole | "">("");
   const [department, setDepartment] = useState("");
   const [course, setCourse] = useState("");
   const [year, setYear] = useState("");
@@ -57,19 +71,21 @@ const FacultyAuth = () => {
         throw new Error("Employee ID already exists");
       }
 
+      const facultyProfile: FacultyProfile = {
+        employee_id: employeeId,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        role: facultyRole as FacultyRole,
+        department,
+        course_name: course,
+        year: year ? parseInt(year) : null,
+        section
+      };
+
       const { data: facultyData, error: facultyError } = await supabase
         .from('faculty_profiles')
-        .insert([{
-          employee_id: employeeId,
-          password,
-          first_name: firstName,
-          last_name: lastName,
-          role: facultyRole as "admin" | "chairman" | "director" | "hod" | "class_coordinator",
-          department,
-          course_name: course,
-          year: year ? parseInt(year) : null,
-          section
-        }] as any)
+        .insert([facultyProfile])
         .select()
         .single();
 
@@ -103,7 +119,6 @@ const FacultyAuth = () => {
         description: "You can now login with your employee ID and password.",
       });
 
-      // Clear form
       setFirstName("");
       setLastName("");
       setEmployeeId("");

@@ -9,6 +9,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+type Profile = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  enrollment_number: string;
+  course_name?: string;
+  year?: number | null;
+  section?: string;
+  role: 'student';
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -59,7 +70,7 @@ const Auth = () => {
       if (authError) throw authError;
       if (!user?.id) throw new Error("Failed to create user");
 
-      const { error: profileError } = await supabase.from('profiles').insert([{
+      const profile: Profile = {
         id: user.id,
         first_name: firstName,
         last_name: lastName,
@@ -68,7 +79,9 @@ const Auth = () => {
         year: year ? parseInt(year) : null,
         section,
         role: 'student'
-      }] as any);
+      };
+
+      const { error: profileError } = await supabase.from('profiles').insert([profile]);
 
       if (profileError) throw profileError;
 
