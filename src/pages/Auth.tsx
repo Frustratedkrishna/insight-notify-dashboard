@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -57,24 +58,19 @@ const Auth = () => {
 
       const email = `${enrollmentNumber}@temp.com`;
 
+      // Create auth user
       const { data: { user }, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            enrollment_number: enrollmentNumber
-          }
-        }
       });
 
       if (authError) throw authError;
       if (!user?.id) throw new Error("Failed to create user");
 
+      // Create profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({
+        .insert({
           id: user.id,
           first_name: firstName,
           last_name: lastName,
@@ -89,6 +85,7 @@ const Auth = () => {
 
       if (profileError) throw profileError;
 
+      // Handle profile image upload if provided
       if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
         const filePath = `${user.id}/profile.${fileExt}`;
@@ -112,6 +109,7 @@ const Auth = () => {
         description: "You can now login with your enrollment number and password.",
       });
 
+      // Clear form
       setFirstName("");
       setLastName("");
       setEnrollmentNumber("");
@@ -141,6 +139,10 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      if (!enrollmentNumber || !password) {
+        throw new Error("Please fill in all required fields");
+      }
+
       const email = `${enrollmentNumber}@temp.com`;
       
       const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
@@ -155,11 +157,10 @@ const Auth = () => {
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
       if (!profile) throw new Error("Profile not found");
-      if (profile.role !== 'student') throw new Error("This login is for students only");
 
       toast({
         title: "Welcome back!",
