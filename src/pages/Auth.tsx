@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -56,63 +55,39 @@ const Auth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      // First check if a user with this enrollment number already exists
-      const email = `${enrollmentNumber}@temp.com`;
-      const { data: existingProfiles } = await supabase
+      // Check if enrollment number already exists
+      const { data: existingStudent } = await supabase
         .from('profiles')
         .select('enrollment_number')
         .eq('enrollment_number', enrollmentNumber)
         .maybeSingle();
 
-      if (existingProfiles) {
-        throw new Error("A user with this enrollment number already exists");
+      if (existingStudent) {
+        throw new Error("A student with this enrollment number already exists");
       }
 
-      // Create auth user
-      const { data: { user }, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            role: 'student'
-          }
-        }
-      });
-
-      if (authError) {
-        if (authError.message.includes("User already registered")) {
-          throw new Error("This enrollment number is already registered. Please try logging in instead.");
-        }
-        throw authError;
-      }
-
-      if (!user?.id) throw new Error("Failed to create user");
-
-      // Create profile
-      const { error: profileError } = await supabase
+      // Create profile with UUID
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .insert({
-          id: user.id,
           first_name: firstName,
           last_name: lastName,
           enrollment_number: enrollmentNumber,
+          password: password,
           course_name: course || null,
           year: year ? parseInt(year) : null,
           section: section || null,
-          role: 'student',
-          email: email
-        });
+          role: 'student'
+        })
+        .select()
+        .single();
 
-      if (profileError) {
-        // If profile creation fails, we should clean up the auth user
-        await supabase.auth.admin.deleteUser(user.id);
-        throw profileError;
-      }
+      if (profileError) throw profileError;
 
       // Handle profile image upload if provided
-      if (profileImage) {
+      if (profileImage && profile.id) {
         const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${user.id}/profile.${fileExt}`;
+        const fileName = `${profile.id}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
@@ -134,7 +109,7 @@ const Auth = () => {
           await supabase
             .from('profiles')
             .update({ profile_image_url: publicUrl })
-            .eq('id', user.id);
+            .eq('id', profile.id);
         }
       }
 
@@ -177,29 +152,24 @@ const Auth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      const email = `${enrollmentNumber}@temp.com`;
-      
-      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (signInError) throw signInError;
-      if (!session) throw new Error("Failed to sign in");
-
+      // Check credentials directly against profiles table
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('enrollment_number', enrollmentNumber)
+        .eq('password', password)
         .maybeSingle();
 
       if (profileError) throw profileError;
-      if (!profile) throw new Error("Profile not found");
+      if (!profile) throw new Error("Invalid credentials");
 
       toast({
         title: "Welcome back!",
         description: `Logged in as ${profile.first_name} ${profile.last_name}`,
       });
+
+      // Store the profile data in localStorage for session management
+      localStorage.setItem('user', JSON.stringify(profile));
 
       navigate("/dashboard");
     } catch (error: any) {

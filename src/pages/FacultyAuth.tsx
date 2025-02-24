@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -62,8 +61,6 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      // First check if a faculty with this employee ID already exists
-      const email = `${employeeId}@faculty.dbit.com`;
       const { data: existingFaculty } = await supabase
         .from('faculty_profiles')
         .select('employee_id')
@@ -74,31 +71,9 @@ const FacultyAuth = () => {
         throw new Error("A faculty member with this employee ID already exists");
       }
 
-      // Create auth user
-      const { data: { user }, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            role: 'faculty'
-          }
-        }
-      });
-
-      if (authError) {
-        if (authError.message.includes("User already registered")) {
-          throw new Error("This employee ID is already registered. Please try logging in instead.");
-        }
-        throw authError;
-      }
-
-      if (!user?.id) throw new Error("Failed to create user");
-
-      // Create faculty profile
-      const { error: facultyError } = await supabase
+      const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert({
-          id: user.id,
           employee_id: employeeId,
           password: password,
           first_name: firstName,
@@ -108,18 +83,15 @@ const FacultyAuth = () => {
           course_name: course || null,
           year: year ? parseInt(year) : null,
           section: section || null
-        });
+        })
+        .select()
+        .single();
 
-      if (facultyError) {
-        // If profile creation fails, we should clean up the auth user
-        await supabase.auth.admin.deleteUser(user.id);
-        throw facultyError;
-      }
+      if (facultyError) throw facultyError;
 
-      // Handle profile image upload if provided
-      if (profileImage) {
+      if (profileImage && faculty.id) {
         const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${user.id}/profile.${fileExt}`;
+        const fileName = `${faculty.id}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
@@ -133,7 +105,6 @@ const FacultyAuth = () => {
             variant: "destructive",
           });
         } else {
-          // Update profile with image URL
           const { data: { publicUrl } } = supabase.storage
             .from('profile-images')
             .getPublicUrl(fileName);
@@ -141,7 +112,7 @@ const FacultyAuth = () => {
           await supabase
             .from('faculty_profiles')
             .update({ profile_image_url: publicUrl })
-            .eq('id', user.id);
+            .eq('id', faculty.id);
         }
       }
 
@@ -150,7 +121,6 @@ const FacultyAuth = () => {
         description: "You can now login with your employee ID and password.",
       });
 
-      // Clear form
       setFirstName("");
       setLastName("");
       setEmployeeId("");
@@ -185,32 +155,25 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      const email = `${employeeId}@faculty.dbit.com`;
-      
-      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (signInError) throw signInError;
-      if (!session) throw new Error("Failed to sign in");
-
-      const { data: facultyProfile, error: profileError } = await supabase
+      const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('employee_id', employeeId)
+        .eq('password', password)
         .maybeSingle();
 
-      if (profileError) throw profileError;
-      if (!facultyProfile) {
+      if (facultyError) throw facultyError;
+      if (!faculty) {
         setShowAdminMessage(true);
-        throw new Error("Faculty profile not found");
+        throw new Error("Invalid credentials");
       }
 
       toast({
         title: "Welcome back!",
-        description: `Logged in as ${facultyProfile.first_name} ${facultyProfile.last_name}`,
+        description: `Logged in as ${faculty.first_name} ${faculty.last_name}`,
       });
+
+      localStorage.setItem('user', JSON.stringify(faculty));
 
       navigate("/faculty/dashboard");
     } catch (error: any) {
