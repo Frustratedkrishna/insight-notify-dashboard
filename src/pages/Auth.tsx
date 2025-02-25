@@ -70,16 +70,17 @@ const Auth = () => {
       // Create profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .insert([{
+        .insert({
           first_name: firstName,
           last_name: lastName,
           enrollment_number: enrollmentNumber,
           course_name: course || null,
           year: year ? parseInt(year) : null,
           section: section || null,
-          role: 'student',
-          email: null
-        }])
+          role: 'student' as const,
+          email: null,
+          password: password
+        })
         .select()
         .single();
 
@@ -158,10 +159,11 @@ const Auth = () => {
         .from('profiles')
         .select('*')
         .eq('enrollment_number', enrollmentNumber)
+        .eq('password', password)
         .maybeSingle();
 
       if (profileError) throw profileError;
-      if (!profile) throw new Error("Invalid enrollment number");
+      if (!profile) throw new Error("Invalid credentials");
 
       toast({
         title: "Welcome back!",

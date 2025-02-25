@@ -76,8 +76,9 @@ const FacultyAuth = () => {
       // Create faculty profile
       const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
-        .insert([{
+        .insert({
           employee_id: employeeId,
+          password: password,
           first_name: firstName,
           last_name: lastName,
           role: facultyRole as FacultyRole,
@@ -85,7 +86,7 @@ const FacultyAuth = () => {
           course_name: course || null,
           year: year ? parseInt(year) : null,
           section: section || null
-        }])
+        })
         .select()
         .single();
 
