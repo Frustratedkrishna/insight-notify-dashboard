@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -56,7 +57,11 @@ const Auth = () => {
         throw new Error("A student with this enrollment number already exists");
       }
 
+      // Generate a UUID for the new profile
+      const newId = crypto.randomUUID();
+
       const insertData: ProfileInsert = {
+        id: newId,
         first_name: firstName,
         last_name: lastName,
         enrollment_number: enrollmentNumber,
