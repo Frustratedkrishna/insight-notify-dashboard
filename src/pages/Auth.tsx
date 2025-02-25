@@ -46,12 +46,19 @@ const Auth = () => {
         throw new Error("Please fill in all required fields");
       }
 
+      console.log("Starting registration process...");
+
       // Check if enrollment number already exists
-      const { data: existingStudent } = await supabase
+      const { data: existingStudent, error: checkError } = await supabase
         .from('profiles')
         .select('enrollment_number')
         .eq('enrollment_number', enrollmentNumber)
         .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking enrollment:', checkError);
+        throw checkError;
+      }
 
       if (existingStudent) {
         throw new Error("A student with this enrollment number already exists");
@@ -59,6 +66,7 @@ const Auth = () => {
 
       // Generate a UUID for the new profile
       const newId = crypto.randomUUID();
+      console.log("Generated new ID:", newId);
 
       const insertData: ProfileInsert = {
         id: newId,
@@ -74,12 +82,12 @@ const Auth = () => {
         profile_image_url: null,
       };
 
+      console.log("Attempting to insert profile:", insertData);
+
       // Create profile
-      const { data: profile, error: profileError } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
-        .insert(insertData)
-        .select()
-        .single();
+        .insert(insertData);
 
       if (profileError) {
         console.error('Profile error:', profileError);
@@ -87,9 +95,10 @@ const Auth = () => {
       }
 
       // Handle profile image upload if provided
-      if (profileImage && profile.id) {
+      if (profileImage) {
+        console.log("Uploading profile image...");
         const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${profile.id}/profile.${fileExt}`;
+        const fileName = `${newId}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
@@ -103,7 +112,7 @@ const Auth = () => {
             variant: "destructive",
           });
         } else {
-          // Update profile with image URL
+          console.log("Image uploaded successfully");
           const { data: { publicUrl } } = supabase.storage
             .from('profile-images')
             .getPublicUrl(fileName);
@@ -111,7 +120,7 @@ const Auth = () => {
           await supabase
             .from('profiles')
             .update({ profile_image_url: publicUrl })
-            .eq('id', profile.id);
+            .eq('id', newId);
         }
       }
 
