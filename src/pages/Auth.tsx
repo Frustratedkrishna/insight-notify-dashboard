@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,19 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface InsertProfileData {
-  first_name: string;
-  last_name: string;
-  enrollment_number: string;
-  password: string;
-  course_name: string | null;
-  year: number | null;
-  section: string | null;
-  role: 'student';
-  email: string | null;
-  profile_image_url: string | null;
-}
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -67,23 +53,23 @@ const Auth = () => {
         throw new Error("A student with this enrollment number already exists");
       }
 
-      const insertData: InsertProfileData = {
-        first_name: firstName,
-        last_name: lastName,
-        enrollment_number: enrollmentNumber,
-        password: password,
-        course_name: course || null,
-        year: year ? parseInt(year) : null,
-        section: section || null,
-        role: 'student',
-        email: null,
-        profile_image_url: null
-      };
-
       // Create profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .insert(insertData)
+        .insert({
+          first_name: firstName,
+          last_name: lastName,
+          enrollment_number: enrollmentNumber,
+          password,
+          course_name: course || null,
+          year: year ? parseInt(year) : null,
+          section: section || null,
+          role: 'student',
+          email: null,
+          profile_image_url: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as const)
         .select()
         .single();
 
