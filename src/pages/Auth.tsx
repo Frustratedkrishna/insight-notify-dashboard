@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,19 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-type Profile = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  enrollment_number: string | null;
-  course_name: string | null;
-  year: number | null;
-  section: string | null;
-  role: 'student';
-  email: string | null;
-  profile_image_url: string | null;
-};
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -74,17 +60,21 @@ const Auth = () => {
           first_name: firstName,
           last_name: lastName,
           enrollment_number: enrollmentNumber,
+          password: password,
           course_name: course || null,
           year: year ? parseInt(year) : null,
           section: section || null,
-          role: 'student' as const,
+          role: 'student',
           email: null,
-          password: password
+          profile_image_url: null
         })
         .select()
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw profileError;
+      }
 
       // Handle profile image upload if provided
       if (profileImage && profile.id) {
@@ -157,7 +147,7 @@ const Auth = () => {
       // Check credentials directly against profiles table
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select()
         .eq('enrollment_number', enrollmentNumber)
         .eq('password', password)
         .maybeSingle();
