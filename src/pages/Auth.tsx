@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -66,19 +67,19 @@ const Auth = () => {
         throw new Error("A student with this enrollment number already exists");
       }
 
-      // Create profile with UUID
+      // Create profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .insert([{
           first_name: firstName,
           last_name: lastName,
           enrollment_number: enrollmentNumber,
-          password: password,
           course_name: course || null,
           year: year ? parseInt(year) : null,
           section: section || null,
-          role: 'student'
-        })
+          role: 'student',
+          email: null
+        }])
         .select()
         .single();
 
@@ -157,11 +158,10 @@ const Auth = () => {
         .from('profiles')
         .select('*')
         .eq('enrollment_number', enrollmentNumber)
-        .eq('password', password)
         .maybeSingle();
 
       if (profileError) throw profileError;
-      if (!profile) throw new Error("Invalid credentials");
+      if (!profile) throw new Error("Invalid enrollment number");
 
       toast({
         title: "Welcome back!",
