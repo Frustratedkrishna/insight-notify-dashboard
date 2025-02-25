@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,19 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Database } from "@/integrations/supabase/types";
 
-type ProfileInsert = {
-  first_name: string;
-  last_name: string;
-  enrollment_number: string;
-  password: string;
-  course_name?: string | null;
-  year?: number | null;
-  section?: string | null;
-  role?: 'student' | 'faculty';
-  email?: string | null;
-  profile_image_url?: string | null;
-}
+type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -77,7 +66,7 @@ const Auth = () => {
         section: section || null,
         role: 'student',
         email: null,
-        profile_image_url: null
+        profile_image_url: null,
       };
 
       // Create profile
