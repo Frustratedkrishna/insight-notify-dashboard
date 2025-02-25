@@ -53,9 +53,9 @@ const Auth = () => {
         .from('profiles')
         .select('enrollment_number')
         .eq('enrollment_number', enrollmentNumber)
-        .maybeSingle();
+        .single();
 
-      if (checkError) {
+      if (checkError && checkError.code !== 'PGRST116') {
         console.error('Error checking enrollment:', checkError);
         throw checkError;
       }
@@ -84,14 +84,14 @@ const Auth = () => {
 
       console.log("Attempting to insert profile:", insertData);
 
-      // Create profile
+      // Create profile with error logging
       const { error: profileError } = await supabase
         .from('profiles')
         .insert(insertData);
 
       if (profileError) {
         console.error('Profile error:', profileError);
-        throw profileError;
+        throw new Error(`Failed to create profile: ${profileError.message}`);
       }
 
       // Handle profile image upload if provided
@@ -117,10 +117,14 @@ const Auth = () => {
             .from('profile-images')
             .getPublicUrl(fileName);
 
-          await supabase
+          const { error: updateError } = await supabase
             .from('profiles')
             .update({ profile_image_url: publicUrl })
             .eq('id', newId);
+
+          if (updateError) {
+            console.error('Error updating profile with image URL:', updateError);
+          }
         }
       }
 
@@ -169,9 +173,9 @@ const Auth = () => {
         .select()
         .eq('enrollment_number', enrollmentNumber)
         .eq('password', password)
-        .maybeSingle();
+        .single();
 
-      if (profileError) throw profileError;
+      if (profileError) throw new Error("Invalid credentials");
       if (!profile) throw new Error("Invalid credentials");
 
       toast({
