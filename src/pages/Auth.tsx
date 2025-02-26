@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,8 @@ const Auth = () => {
         throw new Error("Please fill in all required fields");
       }
 
+      console.log("Starting registration process...");
+
       const { data: existingStudent, error: checkError } = await supabase
         .from('profiles')
         .select('enrollment_number')
@@ -61,6 +64,7 @@ const Auth = () => {
       }
 
       const newId = crypto.randomUUID();
+      console.log("Generated new ID:", newId);
 
       const insertData: ProfileInsert = {
         id: newId,
