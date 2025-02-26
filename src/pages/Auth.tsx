@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -86,9 +85,7 @@ const Auth = () => {
 
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([insertData])
-        .select()
-        .maybeSingle();
+        .insert([insertData]);
 
       if (profileError) {
         console.error('Profile error:', profileError);
