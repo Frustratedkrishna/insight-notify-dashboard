@@ -53,11 +53,11 @@ const Auth = () => {
         .from('profiles')
         .select('enrollment_number')
         .eq('enrollment_number', enrollmentNumber)
-        .single();
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') {
+      if (checkError) {
         console.error('Error checking enrollment:', checkError);
-        throw checkError;
+        throw new Error("Error checking enrollment number");
       }
 
       if (existingStudent) {
@@ -84,14 +84,15 @@ const Auth = () => {
 
       console.log("Attempting to insert profile:", insertData);
 
-      // Create profile with error logging
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert(insertData);
+        .insert([insertData])
+        .select()
+        .maybeSingle();
 
       if (profileError) {
         console.error('Profile error:', profileError);
-        throw new Error(`Failed to create profile: ${profileError.message}`);
+        throw new Error("Failed to create profile. Please try again.");
       }
 
       // Handle profile image upload if provided
@@ -167,16 +168,22 @@ const Auth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      // Check credentials directly against profiles table
+      // Check credentials against profiles table
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select()
         .eq('enrollment_number', enrollmentNumber)
         .eq('password', password)
-        .single();
+        .maybeSingle();
 
-      if (profileError) throw new Error("Invalid credentials");
-      if (!profile) throw new Error("Invalid credentials");
+      if (profileError) {
+        console.error('Login error:', profileError);
+        throw new Error("Failed to verify credentials");
+      }
+
+      if (!profile) {
+        throw new Error("Invalid enrollment number or password");
+      }
 
       toast({
         title: "Welcome back!",
