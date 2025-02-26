@@ -45,9 +45,6 @@ const Auth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      console.log("Starting registration process...");
-
-      // Check if enrollment number already exists
       const { data: existingStudent, error: checkError } = await supabase
         .from('profiles')
         .select('enrollment_number')
@@ -63,9 +60,7 @@ const Auth = () => {
         throw new Error("A student with this enrollment number already exists");
       }
 
-      // Generate a UUID for the new profile
       const newId = crypto.randomUUID();
-      console.log("Generated new ID:", newId);
 
       const insertData: ProfileInsert = {
         id: newId,
@@ -81,8 +76,6 @@ const Auth = () => {
         profile_image_url: null,
       };
 
-      console.log("Attempting to insert profile:", insertData);
-
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([insertData]);
@@ -92,9 +85,7 @@ const Auth = () => {
         throw new Error("Failed to create profile. Please try again.");
       }
 
-      // Handle profile image upload if provided
       if (profileImage) {
-        console.log("Uploading profile image...");
         const fileExt = profileImage.name.split('.').pop();
         const fileName = `${newId}/profile.${fileExt}`;
 
@@ -110,19 +101,14 @@ const Auth = () => {
             variant: "destructive",
           });
         } else {
-          console.log("Image uploaded successfully");
           const { data: { publicUrl } } = supabase.storage
             .from('profile-images')
             .getPublicUrl(fileName);
 
-          const { error: updateError } = await supabase
+          await supabase
             .from('profiles')
             .update({ profile_image_url: publicUrl })
             .eq('id', newId);
-
-          if (updateError) {
-            console.error('Error updating profile with image URL:', updateError);
-          }
         }
       }
 
@@ -131,7 +117,6 @@ const Auth = () => {
         description: "You can now login with your enrollment number and password.",
       });
 
-      // Clear form
       setFirstName("");
       setLastName("");
       setEnrollmentNumber("");
@@ -165,16 +150,14 @@ const Auth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      // Check credentials against profiles table
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select()
+        .select('*')
         .eq('enrollment_number', enrollmentNumber)
         .eq('password', password)
         .maybeSingle();
 
       if (profileError) {
-        console.error('Login error:', profileError);
         throw new Error("Failed to verify credentials");
       }
 
@@ -187,12 +170,9 @@ const Auth = () => {
         description: `Logged in as ${profile.first_name} ${profile.last_name}`,
       });
 
-      // Store the profile data in localStorage for session management
       localStorage.setItem('user', JSON.stringify(profile));
-
       navigate("/dashboard");
     } catch (error: any) {
-      console.error('Login error:', error);
       toast({
         title: "Error",
         description: error.message || "Invalid credentials",
