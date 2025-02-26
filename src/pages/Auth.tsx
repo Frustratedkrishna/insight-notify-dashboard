@@ -53,7 +53,7 @@ const Auth = () => {
 
       if (checkError) {
         console.error('Error checking enrollment:', checkError);
-        throw new Error("Error checking enrollment number");
+        throw new Error("Error checking enrollment number: " + checkError.message);
       }
 
       if (existingStudent) {
@@ -76,45 +76,58 @@ const Auth = () => {
         profile_image_url: null,
       };
 
-      const { error: profileError } = await supabase
+      console.log('Attempting to insert profile with data:', insertData);
+
+      const { data, error: profileError } = await supabase
         .from('profiles')
-        .insert([insertData]);
+        .insert([insertData])
+        .select()
+        .single();
 
       if (profileError) {
-        console.error('Profile error:', profileError);
-        throw new Error("Failed to create profile. Please try again.");
+        console.error('Profile creation error:', profileError);
+        throw new Error("Failed to create profile: " + profileError.message);
       }
+
+      console.log('Profile created successfully:', data);
 
       if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
         const fileName = `${newId}/profile.${fileExt}`;
+
+        console.log('Uploading profile image...');
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
           .upload(fileName, profileImage);
 
         if (uploadError) {
-          console.error('Error uploading image:', uploadError);
+          console.error('Image upload error:', uploadError);
           toast({
             title: "Warning",
             description: "Profile created but failed to upload profile image. You can try uploading it later.",
             variant: "destructive",
           });
         } else {
+          console.log('Image uploaded successfully');
           const { data: { publicUrl } } = supabase.storage
             .from('profile-images')
             .getPublicUrl(fileName);
 
-          await supabase
+          const { error: updateError } = await supabase
             .from('profiles')
             .update({ profile_image_url: publicUrl })
             .eq('id', newId);
+
+          if (updateError) {
+            console.error('Error updating profile with image URL:', updateError);
+          }
         }
       }
 
       toast({
-        title: "Registration successful!",
-        description: "You can now login with your enrollment number and password.",
+        title: "Success!",
+        description: "Registration successful! You can now login with your enrollment number and password.",
       });
 
       setFirstName("");
@@ -132,8 +145,8 @@ const Auth = () => {
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
-        title: "Error",
-        description: error.message || "An unexpected error occurred",
+        title: "Registration Failed",
+        description: error.message || "An unexpected error occurred during registration",
         variant: "destructive",
       });
     } finally {
@@ -337,7 +350,7 @@ const Auth = () => {
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Loading..." : "Sign Up"}
+                {loading ? "Creating Account..." : "Sign Up"}
               </Button>
             </form>
           </TabsContent>
