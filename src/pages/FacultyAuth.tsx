@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,6 @@ const FacultyAuth = () => {
   const [loading, setLoading] = useState(false);
   const [showAdminMessage, setShowAdminMessage] = useState(false);
   
-  // Check if faculty is already logged in
   useEffect(() => {
     const checkAuth = () => {
       const facultyStr = localStorage.getItem('faculty');
@@ -70,7 +68,6 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
-      // Check if employee ID already exists
       const { data: existingFaculty } = await supabase
         .from('faculty_profiles')
         .select('employee_id')
@@ -81,10 +78,9 @@ const FacultyAuth = () => {
         throw new Error("A faculty member with this employee ID already exists");
       }
 
-      // Create faculty profile
       const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
-        .insert({
+        .insert([{
           employee_id: employeeId,
           password: password,
           first_name: firstName,
@@ -94,13 +90,19 @@ const FacultyAuth = () => {
           course_name: course || null,
           year: year ? parseInt(year) : null,
           section: section || null
-        })
+        }])
         .select()
         .single();
 
-      if (facultyError) throw facultyError;
+      if (facultyError) {
+        console.error('Registration error:', facultyError);
+        throw facultyError;
+      }
 
-      // Handle profile image upload if provided
+      if (!faculty) {
+        throw new Error("Failed to create faculty profile");
+      }
+
       if (profileImage && faculty.id) {
         const fileExt = profileImage.name.split('.').pop();
         const fileName = `${faculty.id}/profile.${fileExt}`;
@@ -117,7 +119,6 @@ const FacultyAuth = () => {
             variant: "destructive",
           });
         } else {
-          // Update profile with image URL
           const { data: { publicUrl } } = supabase.storage
             .from('profile-images')
             .getPublicUrl(fileName);
@@ -134,7 +135,6 @@ const FacultyAuth = () => {
         description: "You can now login with your employee ID and password.",
       });
 
-      // Clear form
       setFirstName("");
       setLastName("");
       setEmployeeId("");
@@ -146,12 +146,11 @@ const FacultyAuth = () => {
       setSection("");
       setProfileImage(null);
       setImagePreview(null);
-
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
         title: "Error",
-        description: error.message || "An unexpected error occurred",
+        description: error.message || "Failed to create faculty profile",
         variant: "destructive",
       });
     } finally {
@@ -171,7 +170,6 @@ const FacultyAuth = () => {
 
       console.log('Attempting faculty login with employee ID:', employeeId);
 
-      // Check credentials directly against faculty_profiles table
       const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
         .select('*')
@@ -191,7 +189,6 @@ const FacultyAuth = () => {
 
       console.log('Faculty login successful:', faculty);
 
-      // Store the faculty data in localStorage for session management
       localStorage.setItem('faculty', JSON.stringify(faculty));
 
       toast({
@@ -199,7 +196,6 @@ const FacultyAuth = () => {
         description: `Logged in as ${faculty.first_name} ${faculty.last_name}`,
       });
 
-      // Navigate to faculty dashboard with replace to prevent back navigation
       navigate("/faculty/dashboard", { replace: true });
     } catch (error: any) {
       console.error('Login error:', error);
