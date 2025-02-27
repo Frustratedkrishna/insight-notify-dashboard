@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,22 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FacultyNavbar } from "@/components/FacultyNavbar";
-
-interface FacultyProfile {
-  id: string;
-  role: "admin" | "chairman" | "director" | "hod" | "class_coordinator";
-  department: string | null;
-  created_at: string;
-  updated_at: string;
-  employee_id: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  course_name: string | null;
-  year: number | null;
-  section: string | null;
-  profile_image_url: string | null;
-}
+import type { FacultyProfile } from "@/types/supabase";
 
 export default function FacultyDashboard() {
   const navigate = useNavigate();
@@ -32,32 +18,33 @@ export default function FacultyDashboard() {
   useEffect(() => {
     const fetchFacultyProfile = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) throw sessionError;
-        
-        if (!session) {
-          navigate("/faculty-auth");
-          return;
+        // Get faculty data from localStorage
+        const facultyStr = localStorage.getItem('faculty');
+        if (!facultyStr) {
+          throw new Error("No faculty session found");
         }
 
-        const employeeId = session.user.user_metadata.employee_id;
+        const faculty = JSON.parse(facultyStr);
         
-        if (!employeeId) {
-          throw new Error("Employee ID not found in session");
-        }
-
+        // Fetch fresh data from the database
         const { data: facultyData, error: facultyError } = await supabase
           .from('faculty_profiles')
           .select('*')
-          .eq('employee_id', employeeId)
+          .eq('employee_id', faculty.employee_id)
           .maybeSingle();
 
-        if (facultyError) throw facultyError;
+        if (facultyError) {
+          console.error('Error fetching faculty profile:', facultyError);
+          throw facultyError;
+        }
+
         if (!facultyData) {
           throw new Error("Faculty profile not found");
         }
 
+        console.log('Fetched faculty data:', facultyData);
+
+        // Handle profile image URL
         if (facultyData.profile_image_url && !facultyData.profile_image_url.startsWith('http')) {
           const { data: imageUrl } = await supabase
             .storage
@@ -67,11 +54,11 @@ export default function FacultyDashboard() {
           facultyData.profile_image_url = imageUrl.publicUrl;
         }
 
-        setFacultyProfile(facultyData as FacultyProfile);
+        setFacultyProfile(facultyData);
       } catch (error: any) {
         console.error('Error fetching faculty profile:', error);
         setError(error.message);
-        if (error.message.includes("profile not found")) {
+        if (error.message.includes("No faculty session found") || error.message.includes("profile not found")) {
           navigate("/faculty-auth");
         }
       } finally {
@@ -104,7 +91,7 @@ export default function FacultyDashboard() {
         <main className="container mx-auto p-6">
           <Alert variant="destructive">
             <AlertDescription>
-              {error}. Please contact administrator to set up your faculty profile.
+              {error}. Please contact administrator if this persists.
             </AlertDescription>
           </Alert>
         </main>
