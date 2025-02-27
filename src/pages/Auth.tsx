@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +16,13 @@ const Auth = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [enrollmentNumber, setEnrollmentNumber] = useState("");
@@ -167,6 +173,8 @@ const Auth = () => {
         throw new Error("Please fill in all required fields");
       }
 
+      console.log('Attempting login with enrollment:', enrollmentNumber);
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -175,6 +183,7 @@ const Auth = () => {
         .maybeSingle();
 
       if (profileError) {
+        console.error('Login error:', profileError);
         throw new Error("Failed to verify credentials");
       }
 
@@ -182,14 +191,18 @@ const Auth = () => {
         throw new Error("Invalid enrollment number or password");
       }
 
+      console.log('Login successful, profile:', profile);
+
+      localStorage.setItem('user', JSON.stringify(profile));
+
       toast({
         title: "Welcome back!",
         description: `Logged in as ${profile.first_name} ${profile.last_name}`,
       });
 
-      localStorage.setItem('user', JSON.stringify(profile));
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: "Error",
         description: error.message || "Invalid credentials",
