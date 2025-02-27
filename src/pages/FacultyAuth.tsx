@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,22 +10,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FacultyProfile } from "@/types/supabase";
 
 type FacultyRole = "admin" | "chairman" | "director" | "hod" | "class_coordinator";
-
-type FacultyProfile = {
-  id: string;
-  employee_id: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  role: FacultyRole;
-  department: string | null;
-  course_name: string | null;
-  year: number | null;
-  section: string | null;
-  profile_image_url: string | null;
-};
 
 const FacultyAuth = () => {
   const navigate = useNavigate();
@@ -33,6 +20,27 @@ const FacultyAuth = () => {
   const [loading, setLoading] = useState(false);
   const [showAdminMessage, setShowAdminMessage] = useState(false);
   
+  // Check if faculty is already logged in
+  useEffect(() => {
+    const checkAuth = () => {
+      const facultyStr = localStorage.getItem('faculty');
+      if (facultyStr) {
+        try {
+          const faculty = JSON.parse(facultyStr);
+          if (faculty.employee_id) {
+            navigate('/faculty/dashboard');
+          } else {
+            localStorage.removeItem('faculty');
+          }
+        } catch (error) {
+          localStorage.removeItem('faculty');
+        }
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [employeeId, setEmployeeId] = useState("");
@@ -161,6 +169,8 @@ const FacultyAuth = () => {
         throw new Error("Please fill in all required fields");
       }
 
+      console.log('Attempting faculty login with employee ID:', employeeId);
+
       // Check credentials directly against faculty_profiles table
       const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
@@ -169,21 +179,28 @@ const FacultyAuth = () => {
         .eq('password', password)
         .maybeSingle();
 
-      if (facultyError) throw facultyError;
+      if (facultyError) {
+        console.error('Login error:', facultyError);
+        throw new Error("Failed to verify credentials");
+      }
+
       if (!faculty) {
         setShowAdminMessage(true);
         throw new Error("Invalid credentials");
       }
+
+      console.log('Faculty login successful:', faculty);
+
+      // Store the faculty data in localStorage for session management
+      localStorage.setItem('faculty', JSON.stringify(faculty));
 
       toast({
         title: "Welcome back!",
         description: `Logged in as ${faculty.first_name} ${faculty.last_name}`,
       });
 
-      // Store the faculty data in localStorage for session management
-      localStorage.setItem('user', JSON.stringify(faculty));
-
-      navigate("/faculty/dashboard");
+      // Navigate to faculty dashboard with replace to prevent back navigation
+      navigate("/faculty/dashboard", { replace: true });
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
