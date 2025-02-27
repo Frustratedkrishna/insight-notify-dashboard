@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,13 +38,17 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const checkAuth = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) throw sessionError;
-        
-        if (!session) {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          navigate("/auth");
+          return;
+        }
+
+        const user = JSON.parse(userStr);
+        if (!user.enrollment_number) {
+          localStorage.removeItem('user');
           navigate("/auth");
           return;
         }
@@ -51,18 +56,12 @@ export default function Dashboard() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", session.user.id)
-          .maybeSingle();
+          .eq("enrollment_number", user.enrollment_number)
+          .single();
 
-        if (profileError) throw profileError;
-        
-        if (!profileData) {
-          toast({
-            title: "Profile not found",
-            description: "Please try logging in again",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
+        if (profileError || !profileData) {
+          console.error("Profile error:", profileError);
+          localStorage.removeItem('user');
           navigate("/auth");
           return;
         }
@@ -76,49 +75,34 @@ export default function Dashboard() {
           .or(`type.eq.general,and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${profileData.year * 2})`)
           .order("created_at", { ascending: false });
 
-        if (notificationsError) throw notificationsError;
-
-        setNotifications(notificationsData);
-      } catch (error: any) {
-        console.error("Error:", error);
-        toast({
-          title: "Error loading data",
-          description: error.message,
-          variant: "destructive",
-        });
+        if (notificationsError) {
+          console.error("Error fetching notifications:", notificationsError);
+          toast({
+            title: "Error",
+            description: "Failed to load notifications",
+            variant: "destructive",
+          });
+        } else {
+          setNotifications(notificationsData || []);
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+        localStorage.removeItem('user');
+        navigate("/auth");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
-
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate("/auth");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    checkAuth();
   }, [navigate, toast]);
-
-  const getProfileImageUrl = (imageUrl: string | null) => {
-    if (!imageUrl) return "";
-    const { data } = supabase.storage
-      .from("profile-images")
-      .getPublicUrl(imageUrl);
-    return data.publicUrl;
-  };
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
   if (!profile) {
-    return <div>No profile found</div>;
+    return null;
   }
 
   return (
@@ -134,7 +118,7 @@ export default function Dashboard() {
               <div className="flex items-center space-x-4">
                 <Avatar className="h-24 w-24">
                   <AvatarImage 
-                    src={getProfileImageUrl(profile.profile_image_url)}
+                    src={profile.profile_image_url}
                     alt="Profile" 
                   />
                   <AvatarFallback>

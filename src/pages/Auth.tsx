@@ -17,10 +17,23 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      navigate('/dashboard');
-    }
+    const checkAuth = () => {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user.enrollment_number) {
+            navigate('/dashboard');
+          } else {
+            localStorage.removeItem('user');
+          }
+        } catch (error) {
+          localStorage.removeItem('user');
+        }
+      }
+    };
+
+    checkAuth();
   }, [navigate]);
 
   const [firstName, setFirstName] = useState("");
@@ -193,6 +206,7 @@ const Auth = () => {
 
       console.log('Login successful, profile:', profile);
 
+      // Store user data in localStorage
       localStorage.setItem('user', JSON.stringify(profile));
 
       toast({
@@ -200,6 +214,7 @@ const Auth = () => {
         description: `Logged in as ${profile.first_name} ${profile.last_name}`,
       });
 
+      // Navigate to dashboard with replace to prevent back navigation
       navigate("/dashboard", { replace: true });
     } catch (error: any) {
       console.error('Login error:', error);
