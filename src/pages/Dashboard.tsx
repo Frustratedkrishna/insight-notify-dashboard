@@ -1,219 +1,179 @@
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Clock, Bell, CalendarDays, Pencil } from "lucide-react";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { DashboardNav } from "@/components/DashboardNav";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardNav } from "@/components/DashboardNav";
+import { useToast } from "@/components/ui/use-toast";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { NotificationCard } from "@/components/NotificationCard";
+
+interface Profile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  enrollment_number: string;
+  course_name: string;
+  year: number;
+  section: string;
+  profile_image_url: string;
+}
+
+interface Notification {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  department?: string;
+  semester?: number;
+  created_at: string;
+}
 
 export default function Dashboard() {
-  const [profile, setProfile] = useState<any>(null);
-  const [attendanceData, setAttendanceData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in
     const checkAuth = async () => {
-      const user = localStorage.getItem("user");
-      const profileStr = localStorage.getItem("profile");
-      
-      if (!user || !profileStr) {
-        navigate("/auth");
-        return;
-      }
-      
-      const profile = JSON.parse(profileStr);
-      setProfile(profile);
-      
       try {
-        // Get attendance data
-        if (profile?.id) {
-          const { data, error } = await supabase
-            .from("attendance")
-            .select("*")
-            .eq("student_id", profile.id)
-            .order("date", { ascending: false })
-            .limit(5);
-          
-          if (error) throw error;
-          setAttendanceData(data || []);
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          navigate("/auth");
+          return;
+        }
+
+        const user = JSON.parse(userStr);
+        if (!user.enrollment_number) {
+          localStorage.removeItem('user');
+          navigate("/auth");
+          return;
+        }
+
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("enrollment_number", user.enrollment_number)
+          .single();
+
+        if (profileError || !profileData) {
+          console.error("Profile error:", profileError);
+          localStorage.removeItem('user');
+          navigate("/auth");
+          return;
+        }
+
+        setProfile(profileData);
+
+        // Fetch notifications
+        const { data: notificationsData, error: notificationsError } = await supabase
+          .from("notifications")
+          .select("*")
+          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${profileData.year * 2})`)
+          .order("created_at", { ascending: false });
+
+        if (notificationsError) {
+          console.error("Error fetching notifications:", notificationsError);
+          toast({
+            title: "Error",
+            description: "Failed to load notifications",
+            variant: "destructive",
+          });
+        } else {
+          setNotifications(notificationsData || []);
         }
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error("Auth check error:", error);
+        localStorage.removeItem('user');
+        navigate("/auth");
       } finally {
         setLoading(false);
       }
     };
-    
-    checkAuth();
-  }, [navigate]);
 
-  // Calculate attendance statistics
-  const totalClasses = attendanceData.length;
-  const presentClasses = attendanceData.filter(item => item.status === 'present').length;
-  const attendancePercentage = totalClasses > 0 ? Math.round((presentClasses / totalClasses) * 100) : 0;
+    checkAuth();
+  }, [navigate, toast]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!profile) {
+    return null;
+  }
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="min-h-screen flex w-full">
         <DashboardNav />
-        <main className="flex-1 p-6">
-          <h1 className="text-2xl font-bold mb-6">Student Dashboard</h1>
-          
-          {profile && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-2">Welcome, {profile.first_name}!</h2>
-              <p className="text-muted-foreground">Enrollment: {profile.enrollment_number}</p>
-            </div>
-          )}
-          
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Attendance Overview Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Attendance Overview</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{attendancePercentage}%</div>
-                <p className="text-xs text-muted-foreground">
-                  Present {presentClasses} out of {totalClasses} classes
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4" 
-                  size="sm"
-                  onClick={() => navigate("/attendance")}
-                >
-                  View Attendance
-                </Button>
-              </CardContent>
-            </Card>
-            
-            {/* Academic Calendar Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Academic Calendar</CardTitle>
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">Upcoming</div>
-                <p className="text-xs text-muted-foreground">
-                  Mid-term exams starting next week
-                </p>
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between items-center text-xs">
-                    <span>May 15</span>
-                    <span className="text-muted-foreground">Mathematics Exam</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span>May 17</span>
-                    <span className="text-muted-foreground">Physics Exam</span>
-                  </div>
+        <main className="flex-1 p-6 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Student Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage 
+                    src={profile.profile_image_url}
+                    alt="Profile" 
+                  />
+                  <AvatarFallback>
+                    {profile.first_name[0]}
+                    {profile.last_name[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    {profile.first_name} {profile.last_name}
+                  </h2>
+                  <p className="text-gray-500">
+                    Enrollment: {profile.enrollment_number}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-            
-            {/* Latest Marks Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Latest Marks</CardTitle>
-                <LineChart className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">78<span className="text-sm font-normal text-muted-foreground">/100</span></div>
-                <p className="text-xs text-muted-foreground">
-                  Last Assessment: Database Systems
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4" 
-                  size="sm"
-                  onClick={() => navigate("/marks")}
-                >
-                  View All Marks
-                </Button>
-              </CardContent>
-            </Card>
-            
-            {/* Recent Notifications Card */}
-            <Card className="md:col-span-2 lg:col-span-2">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Recent Notifications</CardTitle>
-                <Bell className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-full bg-primary/10 p-2">
-                      <Pencil className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Assignment Submission</p>
-                      <p className="text-xs text-muted-foreground">
-                        Data Structures assignment due on May 10, 2023
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-full bg-primary/10 p-2">
-                      <Bell className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Class Cancelled</p>
-                      <p className="text-xs text-muted-foreground">
-                        Computer Networks class cancelled tomorrow
-                      </p>
-                    </div>
-                  </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <h3 className="font-semibold">Course</h3>
+                  <p>{profile.course_name}</p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4" 
-                  size="sm"
-                  onClick={() => navigate("/notifications")}
-                >
-                  View All Notifications
-                </Button>
-              </CardContent>
-            </Card>
-            
-            {/* Student Profile Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Profile Info</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {profile && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">Department</span>
-                      <span className="text-xs font-medium">{profile.department || 'Computer Science'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">Batch</span>
-                      <span className="text-xs font-medium">{profile.batch || '2023-2027'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">Email</span>
-                      <span className="text-xs font-medium">{profile.email || 'student@example.com'}</span>
-                    </div>
-                  </div>
-                )}
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4" 
-                  size="sm"
-                  onClick={() => navigate("/profile")}
-                >
-                  View Profile
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                <div>
+                  <h3 className="font-semibold">Year</h3>
+                  <p>{profile.year}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold">Section</h3>
+                  <p>{profile.section}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Notifications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {notifications.length === 0 ? (
+                <p className="text-muted-foreground">No notifications to display</p>
+              ) : (
+                notifications.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    title={notification.title}
+                    content={notification.content}
+                    createdAt={notification.created_at}
+                    type={notification.type}
+                    department={notification.department}
+                    semester={notification.semester}
+                  />
+                ))
+              )}
+            </CardContent>
+          </Card>
         </main>
       </div>
     </SidebarProvider>
