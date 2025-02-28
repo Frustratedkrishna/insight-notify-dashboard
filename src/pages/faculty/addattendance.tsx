@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileUpload, Upload } from "lucide-react";
+import { File, Upload } from "lucide-react";
 import Papa from "papaparse";
 
 const formSchema = z.object({
@@ -255,7 +255,7 @@ export default function AddAttendance() {
                         <FormLabel>Attendance CSV File</FormLabel>
                         <FormControl>
                           <div className="border-2 border-dashed rounded-md p-6 text-center">
-                            <FileUpload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                            <File className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                             <p className="text-sm text-gray-500 mb-2">
                               Drag and drop your CSV file here, or click to browse
                             </p>
