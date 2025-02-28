@@ -1,5 +1,5 @@
 
-import { Bell, LogOut, User } from "lucide-react";
+import { Clock, LineChart, Bell, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -30,7 +30,25 @@ export function DashboardSidebar() {
         onClick={() => navigate("/dashboard")}
       >
         <User className="h-4 w-4" />
-        <span className="ml-2">Profile</span>
+        <span className="ml-2">Dashboard</span>
+      </Button>
+
+      <Button
+        variant="ghost"
+        className="w-full md:w-auto justify-start"
+        onClick={() => navigate("/attendance")}
+      >
+        <Clock className="h-4 w-4" />
+        <span className="ml-2">Attendance</span>
+      </Button>
+
+      <Button
+        variant="ghost"
+        className="w-full md:w-auto justify-start"
+        onClick={() => navigate("/marks")}
+      >
+        <LineChart className="h-4 w-4" />
+        <span className="ml-2">Marks</span>
       </Button>
 
       <Button
