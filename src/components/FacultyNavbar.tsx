@@ -1,5 +1,6 @@
+
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, User, Calendar, Users, Menu } from "lucide-react";
+import { Bell, LogOut, User, Calendar, Users, Menu, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +33,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         description: "You have been signed out of your account",
       });
       
-      window.location.href = "/faculty-auth";
+      navigate("/faculty-auth");
     } catch (error: any) {
       console.error("Faculty sign out error:", error);
       toast({
@@ -68,7 +69,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         className="w-full md:w-auto justify-start"
         onClick={() => navigate("/faculty/attendance")}
       >
-        <Calendar className="h-4 w-4" />
+        <FileSpreadsheet className="h-4 w-4" />
         <span className="ml-2">Attendance</span>
       </Button>
 
@@ -80,6 +81,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         <Users className="h-4 w-4" />
         <span className="ml-2">Students</span>
       </Button>
+      
       <Button
         variant="ghost"
         className="w-full md:w-auto justify-start"
@@ -88,6 +90,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         <Users className="h-4 w-4" />
         <span className="ml-2">Feedbacks</span>
       </Button>
+      
       {(role === 'class_coordinator' || role === 'hod') && (
         <Button
           variant="ghost"
@@ -111,20 +114,21 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
   );
 
   return (
-    <nav className="border-b">
+    <nav className="border-b bg-white sticky top-0 z-10 shadow-sm">
       <div className="container mx-auto">
         <div className="flex h-16 items-center justify-between">
-          <div className="font-semibold">Faculty Dashboard</div>
+          <div className="font-semibold text-primary">Faculty Dashboard</div>
           
           {isMobile ? (
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-primary">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-64">
+              <SheetContent side="right" className="w-64 bg-background border-l border-accent">
+                <div className="font-semibold text-primary text-lg py-4">Menu</div>
                 <NavContent />
               </SheetContent>
             </Sheet>

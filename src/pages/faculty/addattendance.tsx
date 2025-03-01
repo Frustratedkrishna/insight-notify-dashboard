@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { File, Upload } from "lucide-react";
+import { File, Upload, FileSpreadsheet } from "lucide-react";
 import * as XLSX from "xlsx";
 
 const formSchema = z.object({
@@ -216,18 +216,21 @@ export default function AddAttendance() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <FacultyNavbar role={facultyProfile?.role} />
-      <main className="container mx-auto p-6">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle>Upload Attendance Data</CardTitle>
+      <main className="container mx-auto p-4 md:p-6">
+        <Card className="max-w-2xl mx-auto shadow-sm border-accent/20">
+          <CardHeader className="bg-accent/10">
+            <CardTitle className="text-primary flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5" />
+              Upload Attendance Data
+            </CardTitle>
             <CardDescription>
               Upload attendance data from an Excel file (.xlsx) for your class. The Excel sheet should include columns for 
               enrollment_number and status (present/absent).
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             {facultyProfile?.role !== 'class_coordinator' ? (
               <Alert variant="destructive">
                 <AlertTitle>Access Denied</AlertTitle>
@@ -245,7 +248,7 @@ export default function AddAttendance() {
                       <FormItem>
                         <FormLabel>Subject</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter subject name" {...field} />
+                          <Input placeholder="Enter subject name" {...field} className="border-accent/20 focus:border-primary" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -259,7 +262,7 @@ export default function AddAttendance() {
                       <FormItem>
                         <FormLabel>Date</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="date" {...field} className="border-accent/20 focus:border-primary" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -273,18 +276,18 @@ export default function AddAttendance() {
                       <FormItem>
                         <FormLabel>Attendance Excel File</FormLabel>
                         <FormControl>
-                          <div className="border-2 border-dashed rounded-md p-6 text-center">
-                            <File className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                            <p className="text-sm text-gray-500 mb-2">
+                          <div className="border-2 border-dashed border-accent rounded-md p-6 text-center hover:border-primary transition-colors">
+                            <FileSpreadsheet className="h-8 w-8 mx-auto mb-2 text-primary/70" />
+                            <p className="text-sm text-muted-foreground mb-2">
                               Drag and drop your Excel file here, or click to browse
                             </p>
                             <Input
                               type="file"
                               accept=".xlsx,.xls"
                               onChange={handleFileChange}
-                              className="max-w-xs mx-auto"
+                              className="max-w-xs mx-auto file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                             />
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className="text-xs text-muted-foreground mt-2">
                               File should contain columns: enrollment_number, status
                             </p>
                           </div>
@@ -295,7 +298,7 @@ export default function AddAttendance() {
                   />
                   
                   {uploadStatus === "uploading" && (
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                    <div className="w-full bg-accent/30 rounded-full h-2 mb-4">
                       <div 
                         className="bg-primary h-2 rounded-full transition-all duration-300" 
                         style={{ width: `${uploadProgress}%` }} 
@@ -304,8 +307,8 @@ export default function AddAttendance() {
                   )}
                   
                   {uploadStatus === "success" && (
-                    <Alert>
-                      <AlertDescription>
+                    <Alert className="bg-secondary/10 border-secondary">
+                      <AlertDescription className="text-secondary-foreground">
                         Attendance data uploaded successfully!
                       </AlertDescription>
                     </Alert>
