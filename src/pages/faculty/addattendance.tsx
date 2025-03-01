@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { FacultyNavbar } from "@/components/FacultyNavbar";
@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { File, Upload } from "lucide-react";
-import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 const formSchema = z.object({
   subject: z.string().min(1, { message: "Subject is required" }),
@@ -23,6 +23,13 @@ const formSchema = z.object({
   file: z.any()
     .refine(file => file instanceof File, { message: "File is required" })
     .refine(file => file.size <= 5000000, { message: "File must be less than 5MB" })
+    .refine(
+      file => [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+      ].includes(file.type),
+      { message: "Only Excel files (.xlsx, .xls) are supported" }
+    )
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -46,14 +53,14 @@ export default function AddAttendance() {
   });
 
   // Get the currently logged in faculty from localStorage
-  useState(() => {
+  useEffect(() => {
     const facultyStr = localStorage.getItem('faculty');
     if (facultyStr) {
       setFacultyProfile(JSON.parse(facultyStr));
     } else {
       navigate("/faculty-auth");
     }
-  });
+  }, [navigate]);
 
   // Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,31 +70,43 @@ export default function AddAttendance() {
     }
   };
 
-  // Process CSV data
-  const processCSV = async (file: File, subject: string, date: string): Promise<any[]> => {
+  // Process Excel data
+  const processExcel = async (file: File, subject: string, date: string): Promise<any[]> => {
     return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async (results) => {
-          try {
-            const rows = results.data as any[];
-            const processedData = rows.map((row) => ({
-              enrollment_number: row.enrollment_number?.toString() || "",
-              status: row.status?.toLowerCase() || "absent",
-              subject,
-              date,
-              faculty_id: facultyProfile.id
-            }));
-            resolve(processedData);
-          } catch (error) {
-            reject(error);
-          }
-        },
-        error: (error) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          // Get the first worksheet
+          const worksheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[worksheetName];
+          
+          // Convert to JSON
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          
+          // Process the data
+          const processedData = jsonData.map((row: any) => ({
+            enrollment_number: row.enrollment_number?.toString() || "",
+            status: (row.status?.toString() || "absent").toLowerCase(),
+            subject,
+            date,
+            faculty_id: facultyProfile.id
+          }));
+          
+          resolve(processedData);
+        } catch (error) {
           reject(error);
         }
-      });
+      };
+      
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      
+      reader.readAsArrayBuffer(file);
     });
   };
 
@@ -158,9 +177,9 @@ export default function AddAttendance() {
 
       const file = values.file as File;
       
-      // Process CSV file
+      // Process Excel file
       setUploadProgress(30);
-      const processedData = await processCSV(file, values.subject, values.date);
+      const processedData = await processExcel(file, values.subject, values.date);
       
       // Update progress
       setUploadProgress(60);
@@ -204,7 +223,7 @@ export default function AddAttendance() {
           <CardHeader>
             <CardTitle>Upload Attendance Data</CardTitle>
             <CardDescription>
-              Upload attendance data from a CSV file for your class. The CSV should include columns for 
+              Upload attendance data from an Excel file (.xlsx) for your class. The Excel sheet should include columns for 
               enrollment_number and status (present/absent).
             </CardDescription>
           </CardHeader>
@@ -252,16 +271,16 @@ export default function AddAttendance() {
                     name="file"
                     render={() => (
                       <FormItem>
-                        <FormLabel>Attendance CSV File</FormLabel>
+                        <FormLabel>Attendance Excel File</FormLabel>
                         <FormControl>
                           <div className="border-2 border-dashed rounded-md p-6 text-center">
                             <File className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                             <p className="text-sm text-gray-500 mb-2">
-                              Drag and drop your CSV file here, or click to browse
+                              Drag and drop your Excel file here, or click to browse
                             </p>
                             <Input
                               type="file"
-                              accept=".csv"
+                              accept=".xlsx,.xls"
                               onChange={handleFileChange}
                               className="max-w-xs mx-auto"
                             />
