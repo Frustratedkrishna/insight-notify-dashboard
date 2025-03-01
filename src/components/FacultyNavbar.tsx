@@ -21,12 +21,23 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      navigate("/faculty-auth");
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
+      localStorage.removeItem('faculty');
+      
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account",
+      });
+      
+      window.location.href = "/faculty-auth";
     } catch (error: any) {
+      console.error("Faculty sign out error:", error);
       toast({
         title: "Error signing out",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     }

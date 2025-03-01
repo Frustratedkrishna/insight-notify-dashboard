@@ -1,4 +1,3 @@
-
 import { Clock, LineChart, Bell, User, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,10 @@ export function DashboardSidebar() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
       localStorage.removeItem('user');
       localStorage.removeItem('profile');
       
@@ -19,12 +21,12 @@ export function DashboardSidebar() {
         description: "You have been signed out of your account",
       });
       
-      // Use window.location to ensure full page refresh
       window.location.href = "/auth";
     } catch (error: any) {
+      console.error("Sign out error:", error);
       toast({
         title: "Error signing out",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     }
