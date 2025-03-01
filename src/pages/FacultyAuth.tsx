@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -64,20 +65,28 @@ const FacultyAuth = () => {
     setLoading(true);
 
     try {
+      // Basic validation
       if (!firstName || !lastName || !employeeId || !password || !facultyRole) {
         throw new Error("Please fill in all required fields");
       }
 
-      const { data: existingFaculty } = await supabase
+      // Check if faculty with this employee ID already exists
+      const { data: existingFaculty, error: checkError } = await supabase
         .from('faculty_profiles')
         .select('employee_id')
         .eq('employee_id', employeeId)
         .maybeSingle();
 
+      if (checkError) {
+        console.error('Error checking existing faculty:', checkError);
+        throw new Error("Failed to check if faculty exists");
+      }
+
       if (existingFaculty) {
         throw new Error("A faculty member with this employee ID already exists");
       }
 
+      // Insert the faculty profile
       const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert([{
@@ -103,13 +112,28 @@ const FacultyAuth = () => {
         throw new Error("Failed to create faculty profile");
       }
 
+      // Handle profile image upload if provided
       if (profileImage && faculty.id) {
         const fileExt = profileImage.name.split('.').pop();
         const fileName = `${faculty.id}/profile.${fileExt}`;
 
+        // Check if storage bucket exists
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const profileBucket = buckets?.find(b => b.name === 'profile-images');
+        
+        if (!profileBucket) {
+          // Create the bucket if it doesn't exist
+          await supabase.storage.createBucket('profile-images', {
+            public: true,
+            fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
+          });
+        }
+
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
-          .upload(fileName, profileImage);
+          .upload(fileName, profileImage, {
+            upsert: true
+          });
 
         if (uploadError) {
           console.error('Error uploading image:', uploadError);
@@ -135,6 +159,7 @@ const FacultyAuth = () => {
         description: "You can now login with your employee ID and password.",
       });
 
+      // Reset form
       setFirstName("");
       setLastName("");
       setEmployeeId("");
