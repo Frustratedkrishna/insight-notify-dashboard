@@ -9,6 +9,7 @@ export interface Profile {
   section: string;
   email: string;
   profile_image_url?: string;
+  verify: boolean;
 }
 
 export interface FacultyProfile {
@@ -24,6 +25,7 @@ export interface FacultyProfile {
   profile_image_url: string | null;
   created_at: string;
   updated_at: string;
+  verify: boolean;
 }
 
 export interface Notification {
@@ -46,4 +48,5 @@ export interface Student {
   course_name: string;
   year: number;
   section: string;
+  verify: boolean;
 }

@@ -68,6 +68,7 @@ export type Database = {
           role: Database["public"]["Enums"]["faculty_role"]
           section: string | null
           updated_at: string | null
+          verify: boolean | null
           year: number | null
         }
         Insert: {
@@ -83,6 +84,7 @@ export type Database = {
           role: Database["public"]["Enums"]["faculty_role"]
           section?: string | null
           updated_at?: string | null
+          verify?: boolean | null
           year?: number | null
         }
         Update: {
@@ -98,6 +100,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["faculty_role"]
           section?: string | null
           updated_at?: string | null
+          verify?: boolean | null
           year?: number | null
         }
         Relationships: []
@@ -202,6 +205,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"] | null
           section: string | null
           updated_at: string | null
+          verify: boolean | null
           year: number | null
         }
         Insert: {
@@ -217,6 +221,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"] | null
           section?: string | null
           updated_at?: string | null
+          verify?: boolean | null
           year?: number | null
         }
         Update: {
@@ -232,6 +237,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"] | null
           section?: string | null
           updated_at?: string | null
+          verify?: boolean | null
           year?: number | null
         }
         Relationships: []

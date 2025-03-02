@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Database } from "@/integrations/supabase/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
 
@@ -15,6 +17,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [verificationPending, setVerificationPending] = useState(false);
   
   useEffect(() => {
     const checkAuth = () => {
@@ -97,6 +100,7 @@ const Auth = () => {
         role: 'student',
         email: null,
         profile_image_url: null,
+        verify: false // Set verify to false by default
       };
 
       console.log('Attempting to insert profile with data:', insertData);
@@ -150,9 +154,10 @@ const Auth = () => {
 
       toast({
         title: "Success!",
-        description: "Registration successful! You can now login with your enrollment number and password.",
+        description: "Registration successful! Your account now needs to be verified by your class coordinator before you can login.",
       });
 
+      // Reset form fields
       setFirstName("");
       setLastName("");
       setEnrollmentNumber("");
@@ -180,6 +185,7 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setVerificationPending(false);
 
     try {
       if (!enrollmentNumber || !password) {
@@ -202,6 +208,13 @@ const Auth = () => {
 
       if (!profile) {
         throw new Error("Invalid enrollment number or password");
+      }
+
+      // Check if the account is verified
+      if (!profile.verify) {
+        console.log('Account not verified:', profile);
+        setVerificationPending(true);
+        throw new Error("Your account has not been verified yet. Please contact your class coordinator for approval.");
       }
 
       console.log('Login successful, profile:', profile);
@@ -247,6 +260,13 @@ const Auth = () => {
           </TabsList>
 
           <TabsContent value="login">
+            {verificationPending && (
+              <Alert className="mb-4">
+                <AlertDescription>
+                  Your account has not been verified yet. Please contact your class coordinator for approval.
+                </AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
                 <Label htmlFor="login-enrollment">Enrollment Number</Label>

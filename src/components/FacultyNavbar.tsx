@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, User, Calendar, Users, Menu, FileSpreadsheet } from "lucide-react";
+import { Bell, LogOut, User, Calendar, Users, Menu, FileSpreadsheet, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -90,6 +90,17 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         <Users className="h-4 w-4" />
         <span className="ml-2">Feedbacks</span>
       </Button>
+      
+      {role === 'class_coordinator' && (
+        <Button
+          variant="ghost"
+          className="w-full md:w-auto justify-start"
+          onClick={() => navigate("/faculty/approve-students")}
+        >
+          <UserCheck className="h-4 w-4" />
+          <span className="ml-2">Approve Students</span>
+        </Button>
+      )}
       
       {(role === 'class_coordinator' || role === 'hod') && (
         <Button

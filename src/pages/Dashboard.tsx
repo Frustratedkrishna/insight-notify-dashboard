@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationCard } from "@/components/NotificationCard";
 import { Footer } from "@/components/Footer";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -18,6 +21,7 @@ interface Profile {
   year: number;
   section: string;
   profile_image_url: string;
+  verify: boolean;
 }
 
 interface Notification {
@@ -61,6 +65,18 @@ export default function Dashboard() {
 
         if (profileError || !profileData) {
           console.error("Profile error:", profileError);
+          localStorage.removeItem('user');
+          navigate("/auth");
+          return;
+        }
+
+        // Check if user is verified
+        if (!profileData.verify) {
+          toast({
+            title: "Account not verified",
+            description: "Your account is pending verification by your class coordinator.",
+            variant: "destructive",
+          });
           localStorage.removeItem('user');
           navigate("/auth");
           return;
@@ -110,6 +126,15 @@ export default function Dashboard() {
       <div className="min-h-screen flex flex-col w-full">
         <DashboardNav />
         <main className="flex-1 p-6 space-y-6">
+          {!profile.verify && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Your account is pending verification by your class coordinator. Some features may be limited.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Student Profile</CardTitle>
