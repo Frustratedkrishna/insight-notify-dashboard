@@ -21,7 +21,7 @@ export function DashboardNav() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
+        <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 md:hidden bg-yellow-100 text-red-600 hover:bg-yellow-200">
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle navigation menu</span>
         </Button>

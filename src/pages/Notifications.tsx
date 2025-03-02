@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,7 @@ import { DashboardNav } from "@/components/DashboardNav";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationCard } from "@/components/NotificationCard";
 import { useToast } from "@/components/ui/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Profile {
   course_name: string;
@@ -32,22 +34,54 @@ export default function Notifications() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) throw sessionError;
-        
-        if (!session) {
-          navigate("/auth");
-          return;
+        // Check auth from localStorage first
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          // If not in localStorage, check session
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) throw sessionError;
+          
+          if (!session) {
+            navigate("/auth");
+            return;
+          }
         }
 
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("course_name, year, section")
-          .eq("id", session.user.id)
-          .single();
-
-        if (profileError) throw profileError;
+        // Get profile using either localStorage or Supabase session
+        let profileData: Profile | null = null;
+        
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          
+          // Fetch from profiles table
+          const { data: dbProfile, error: profileError } = await supabase
+            .from("profiles")
+            .select("course_name, year, section")
+            .eq("enrollment_number", user.enrollment_number)
+            .maybeSingle();
+            
+          if (profileError) throw profileError;
+          if (!dbProfile) throw new Error("Profile not found");
+          
+          profileData = dbProfile;
+        } else {
+          // Use session
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            navigate("/auth");
+            return;
+          }
+          
+          const { data: dbProfile, error: profileError } = await supabase
+            .from("profiles")
+            .select("course_name, year, section")
+            .eq("id", session.user.id)
+            .single();
+            
+          if (profileError) throw profileError;
+          profileData = dbProfile;
+        }
         
         setProfile(profileData);
 
@@ -76,27 +110,23 @@ export default function Notifications() {
     fetchData();
   }, [navigate, toast]);
 
-  if (loading) {
-    return (
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <DashboardNav />
-          <main className="flex-1 p-6">
-            <div>Loading...</div>
-          </main>
-        </div>
-      </SidebarProvider>
-    );
-  }
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <DashboardNav />
-        <main className="flex-1 p-6">
-          <h1 className="text-2xl font-bold mb-6">Notifications</h1>
+        <main className="flex-1 p-4 md:p-6">
+          <h1 className="text-2xl font-bold mb-6 text-red-600">Notifications</h1>
           <div className="space-y-4">
-            {notifications.length === 0 ? (
+            {loading ? (
+              Array(3).fill(0).map((_, i) => (
+                <div key={i} className="mb-4 border rounded-lg p-4">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/4 mb-4" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+              ))
+            ) : notifications.length === 0 ? (
               <p className="text-muted-foreground">No notifications to display</p>
             ) : (
               notifications.map((notification) => (

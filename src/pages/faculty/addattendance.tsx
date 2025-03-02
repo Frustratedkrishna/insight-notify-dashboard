@@ -6,7 +6,6 @@ import { FacultyNavbar } from "@/components/FacultyNavbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -54,12 +53,41 @@ export default function AddAttendance() {
 
   // Get the currently logged in faculty from localStorage
   useEffect(() => {
-    const facultyStr = localStorage.getItem('faculty');
-    if (facultyStr) {
-      setFacultyProfile(JSON.parse(facultyStr));
-    } else {
-      navigate("/faculty-auth");
-    }
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          navigate("/faculty-auth");
+          return;
+        }
+        
+        const employeeId = session.user.user_metadata.employee_id;
+        
+        if (!employeeId) {
+          throw new Error("Employee ID not found in session");
+        }
+        
+        // Fetch faculty profile
+        const { data: facultyData, error: facultyError } = await supabase
+          .from('faculty_profiles')
+          .select('*')
+          .eq('employee_id', employeeId)
+          .maybeSingle();
+        
+        if (facultyError) throw facultyError;
+        if (!facultyData) {
+          throw new Error("Faculty profile not found");
+        }
+        
+        setFacultyProfile(facultyData);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        navigate("/faculty-auth");
+      }
+    };
+    
+    checkAuth();
   }, [navigate]);
 
   // Handle file upload
@@ -84,20 +112,59 @@ export default function AddAttendance() {
           const worksheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[worksheetName];
           
-          // Convert to JSON
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          // Convert to JSON with header row
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
           
-          // Process the data
-          const processedData = jsonData.map((row: any) => ({
-            enrollment_number: row.enrollment_number?.toString() || "",
-            status: (row.status?.toString() || "absent").toLowerCase(),
-            subject,
-            date,
-            faculty_id: facultyProfile.id
-          }));
+          // Find the indexes of the enrollment_number and status columns
+          const headerRow = jsonData[0] as string[];
+          const enrollmentIndex = headerRow.findIndex(
+            col => col && col.toLowerCase().includes('enrollment')
+          );
+          const statusIndex = headerRow.findIndex(
+            col => col && col.toLowerCase().includes('status')
+          );
+          
+          if (enrollmentIndex === -1 || statusIndex === -1) {
+            reject(new Error("Excel file must contain 'enrollment_number' and 'status' columns"));
+            return;
+          }
+          
+          // Process the data starting from row 1 (skip header)
+          const processedData = jsonData.slice(1).map((row: any) => {
+            // Handle enrollment number - ensure it's a string
+            let enrollmentNumber = row[enrollmentIndex];
+            if (enrollmentNumber !== undefined) {
+              enrollmentNumber = String(enrollmentNumber).trim();
+            } else {
+              enrollmentNumber = "";
+            }
+            
+            // Handle status - convert to lowercase and ensure it's a string
+            let status = row[statusIndex];
+            if (status !== undefined) {
+              status = String(status).trim().toLowerCase();
+              // Normalize status values
+              if (status === "p" || status === "present" || status === "1") {
+                status = "present";
+              } else {
+                status = "absent";
+              }
+            } else {
+              status = "absent";
+            }
+            
+            return {
+              enrollment_number: enrollmentNumber,
+              status: status,
+              subject,
+              date,
+              faculty_id: facultyProfile.id
+            };
+          }).filter(item => item.enrollment_number); // Filter out rows with no enrollment number
           
           resolve(processedData);
         } catch (error) {
+          console.error("Excel processing error:", error);
           reject(error);
         }
       };
@@ -112,18 +179,27 @@ export default function AddAttendance() {
 
   // Upload attendance data to Supabase
   const uploadAttendanceData = async (data: any[]) => {
-    if (!data.length) return;
+    if (!data.length) return 0;
     
     try {
+      console.log("Processed attendance data:", data);
+      
       // First, get student IDs based on enrollment numbers
       const enrollmentNumbers = [...new Set(data.map(item => item.enrollment_number))];
+      
+      console.log("Looking up students with enrollment numbers:", enrollmentNumbers);
       
       const { data: students, error: studentsError } = await supabase
         .from('profiles')
         .select('id, enrollment_number')
         .in('enrollment_number', enrollmentNumbers);
       
-      if (studentsError) throw studentsError;
+      if (studentsError) {
+        console.error("Error fetching students:", studentsError);
+        throw studentsError;
+      }
+      
+      console.log("Found students:", students);
       
       // Create a mapping of enrollment number to student ID
       const studentMap = new Map();
@@ -132,29 +208,38 @@ export default function AddAttendance() {
       });
       
       // Prepare attendance records with student IDs
-      const attendanceRecords = data.map(item => {
-        const studentId = studentMap.get(item.enrollment_number);
-        if (!studentId) {
-          console.warn(`No student found with enrollment number: ${item.enrollment_number}`);
-          return null;
-        }
-        
-        return {
-          student_id: studentId,
-          faculty_id: item.faculty_id,
-          date: item.date,
-          subject: item.subject,
-          status: item.status
-        };
-      }).filter(Boolean);
+      const attendanceRecords = data
+        .filter(item => item.enrollment_number && studentMap.has(item.enrollment_number))
+        .map(item => {
+          const studentId = studentMap.get(item.enrollment_number);
+          
+          return {
+            student_id: studentId,
+            faculty_id: item.faculty_id,
+            date: item.date,
+            subject: item.subject,
+            status: item.status
+          };
+        });
       
-      // Insert attendance records
+      console.log("Prepared attendance records:", attendanceRecords);
+      
+      // Insert attendance records in batches to avoid payload size limits
       if (attendanceRecords.length > 0) {
-        const { error: insertError } = await supabase
-          .from('attendance')
-          .insert(attendanceRecords);
-        
-        if (insertError) throw insertError;
+        const batchSize = 50;
+        for (let i = 0; i < attendanceRecords.length; i += batchSize) {
+          const batch = attendanceRecords.slice(i, i + batchSize);
+          console.log(`Uploading batch ${i/batchSize + 1}:`, batch);
+          
+          const { error: insertError } = await supabase
+            .from('attendance')
+            .insert(batch);
+          
+          if (insertError) {
+            console.error("Error inserting attendance records:", insertError);
+            throw insertError;
+          }
+        }
       }
       
       return attendanceRecords.length;
