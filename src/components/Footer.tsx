@@ -1,9 +1,15 @@
 
 import React from "react";
-import { Facebook, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Twitter, Youtube, Globe } from "lucide-react";
 import { Separator } from "./ui/separator";
 
 export function Footer() {
+  const developers = [
+    { name: "Developer 1", portfolioUrl: "https://portfolio1.com", linkedinUrl: "https://linkedin.com/in/dev1" },
+    { name: "Developer 2", portfolioUrl: "https://portfolio2.com", linkedinUrl: "https://linkedin.com/in/dev2" },
+    { name: "Developer 3", portfolioUrl: "https://portfolio3.com", linkedinUrl: "https://linkedin.com/in/dev3" }
+  ];
+
   return (
     <footer className="w-full border-t bg-background px-4 py-6 mt-auto">
       <div className="container mx-auto">
@@ -19,16 +25,16 @@ export function Footer() {
               </div>
             </div>
             <p className="text-sm text-gray-600 text-center md:text-left">
-              Premier Engineering College in Mumbai offering quality education since 1989
+              Premier Engineering College in Delhi offering quality education since 1989
             </p>
           </div>
           
           <div className="flex flex-col items-center">
             <h3 className="font-semibold text-lg mb-4">Address</h3>
             <p className="text-sm text-gray-600 text-center md:text-left">
-              Premier Automobiles Road,<br />
-              Kurla West, Mumbai,<br />
-              Maharashtra 400070
+              Adjacent to Sukhdev Vihar,<br />
+              New Delhi, Delhi,<br />
+              India
             </p>
           </div>
           
@@ -56,8 +62,23 @@ export function Footer() {
         
         <Separator className="my-6" />
         
-        <div className="text-center text-sm text-gray-600">
+        <div className="text-center text-sm text-gray-600 mb-4">
           &copy; {new Date().getFullYear()} Don Bosco Institute of Technology. All rights reserved.
+        </div>
+        
+        <div className="flex flex-wrap justify-center gap-6">
+          <h4 className="w-full text-center font-semibold text-gray-700 mb-2">Developed by:</h4>
+          {developers.map((dev, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <span className="text-sm font-medium">{dev.name}</span>
+              <a href={dev.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-red-600 transition-colors">
+                <Globe size={16} />
+              </a>
+              <a href={dev.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-red-600 transition-colors">
+                <Linkedin size={16} />
+              </a>
+            </div>
+          ))}
         </div>
       </div>
     </footer>
