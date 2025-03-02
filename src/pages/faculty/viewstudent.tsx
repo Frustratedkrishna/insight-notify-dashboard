@@ -89,7 +89,8 @@ const ViewStudents: React.FC = () => {
             enrollment_number: item.enrollment_number,
             course_name: item.course_name,
             year: item.year,
-            section: item.section
+            section: item.section,
+            verify: item.verify || false  // Include verify property with fallback
           }));
           setStudents(formattedStudents);
         }
