@@ -5,9 +5,9 @@ import { Separator } from "./ui/separator";
 
 export function Footer() {
   const developers = [
-    { name: "Developer 1", portfolioUrl: "https://portfolio1.com", linkedinUrl: "https://linkedin.com/in/dev1" },
-    { name: "Developer 2", portfolioUrl: "https://portfolio2.com", linkedinUrl: "https://linkedin.com/in/dev2" },
-    { name: "Developer 3", portfolioUrl: "https://portfolio3.com", linkedinUrl: "https://linkedin.com/in/dev3" }
+    { name: "Krishna Khurana", portfolioUrl: "https://krishnakhurana.us.kg", linkedinUrl: "https://linkedin.com/in/dev1" },
+    { name: "Daksh Gulati", portfolioUrl: "#", linkedinUrl: "https://linkedin.com/in/dev2" },
+    { name: "Taranpreet Singh", portfolioUrl: "#", linkedinUrl: "https://linkedin.com/in/dev3" }
   ];
 
   return (
