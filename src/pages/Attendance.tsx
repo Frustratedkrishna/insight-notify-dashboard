@@ -16,6 +16,7 @@ import {
   Tooltip,
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/Footer";
 
 interface AttendanceData {
   subject: string;
@@ -28,7 +29,6 @@ export default function Attendance() {
   const { data: attendance, isLoading } = useQuery({
     queryKey: ["attendance"],
     queryFn: async () => {
-      // First get the profile with enrollment number
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id")
@@ -53,7 +53,6 @@ export default function Attendance() {
         return [];
       }
 
-      // Then get attendance using the profile id
       const { data, error } = await supabase
         .from("attendance")
         .select("subject, status")
@@ -91,7 +90,7 @@ export default function Attendance() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex flex-col w-full">
         <DashboardNav />
         <main className="flex-1 p-6 space-y-6">
           <Card>
@@ -136,6 +135,7 @@ export default function Attendance() {
             </CardContent>
           </Card>
         </main>
+        <Footer />
       </div>
     </SidebarProvider>
   );

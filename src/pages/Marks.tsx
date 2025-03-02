@@ -18,6 +18,7 @@ import {
   Tooltip,
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/Footer";
 
 interface Mark {
   subject: string;
@@ -31,7 +32,6 @@ export default function Marks() {
   const { data: marks, isLoading } = useQuery({
     queryKey: ["marks"],
     queryFn: async () => {
-      // First get the profile with enrollment number
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id")
@@ -56,7 +56,6 @@ export default function Marks() {
         return [];
       }
 
-      // Then get marks using the profile id
       const { data, error } = await supabase
         .from("marks")
         .select("subject, marks, exam_type")
@@ -91,7 +90,7 @@ export default function Marks() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex flex-col w-full">
         <DashboardNav />
         <main className="flex-1 p-6 space-y-6">
           <Card>
@@ -130,6 +129,7 @@ export default function Marks() {
             </CardContent>
           </Card>
         </main>
+        <Footer />
       </div>
     </SidebarProvider>
   );

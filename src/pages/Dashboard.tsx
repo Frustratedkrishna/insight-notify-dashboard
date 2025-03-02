@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,7 @@ import { DashboardNav } from "@/components/DashboardNav";
 import { useToast } from "@/components/ui/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationCard } from "@/components/NotificationCard";
+import { Footer } from "@/components/Footer";
 
 interface Profile {
   id: string;
@@ -107,7 +107,7 @@ export default function Dashboard() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex flex-col w-full">
         <DashboardNav />
         <main className="flex-1 p-6 space-y-6">
           <Card>
@@ -175,6 +175,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </main>
+        <Footer />
       </div>
     </SidebarProvider>
   );
