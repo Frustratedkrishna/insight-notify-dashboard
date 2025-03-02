@@ -44,85 +44,101 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
     }
   };
 
-  const NavContent = () => (
-    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 md:p-0">
-      <Button
-        variant="ghost"
-        className="w-full md:w-auto justify-start"
-        onClick={() => navigate("/faculty/dashboard")}
-      >
-        <User className="h-4 w-4" />
-        <span className="ml-2">Profile</span>
-      </Button>
-
-      <Button
-        variant="ghost"
-        className="w-full md:w-auto justify-start"
-        onClick={() => navigate("/faculty/notifications")}
-      >
-        <Bell className="h-4 w-4" />
-        <span className="ml-2">Notifications</span>
-      </Button>
-
-      <Button
-        variant="ghost"
-        className="w-full md:w-auto justify-start"
-        onClick={() => navigate("/faculty/attendance")}
-      >
-        <FileSpreadsheet className="h-4 w-4" />
-        <span className="ml-2">Attendance</span>
-      </Button>
-
-      <Button
-        variant="ghost"
-        className="w-full md:w-auto justify-start"
-        onClick={() => navigate("/faculty/viewstudent")}
-      >
-        <Users className="h-4 w-4" />
-        <span className="ml-2">Students</span>
-      </Button>
-      
-      <Button
-        variant="ghost"
-        className="w-full md:w-auto justify-start"
-        onClick={() => navigate("/faculty/viewfeedbacks")}
-      >
-        <Users className="h-4 w-4" />
-        <span className="ml-2">Feedbacks</span>
-      </Button>
-      
-      {role === 'class_coordinator' && (
+  const NavContent = () => {
+    // Get faculty role from localStorage if not provided as prop
+    let facultyRole = role;
+    if (!facultyRole) {
+      try {
+        const facultyStr = localStorage.getItem('faculty');
+        if (facultyStr) {
+          const faculty = JSON.parse(facultyStr);
+          facultyRole = faculty.role;
+        }
+      } catch (error) {
+        console.error("Error getting faculty role:", error);
+      }
+    }
+    
+    return (
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 md:p-0">
         <Button
           variant="ghost"
           className="w-full md:w-auto justify-start"
-          onClick={() => navigate("/faculty/approve-students")}
+          onClick={() => navigate("/faculty/dashboard")}
         >
-          <UserCheck className="h-4 w-4" />
-          <span className="ml-2">Approve Students</span>
+          <User className="h-4 w-4" />
+          <span className="ml-2">Profile</span>
         </Button>
-      )}
-      
-      {(role === 'class_coordinator' || role === 'hod') && (
+
         <Button
           variant="ghost"
           className="w-full md:w-auto justify-start"
-          onClick={() => navigate("/faculty/announcements")}
+          onClick={() => navigate("/faculty/notifications")}
         >
           <Bell className="h-4 w-4" />
-          <span className="ml-2">Announcements</span>
+          <span className="ml-2">Notifications</span>
         </Button>
-      )}
 
-      <Button
-        variant="ghost"
-        className="w-full md:w-auto justify-start"
-        onClick={handleSignOut}
-      >
-        <LogOut className="h-4 w-4" />
-        <span className="ml-2">Sign Out</span>
-      </Button>
-    </div>
-  );
+        <Button
+          variant="ghost"
+          className="w-full md:w-auto justify-start"
+          onClick={() => navigate("/faculty/addattendance")}
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+          <span className="ml-2">Attendance</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          className="w-full md:w-auto justify-start"
+          onClick={() => navigate("/faculty/viewstudent")}
+        >
+          <Users className="h-4 w-4" />
+          <span className="ml-2">Students</span>
+        </Button>
+        
+        <Button
+          variant="ghost"
+          className="w-full md:w-auto justify-start"
+          onClick={() => navigate("/faculty/viewfeedbacks")}
+        >
+          <Users className="h-4 w-4" />
+          <span className="ml-2">Feedbacks</span>
+        </Button>
+        
+        {facultyRole === 'class_coordinator' && (
+          <Button
+            variant="ghost"
+            className="w-full md:w-auto justify-start"
+            onClick={() => navigate("/faculty/approve-students")}
+          >
+            <UserCheck className="h-4 w-4" />
+            <span className="ml-2">Approve Students</span>
+          </Button>
+        )}
+        
+        {(facultyRole === 'class_coordinator' || facultyRole === 'hod') && (
+          <Button
+            variant="ghost"
+            className="w-full md:w-auto justify-start"
+            onClick={() => navigate("/faculty/announcements")}
+          >
+            <Bell className="h-4 w-4" />
+            <span className="ml-2">Announcements</span>
+          </Button>
+        )}
+
+        <Button
+          variant="ghost"
+          className="w-full md:w-auto justify-start"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="ml-2">Sign Out</span>
+        </Button>
+      </div>
+    );
+  };
 
   return (
     <nav className="border-b bg-white sticky top-0 z-10 shadow-sm">
