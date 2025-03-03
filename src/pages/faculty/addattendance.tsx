@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +40,6 @@ export default function AddAttendance() {
   const [facultyProfile, setFacultyProfile] = useState<any>(null);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
 
-  // Initialize form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -51,7 +49,6 @@ export default function AddAttendance() {
     },
   });
 
-  // Get the currently logged in faculty from localStorage
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -68,7 +65,6 @@ export default function AddAttendance() {
           throw new Error("Employee ID not found in session");
         }
         
-        // Fetch faculty profile
         const { data: facultyData, error: facultyError } = await supabase
           .from('faculty_profiles')
           .select('*')
@@ -88,9 +84,9 @@ export default function AddAttendance() {
     };
     
     checkAuth();
+    console.log("AddAttendance component mounted");
   }, [navigate]);
 
-  // Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -98,7 +94,6 @@ export default function AddAttendance() {
     }
   };
 
-  // Process Excel data
   const processExcel = async (file: File, subject: string, date: string): Promise<any[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -108,14 +103,11 @@ export default function AddAttendance() {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
           
-          // Get the first worksheet
           const worksheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[worksheetName];
           
-          // Convert to JSON with header row
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
           
-          // Find the indexes of the enrollment_number and status columns
           const headerRow = jsonData[0] as string[];
           const enrollmentIndex = headerRow.findIndex(
             col => col && col.toLowerCase().includes('enrollment')
@@ -129,9 +121,7 @@ export default function AddAttendance() {
             return;
           }
           
-          // Process the data starting from row 1 (skip header)
           const processedData = jsonData.slice(1).map((row: any) => {
-            // Handle enrollment number - ensure it's a string
             let enrollmentNumber = row[enrollmentIndex];
             if (enrollmentNumber !== undefined) {
               enrollmentNumber = String(enrollmentNumber).trim();
@@ -139,11 +129,9 @@ export default function AddAttendance() {
               enrollmentNumber = "";
             }
             
-            // Handle status - convert to lowercase and ensure it's a string
             let status = row[statusIndex];
             if (status !== undefined) {
               status = String(status).trim().toLowerCase();
-              // Normalize status values
               if (status === "p" || status === "present" || status === "1") {
                 status = "present";
               } else {
@@ -160,7 +148,7 @@ export default function AddAttendance() {
               date,
               faculty_id: facultyProfile.id
             };
-          }).filter(item => item.enrollment_number); // Filter out rows with no enrollment number
+          }).filter(item => item.enrollment_number);
           
           resolve(processedData);
         } catch (error) {
@@ -177,14 +165,12 @@ export default function AddAttendance() {
     });
   };
 
-  // Upload attendance data to Supabase
   const uploadAttendanceData = async (data: any[]) => {
     if (!data.length) return 0;
     
     try {
       console.log("Processed attendance data:", data);
       
-      // First, get student IDs based on enrollment numbers
       const enrollmentNumbers = [...new Set(data.map(item => item.enrollment_number))];
       
       console.log("Looking up students with enrollment numbers:", enrollmentNumbers);
@@ -201,13 +187,11 @@ export default function AddAttendance() {
       
       console.log("Found students:", students);
       
-      // Create a mapping of enrollment number to student ID
       const studentMap = new Map();
       students?.forEach(student => {
         studentMap.set(student.enrollment_number, student.id);
       });
       
-      // Prepare attendance records with student IDs
       const attendanceRecords = data
         .filter(item => item.enrollment_number && studentMap.has(item.enrollment_number))
         .map(item => {
@@ -224,7 +208,6 @@ export default function AddAttendance() {
       
       console.log("Prepared attendance records:", attendanceRecords);
       
-      // Insert attendance records in batches to avoid payload size limits
       if (attendanceRecords.length > 0) {
         const batchSize = 50;
         for (let i = 0; i < attendanceRecords.length; i += batchSize) {
@@ -249,7 +232,6 @@ export default function AddAttendance() {
     }
   };
 
-  // Submit handler
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
@@ -262,14 +244,11 @@ export default function AddAttendance() {
 
       const file = values.file as File;
       
-      // Process Excel file
       setUploadProgress(30);
       const processedData = await processExcel(file, values.subject, values.date);
       
-      // Update progress
       setUploadProgress(60);
       
-      // Upload to Supabase
       const recordsUploaded = await uploadAttendanceData(processedData);
       
       setUploadProgress(100);
@@ -280,7 +259,6 @@ export default function AddAttendance() {
         description: `${recordsUploaded} attendance records uploaded for ${values.subject} on ${values.date}`,
       });
       
-      // Reset form
       form.reset({
         subject: "",
         date: new Date().toISOString().split('T')[0],
@@ -300,6 +278,8 @@ export default function AddAttendance() {
     }
   };
 
+  console.log("Rendering AddAttendance component", { facultyProfile });
+
   return (
     <div className="min-h-screen bg-background">
       <FacultyNavbar role={facultyProfile?.role} />
@@ -316,14 +296,7 @@ export default function AddAttendance() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
-            {facultyProfile?.role !== 'class_coordinator' ? (
-              <Alert variant="destructive">
-                <AlertTitle>Access Denied</AlertTitle>
-                <AlertDescription>
-                  Only class coordinators can upload attendance data.
-                </AlertDescription>
-              </Alert>
-            ) : (
+            {facultyProfile ? (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
@@ -426,6 +399,11 @@ export default function AddAttendance() {
                   </Button>
                 </form>
               </Form>
+            ) : (
+              <div className="p-4 text-center">
+                <Skeleton className="h-8 w-1/3 mx-auto mb-4" />
+                <Skeleton className="h-6 w-1/2 mx-auto" />
+              </div>
             )}
           </CardContent>
         </Card>

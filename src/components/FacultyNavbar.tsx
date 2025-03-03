@@ -59,6 +59,8 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
       }
     }
     
+    console.log("Faculty role in navbar:", facultyRole);
+    
     return (
       <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 md:p-0">
         <Button
@@ -82,7 +84,10 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         <Button
           variant="ghost"
           className="w-full md:w-auto justify-start"
-          onClick={() => navigate("/faculty/addattendance")}
+          onClick={() => {
+            console.log("Navigating to addattendance");
+            navigate("/faculty/addattendance");
+          }}
         >
           <FileSpreadsheet className="h-4 w-4" />
           <span className="ml-2">Add Attendance</span>
