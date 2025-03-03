@@ -84,10 +84,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         <Button
           variant="ghost"
           className="w-full md:w-auto justify-start"
-          onClick={() => {
-            console.log("Navigating to addattendance");
-            navigate("/faculty/addattendance");
-          }}
+          onClick={() => navigate("/faculty/addattendance")}
         >
           <FileSpreadsheet className="h-4 w-4" />
           <span className="ml-2">Add Attendance</span>

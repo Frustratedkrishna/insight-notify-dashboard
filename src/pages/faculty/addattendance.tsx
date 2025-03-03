@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { File, Upload, FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 
 const formSchema = z.object({
@@ -50,33 +50,29 @@ export default function AddAttendance() {
   });
 
   useEffect(() => {
+    console.log("AddAttendance component mounted - checking authentication");
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Check localStorage first
+        const facultyStr = localStorage.getItem('faculty');
         
-        if (!session) {
+        if (!facultyStr) {
+          console.log("No faculty data in localStorage, redirecting to faculty-auth");
           navigate("/faculty-auth");
           return;
         }
         
-        const employeeId = session.user.user_metadata.employee_id;
+        // Parse the faculty data from localStorage
+        const faculty = JSON.parse(facultyStr);
+        console.log("Faculty profile from localStorage:", faculty);
         
-        if (!employeeId) {
-          throw new Error("Employee ID not found in session");
+        if (!faculty.employee_id) {
+          console.log("No employee_id in faculty profile, redirecting to faculty-auth");
+          navigate("/faculty-auth");
+          return;
         }
         
-        const { data: facultyData, error: facultyError } = await supabase
-          .from('faculty_profiles')
-          .select('*')
-          .eq('employee_id', employeeId)
-          .maybeSingle();
-        
-        if (facultyError) throw facultyError;
-        if (!facultyData) {
-          throw new Error("Faculty profile not found");
-        }
-        
-        setFacultyProfile(facultyData);
+        setFacultyProfile(faculty);
       } catch (error) {
         console.error("Auth check error:", error);
         navigate("/faculty-auth");
@@ -84,7 +80,6 @@ export default function AddAttendance() {
     };
     
     checkAuth();
-    console.log("AddAttendance component mounted");
   }, [navigate]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

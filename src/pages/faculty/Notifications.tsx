@@ -66,36 +66,23 @@ export default function FacultyNotifications() {
   });
 
   useEffect(() => {
+    console.log("FacultyNotifications component mounted");
     const fetchData = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // First check localStorage for faculty data
+        const facultyStr = localStorage.getItem('faculty');
         
-        if (sessionError) throw sessionError;
-        
-        if (!session) {
+        if (!facultyStr) {
+          console.log("No faculty data in localStorage, redirecting to faculty-auth");
           navigate("/faculty-auth");
           return;
         }
-
-        const employeeId = session.user.user_metadata.employee_id;
         
-        if (!employeeId) {
-          throw new Error("Employee ID not found in session");
-        }
-
-        // Fetch faculty profile
-        const { data: facultyData, error: facultyError } = await supabase
-          .from('faculty_profiles')
-          .select('role, course_name, section, department')
-          .eq('employee_id', employeeId)
-          .maybeSingle();
-
-        if (facultyError) throw facultyError;
-        if (!facultyData) {
-          throw new Error("Faculty profile not found");
-        }
-
-        setFacultyProfile(facultyData);
+        // Parse the faculty data
+        const faculty = JSON.parse(facultyStr);
+        setFacultyProfile(faculty);
+        
+        console.log("Faculty profile loaded from localStorage:", faculty);
 
         // Fetch notifications based on role
         let query = supabase
@@ -103,12 +90,12 @@ export default function FacultyNotifications() {
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (facultyData.role === 'class_coordinator') {
+        if (faculty.role === 'class_coordinator') {
           // Class coordinators see notifications for their specific class
-          query = query.or(`type.eq.general,and(type.eq.course_specific,department.eq.${facultyData.course_name},semester.eq.${facultyData.section})`);
-        } else if (facultyData.role === 'hod') {
+          query = query.or(`type.eq.general,and(type.eq.course_specific,department.eq.${faculty.course_name},semester.eq.${faculty.section})`);
+        } else if (faculty.role === 'hod') {
           // HODs see notifications for their department
-          query = query.or(`type.eq.general,and(type.eq.course_specific,department.eq.${facultyData.course_name})`);
+          query = query.or(`type.eq.general,and(type.eq.course_specific,department.eq.${faculty.course_name})`);
         }
 
         const { data: notificationsData, error: notificationsError } = await query;
@@ -116,6 +103,7 @@ export default function FacultyNotifications() {
         if (notificationsError) throw notificationsError;
 
         setNotifications(notificationsData);
+        console.log("Notifications loaded:", notificationsData);
       } catch (error: any) {
         console.error("Error:", error);
         toast({
