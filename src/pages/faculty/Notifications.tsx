@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +34,7 @@ interface Notification {
   content: string;
   type: string;
   department?: string;
-  semester?: number;
+  semester?: string; // Changed from number to string
   created_at: string;
 }
 
@@ -84,14 +85,24 @@ export default function FacultyNotifications() {
         
         console.log("Faculty profile loaded from localStorage:", faculty);
 
+        // Check Supabase authentication session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.log("No active Supabase session, redirecting to faculty-auth");
+          navigate("/faculty-auth");
+          return;
+        }
+
         // Fetch notifications based on role
         let query = supabase
           .from('notifications')
           .select('*')
           .order('created_at', { ascending: false });
 
+        // Adjust query based on faculty role
         if (faculty.role === 'class_coordinator') {
           // Class coordinators see notifications for their specific class
+          // Use the appropriate syntax for string semester
           query = query.or(`type.eq.general,and(type.eq.course_specific,department.eq.${faculty.course_name},semester.eq.${faculty.section})`);
         } else if (faculty.role === 'hod') {
           // HODs see notifications for their department
@@ -100,12 +111,15 @@ export default function FacultyNotifications() {
 
         const { data: notificationsData, error: notificationsError } = await query;
 
-        if (notificationsError) throw notificationsError;
+        if (notificationsError) {
+          console.error("Notifications error:", notificationsError);
+          throw notificationsError;
+        }
 
-        setNotifications(notificationsData);
+        setNotifications(notificationsData || []);
         console.log("Notifications loaded:", notificationsData);
       } catch (error: any) {
-        console.error("Error:", error);
+        console.error("Error fetching notifications:", error);
         toast({
           title: "Error loading notifications",
           description: error.message,
@@ -123,20 +137,39 @@ export default function FacultyNotifications() {
     try {
       if (!facultyProfile) return;
 
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication error",
+          description: "You need to be logged in to create announcements",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const notificationData = {
         title: values.title,
         content: values.content,
         type: 'course_specific',
         department: facultyProfile.course_name,
-        semester: facultyProfile.role === 'class_coordinator' ? parseInt(facultyProfile.section || '0') : null,
-        created_by: (await supabase.auth.getSession()).data.session?.user.id,
+        semester: facultyProfile.section, // This will now correctly work with string sections
+        created_by: session.user.id,
       };
 
-      const { error } = await supabase
-        .from('notifications')
-        .insert(notificationData);
+      console.log("Creating notification with data:", notificationData);
 
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from('notifications')
+        .insert(notificationData)
+        .select();
+
+      if (error) {
+        console.error("Error creating notification:", error);
+        throw error;
+      }
+
+      console.log("Notification created successfully:", data);
 
       toast({
         title: "Success",
@@ -153,10 +186,10 @@ export default function FacultyNotifications() {
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-      setNotifications(newNotifications);
+      setNotifications(newNotifications || []);
 
     } catch (error: any) {
-      console.error("Error:", error);
+      console.error("Error creating announcement:", error);
       toast({
         title: "Error creating announcement",
         description: error.message,

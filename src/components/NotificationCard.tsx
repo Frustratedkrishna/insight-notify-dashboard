@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 
@@ -7,7 +8,7 @@ interface NotificationCardProps {
   createdAt: string;
   type: string;
   department?: string;
-  semester?: number;
+  semester?: string; // Changed from number to string
 }
 
 export function NotificationCard({
@@ -18,6 +19,19 @@ export function NotificationCard({
   department,
   semester,
 }: NotificationCardProps) {
+  // Calculate year from semester - handle both numeric and string sections
+  const getYear = (semester: string | undefined): number => {
+    if (!semester) return 0;
+    
+    // If it's a number like "1", "2", etc., use the formula
+    if (!isNaN(Number(semester))) {
+      return Math.ceil(Number(semester) / 2);
+    }
+    
+    // If it's a section like "A", "B", etc., return 1 as default
+    return 1;
+  };
+
   return (
     <Card className="mb-4">
       <CardHeader>
@@ -28,8 +42,16 @@ export function NotificationCard({
             <>
               <span>•</span>
               <span>{department}</span>
-              <span>•</span>
-              <span>Year {Math.ceil((semester || 0) / 2)}</span>
+              {semester && (
+                <>
+                  <span>•</span>
+                  <span>
+                    {isNaN(Number(semester)) 
+                      ? `Section ${semester}` 
+                      : `Year ${getYear(semester)}`}
+                  </span>
+                </>
+              )}
             </>
           )}
         </div>
