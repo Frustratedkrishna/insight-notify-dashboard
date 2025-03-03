@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, User, Calendar, Users, Menu, FileSpreadsheet, UserCheck } from "lucide-react";
+import { Bell, LogOut, User, Users, Menu, FileSpreadsheet, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,7 +85,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
           onClick={() => navigate("/faculty/addattendance")}
         >
           <FileSpreadsheet className="h-4 w-4" />
-          <span className="ml-2">Attendance</span>
+          <span className="ml-2">Add Attendance</span>
         </Button>
 
         <Button
