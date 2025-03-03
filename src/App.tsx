@@ -16,6 +16,7 @@ import ViewStudents from "./pages/faculty/viewstudent";
 import AddAttendance from "./pages/faculty/addattendance";
 import ViewFeedbacks from "./pages/faculty/Viewfeedbacks";
 import ApproveStudents from "./pages/faculty/ApproveStudents";
+import Announcements from "./pages/faculty/Announcements";
 
 function App() {
   return (
@@ -33,9 +34,10 @@ function App() {
           <Route path="/faculty/notifications" element={<FacultyNotifications />} />
           <Route path="/faculty/viewstudent" element={<ViewStudents />} />
           <Route path="/faculty/attendance" element={<Attendance />} />
-          <Route path="/faculty/addattendance/:id" element={<AddAttendance />} />
+          <Route path="/faculty/addattendance" element={<AddAttendance />} />
           <Route path="/faculty/viewfeedbacks" element={<ViewFeedbacks />} />
           <Route path="/faculty/approve-students" element={<ApproveStudents />} />
+          <Route path="/faculty/announcements" element={<Announcements />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
