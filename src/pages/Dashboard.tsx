@@ -11,28 +11,7 @@ import { NotificationCard } from "@/components/NotificationCard";
 import { Footer } from "@/components/Footer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-
-interface Profile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  enrollment_number: string;
-  course_name: string;
-  year: number;
-  section: string;
-  profile_image_url: string;
-  verify: boolean;
-}
-
-interface Notification {
-  id: string;
-  title: string;
-  content: string;
-  type: string;
-  department?: string;
-  semester?: number;
-  created_at: string;
-}
+import { Notification, Profile } from "@/types/supabase";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -84,11 +63,14 @@ export default function Dashboard() {
 
         setProfile(profileData);
 
+        // Convert year to semester (year * 2) and convert to string for the query
+        const semester = String(profileData.year * 2);
+        
         // Fetch notifications
         const { data: notificationsData, error: notificationsError } = await supabase
           .from("notifications")
           .select("*")
-          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${profileData.year * 2})`)
+          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${semester})`)
           .order("created_at", { ascending: false });
 
         if (notificationsError) {

@@ -34,7 +34,7 @@ export interface Notification {
   content: string;
   type: string;
   department?: string;
-  semester?: string; // Changed from number to string
+  semester?: string;
   created_by?: string;
   created_at: string;
 }

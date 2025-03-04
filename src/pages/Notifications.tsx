@@ -7,21 +7,12 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationCard } from "@/components/NotificationCard";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Notification } from "@/types/supabase";
 
 interface Profile {
   course_name: string;
   year: number;
   section: string;
-}
-
-interface Notification {
-  id: string;
-  title: string;
-  content: string;
-  type: string;
-  department?: string;
-  semester?: number;
-  created_at: string;
 }
 
 export default function Notifications() {
@@ -85,11 +76,14 @@ export default function Notifications() {
         
         setProfile(profileData);
 
+        // Convert year to semester (as string)
+        const semester = String(profileData.year * 2);
+
         // Fetch notifications
         const { data: notificationsData, error: notificationsError } = await supabase
           .from("notifications")
           .select("*")
-          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${profileData.year * 2})`)
+          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${semester})`)
           .order("created_at", { ascending: false });
 
         if (notificationsError) throw notificationsError;

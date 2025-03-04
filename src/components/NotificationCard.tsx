@@ -8,7 +8,7 @@ interface NotificationCardProps {
   createdAt: string;
   type: string;
   department?: string;
-  semester?: string; // Changed from number to string
+  semester?: string;
 }
 
 export function NotificationCard({

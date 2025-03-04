@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,16 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
-interface Notification {
-  id: string;
-  title: string;
-  content: string;
-  type: string;
-  department?: string;
-  semester?: string; // Changed from number to string
-  created_at: string;
-}
+import { Notification } from "@/types/supabase";
 
 interface FacultyProfile {
   role: string;
@@ -102,7 +92,6 @@ export default function FacultyNotifications() {
         // Adjust query based on faculty role
         if (faculty.role === 'class_coordinator') {
           // Class coordinators see notifications for their specific class
-          // Use the appropriate syntax for string semester
           query = query.or(`type.eq.general,and(type.eq.course_specific,department.eq.${faculty.course_name},semester.eq.${faculty.section})`);
         } else if (faculty.role === 'hod') {
           // HODs see notifications for their department
