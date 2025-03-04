@@ -75,7 +75,10 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         <Button
           variant="ghost"
           className="w-full md:w-auto justify-start"
-          onClick={() => navigate("/faculty/notifications")}
+          onClick={() => {
+            console.log("Navigating to faculty notifications");
+            navigate("/faculty/notifications");
+          }}
         >
           <Bell className="h-4 w-4" />
           <span className="ml-2">Notifications</span>
