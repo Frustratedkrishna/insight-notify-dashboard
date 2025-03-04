@@ -139,13 +139,22 @@ export default function FacultyNotifications() {
         faculty: facultyProfile
       });
 
+      // Get the user ID from Supabase auth
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      console.log("Current authenticated user:", user);
+
       const notificationData = {
         title: values.title,
         content: values.content,
         type: 'course_specific',
         department: facultyProfile.course_name,
-        semester: facultyProfile.section, // This will now correctly work with string sections
-        created_by: facultyProfile.id,
+        semester: facultyProfile.section,
+        created_by: user.id, // Use authenticated user ID from auth
       };
 
       console.log("Notification data prepared:", notificationData);
