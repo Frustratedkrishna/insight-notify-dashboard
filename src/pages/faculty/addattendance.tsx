@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +53,18 @@ export default function AddAttendance() {
     console.log("AddAttendance component mounted - checking authentication");
     const checkAuth = async () => {
       try {
-        // Check localStorage first
+        // First, check if user is authenticated with Supabase
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.log("No authenticated user, redirecting to faculty-auth");
+          navigate("/faculty-auth");
+          return;
+        }
+        
+        console.log("Authenticated user:", user);
+        
+        // Check localStorage for faculty profile data
         const facultyStr = localStorage.getItem('faculty');
         
         if (!facultyStr) {
@@ -149,8 +159,7 @@ export default function AddAttendance() {
               enrollment_number: enrollmentNumber,
               status: status,
               subject,
-              date,
-              faculty_id: facultyProfile.id
+              date
             };
           }).filter(item => item.enrollment_number);
           
@@ -175,6 +184,16 @@ export default function AddAttendance() {
     
     try {
       console.log("Processed attendance data:", data);
+      
+      // Get the current authenticated user ID
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.error("Authentication error:", authError);
+        throw new Error("User not authenticated. Please log in again.");
+      }
+      
+      console.log("Current authenticated user:", user);
       
       const enrollmentNumbers = [...new Set(data.map(item => item.enrollment_number))];
       
@@ -216,7 +235,7 @@ export default function AddAttendance() {
           
           return {
             student_id: studentId,
-            faculty_id: item.faculty_id,
+            faculty_id: user.id,
             date: item.date,
             subject: item.subject,
             status: item.status
