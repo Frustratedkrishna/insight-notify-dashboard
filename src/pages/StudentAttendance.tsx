@@ -21,10 +21,16 @@ export default function StudentAttendance() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-  const [stats, setStats] = useState<{ present: number; absent: number; total: number }>({
+  const [stats, setStats] = useState<{ 
+    present: number; 
+    absent: number; 
+    total: number;
+    subjectWise: Record<string, { present: number, absent: number, total: number }>
+  }>({
     present: 0,
     absent: 0,
     total: 0,
+    subjectWise: {}
   });
 
   useEffect(() => {
@@ -37,6 +43,7 @@ export default function StudentAttendance() {
         }
         
         const profile = JSON.parse(profileStr);
+        console.log("Student profile from localStorage:", profile);
         
         // First get the student's ID using their enrollment number
         const { data: studentData, error: studentError } = await supabase
@@ -45,8 +52,17 @@ export default function StudentAttendance() {
           .eq('enrollment_number', profile.enrollment_number)
           .maybeSingle();
         
-        if (studentError) throw studentError;
-        if (!studentData) throw new Error("Student record not found");
+        if (studentError) {
+          console.error("Error fetching student profile:", studentError);
+          throw studentError;
+        }
+        
+        if (!studentData) {
+          console.error("Student record not found");
+          throw new Error("Student record not found");
+        }
+        
+        console.log("Found student ID:", studentData.id);
         
         // Now fetch attendance records for this student
         const { data: attendanceData, error: attendanceError } = await supabase
@@ -55,7 +71,12 @@ export default function StudentAttendance() {
           .eq('student_id', studentData.id)
           .order('date', { ascending: false });
         
-        if (attendanceError) throw attendanceError;
+        if (attendanceError) {
+          console.error("Error fetching attendance data:", attendanceError);
+          throw attendanceError;
+        }
+        
+        console.log("Fetched attendance records:", attendanceData);
         
         // Update state with fetched attendance
         setAttendance(attendanceData || []);
@@ -64,10 +85,32 @@ export default function StudentAttendance() {
         const present = attendanceData?.filter(record => record.status === 'present').length || 0;
         const total = attendanceData?.length || 0;
         
+        // Calculate subject-wise statistics
+        const subjectWise: Record<string, { present: number, absent: number, total: number }> = {};
+        
+        attendanceData?.forEach(record => {
+          // Initialize subject if not exists
+          if (!subjectWise[record.subject]) {
+            subjectWise[record.subject] = { present: 0, absent: 0, total: 0 };
+          }
+          
+          // Increment stats
+          subjectWise[record.subject].total++;
+          
+          if (record.status === 'present') {
+            subjectWise[record.subject].present++;
+          } else {
+            subjectWise[record.subject].absent++;
+          }
+        });
+        
+        console.log("Subject-wise attendance stats:", subjectWise);
+        
         setStats({
           present,
           absent: total - present,
-          total
+          total,
+          subjectWise
         });
         
       } catch (error: any) {
@@ -94,9 +137,9 @@ export default function StudentAttendance() {
   
   const COLORS = ['#22c55e', '#ef4444'];
 
-  const getAttendancePercentage = () => {
-    if (stats.total === 0) return 0;
-    return Math.round((stats.present / stats.total) * 100);
+  const getAttendancePercentage = (present: number, total: number) => {
+    if (total === 0) return 0;
+    return Math.round((present / total) * 100);
   };
 
   if (loading) {
@@ -136,7 +179,7 @@ export default function StudentAttendance() {
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>Attendance Summary</CardTitle>
+              <CardTitle>Overall Attendance Summary</CardTitle>
             </CardHeader>
             <CardContent>
               {stats.total === 0 ? (
@@ -184,13 +227,13 @@ export default function StudentAttendance() {
                   </div>
                   
                   <div className="bg-blue-50 p-4 rounded-md text-center">
-                    <p className="text-sm text-gray-500 mb-1">Attendance Percentage</p>
+                    <p className="text-sm text-gray-500 mb-1">Overall Attendance Percentage</p>
                     <p className={`text-2xl font-bold ${
-                      getAttendancePercentage() >= 75 ? 'text-green-600' : 'text-red-600'
+                      getAttendancePercentage(stats.present, stats.total) >= 75 ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {getAttendancePercentage()}%
+                      {getAttendancePercentage(stats.present, stats.total)}%
                     </p>
-                    {getAttendancePercentage() < 75 && (
+                    {getAttendancePercentage(stats.present, stats.total) < 75 && (
                       <p className="text-sm text-red-500 mt-1">
                         Your attendance is below 75%. Please improve your attendance.
                       </p>
@@ -202,6 +245,46 @@ export default function StudentAttendance() {
           </Card>
           
           <Card>
+            <CardHeader>
+              <CardTitle>Subject-wise Attendance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(stats.subjectWise).length === 0 ? (
+                <p className="text-gray-500 text-center py-10">No subject-wise data available</p>
+              ) : (
+                <div className="space-y-4">
+                  {Object.entries(stats.subjectWise).map(([subject, data]) => {
+                    const percentage = getAttendancePercentage(data.present, data.total);
+                    return (
+                      <div key={subject} className="p-3 rounded-md border">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-medium">{subject}</h3>
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            percentage >= 75 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {percentage}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${percentage >= 75 ? 'bg-green-500' : 'bg-red-500'}`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs mt-1 text-gray-500">
+                          <span>Present: {data.present}</span>
+                          <span>Absent: {data.absent}</span>
+                          <span>Total: {data.total}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>Attendance Records</CardTitle>
             </CardHeader>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,13 +104,21 @@ export default function AddAttendance() {
           
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
           
+          console.log("Excel data parsed:", jsonData);
+          
           const headerRow = jsonData[0] as string[];
           const enrollmentIndex = headerRow.findIndex(
-            col => col && col.toLowerCase().includes('enrollment')
+            col => col && String(col).toLowerCase().includes('enrollment')
           );
           const statusIndex = headerRow.findIndex(
-            col => col && col.toLowerCase().includes('status')
+            col => col && String(col).toLowerCase().includes('status')
           );
+          
+          console.log("Header columns found:", { 
+            header: headerRow, 
+            enrollmentIndex, 
+            statusIndex 
+          });
           
           if (enrollmentIndex === -1 || statusIndex === -1) {
             reject(new Error("Excel file must contain 'enrollment_number' and 'status' columns"));
@@ -145,6 +154,7 @@ export default function AddAttendance() {
             };
           }).filter(item => item.enrollment_number);
           
+          console.log("Processed data:", processedData);
           resolve(processedData);
         } catch (error) {
           console.error("Excel processing error:", error);
@@ -182,13 +192,25 @@ export default function AddAttendance() {
       
       console.log("Found students:", students);
       
+      if (!students || students.length === 0) {
+        throw new Error("No matching students found with the provided enrollment numbers");
+      }
+      
       const studentMap = new Map();
       students?.forEach(student => {
         studentMap.set(student.enrollment_number, student.id);
       });
       
+      console.log("Student mapping created:", Array.from(studentMap.entries()));
+      
       const attendanceRecords = data
-        .filter(item => item.enrollment_number && studentMap.has(item.enrollment_number))
+        .filter(item => {
+          const hasMapping = item.enrollment_number && studentMap.has(item.enrollment_number);
+          if (!hasMapping) {
+            console.log(`No student found for enrollment number: ${item.enrollment_number}`);
+          }
+          return hasMapping;
+        })
         .map(item => {
           const studentId = studentMap.get(item.enrollment_number);
           
@@ -202,6 +224,10 @@ export default function AddAttendance() {
         });
       
       console.log("Prepared attendance records:", attendanceRecords);
+      
+      if (attendanceRecords.length === 0) {
+        throw new Error("No valid attendance records could be created. Check if enrollment numbers match registered students.");
+      }
       
       if (attendanceRecords.length > 0) {
         const batchSize = 50;
@@ -240,9 +266,11 @@ export default function AddAttendance() {
       const file = values.file as File;
       
       setUploadProgress(30);
+      console.log("Processing Excel file:", file.name);
       const processedData = await processExcel(file, values.subject, values.date);
       
       setUploadProgress(60);
+      console.log(`Uploading ${processedData.length} attendance records`);
       
       const recordsUploaded = await uploadAttendanceData(processedData);
       

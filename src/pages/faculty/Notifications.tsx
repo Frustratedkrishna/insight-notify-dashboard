@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,8 +28,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Notification } from "@/types/supabase";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface FacultyProfile {
+  id: string;
   role: string;
   course_name?: string;
   section?: string;
@@ -46,6 +51,7 @@ export default function FacultyNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [facultyProfile, setFacultyProfile] = useState<FacultyProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const form = useForm<z.infer<typeof notificationSchema>>({
@@ -65,6 +71,7 @@ export default function FacultyNotifications() {
         
         if (!facultyStr) {
           console.log("No faculty data in localStorage, redirecting to faculty-auth");
+          setError("Authentication required. Please login again.");
           navigate("/faculty-auth");
           return;
         }
@@ -74,14 +81,6 @@ export default function FacultyNotifications() {
         setFacultyProfile(faculty);
         
         console.log("Faculty profile loaded from localStorage:", faculty);
-
-        // Check Supabase authentication session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          console.log("No active Supabase session, redirecting to faculty-auth");
-          navigate("/faculty-auth");
-          return;
-        }
 
         // Fetch notifications based on role
         let query = supabase
@@ -109,6 +108,7 @@ export default function FacultyNotifications() {
         console.log("Notifications loaded:", notificationsData);
       } catch (error: any) {
         console.error("Error fetching notifications:", error);
+        setError(error.message);
         toast({
           title: "Error loading notifications",
           description: error.message,
@@ -124,18 +124,20 @@ export default function FacultyNotifications() {
 
   const onSubmit = async (values: z.infer<typeof notificationSchema>) => {
     try {
-      if (!facultyProfile) return;
-
-      // Get current user session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!facultyProfile) {
         toast({
-          title: "Authentication error",
-          description: "You need to be logged in to create announcements",
+          title: "Error",
+          description: "Faculty profile not found. Please login again.",
           variant: "destructive",
         });
         return;
       }
+
+      console.log("Creating notification with data:", {
+        title: values.title,
+        content: values.content,
+        faculty: facultyProfile
+      });
 
       const notificationData = {
         title: values.title,
@@ -143,10 +145,10 @@ export default function FacultyNotifications() {
         type: 'course_specific',
         department: facultyProfile.course_name,
         semester: facultyProfile.section, // This will now correctly work with string sections
-        created_by: session.user.id,
+        created_by: facultyProfile.id,
       };
 
-      console.log("Creating notification with data:", notificationData);
+      console.log("Notification data prepared:", notificationData);
 
       const { data, error } = await supabase
         .from('notifications')
@@ -188,6 +190,45 @@ export default function FacultyNotifications() {
   };
 
   const canCreateAnnouncements = facultyProfile?.role === 'class_coordinator' || facultyProfile?.role === 'hod';
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col w-full">
+        <FacultyNavbar role={facultyProfile?.role} />
+        <main className="flex-1 container mx-auto p-6">
+          <div className="flex justify-between items-center mb-6">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-10 w-40" />
+          </div>
+          {Array(3).fill(0).map((_, i) => (
+            <div key={i} className="mb-4 border rounded-lg p-4">
+              <Skeleton className="h-6 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-1/4 mb-4" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+          ))}
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col w-full">
+        <FacultyNavbar role={facultyProfile?.role} />
+        <main className="flex-1 container mx-auto p-6">
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button onClick={() => navigate("/faculty-auth")}>
+            Go to Login
+          </Button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col w-full">
@@ -244,27 +285,23 @@ export default function FacultyNotifications() {
             </Dialog>
           )}
         </div>
-        {loading ? (
-          <div>Loading...</div>
-        ) : (
-          <div className="space-y-4">
-            {notifications.length === 0 ? (
-              <p className="text-muted-foreground">No notifications to display</p>
-            ) : (
-              notifications.map((notification) => (
-                <NotificationCard
-                  key={notification.id}
-                  title={notification.title}
-                  content={notification.content}
-                  createdAt={notification.created_at}
-                  type={notification.type}
-                  department={notification.department}
-                  semester={notification.semester}
-                />
-              ))
-            )}
-          </div>
-        )}
+        <div className="space-y-4">
+          {notifications.length === 0 ? (
+            <p className="text-muted-foreground">No notifications to display</p>
+          ) : (
+            notifications.map((notification) => (
+              <NotificationCard
+                key={notification.id}
+                title={notification.title}
+                content={notification.content}
+                createdAt={notification.created_at}
+                type={notification.type}
+                department={notification.department}
+                semester={notification.semester}
+              />
+            ))
+          )}
+        </div>
       </main>
     </div>
   );

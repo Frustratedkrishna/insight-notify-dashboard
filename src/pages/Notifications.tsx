@@ -5,9 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { DashboardNav } from "@/components/DashboardNav";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationCard } from "@/components/NotificationCard";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Notification } from "@/types/supabase";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface Profile {
   course_name: string;
@@ -21,76 +23,56 @@ export default function Notifications() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Check auth from localStorage first
-        const userStr = localStorage.getItem('user');
-        if (!userStr) {
-          // If not in localStorage, check session
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-          
-          if (sessionError) throw sessionError;
-          
-          if (!session) {
-            navigate("/auth");
-            return;
-          }
+        const profileStr = localStorage.getItem('profile');
+        if (!profileStr) {
+          setError("Authentication required. Please login again.");
+          navigate("/auth");
+          return;
         }
 
-        // Get profile using either localStorage or Supabase session
-        let profileData: Profile | null = null;
+        // Get profile from localStorage
+        const profile = JSON.parse(profileStr);
         
-        if (userStr) {
-          const user = JSON.parse(userStr);
+        // Fetch from profiles table to ensure we have the latest data
+        const { data: dbProfile, error: profileError } = await supabase
+          .from("profiles")
+          .select("course_name, year, section")
+          .eq("enrollment_number", profile.enrollment_number)
+          .maybeSingle();
           
-          // Fetch from profiles table
-          const { data: dbProfile, error: profileError } = await supabase
-            .from("profiles")
-            .select("course_name, year, section")
-            .eq("enrollment_number", user.enrollment_number)
-            .maybeSingle();
-            
-          if (profileError) throw profileError;
-          if (!dbProfile) throw new Error("Profile not found");
-          
-          profileData = dbProfile;
-        } else {
-          // Use session
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
-            navigate("/auth");
-            return;
-          }
-          
-          const { data: dbProfile, error: profileError } = await supabase
-            .from("profiles")
-            .select("course_name, year, section")
-            .eq("id", session.user.id)
-            .single();
-            
-          if (profileError) throw profileError;
-          profileData = dbProfile;
-        }
+        if (profileError) throw profileError;
+        if (!dbProfile) throw new Error("Profile not found");
         
-        setProfile(profileData);
+        setProfile(dbProfile);
+        console.log("Student profile loaded:", dbProfile);
 
         // Convert year to semester (as string)
-        const semester = String(profileData.year * 2);
+        const semester = String(dbProfile.year * 2);
+        console.log("Calculated semester:", semester);
 
         // Fetch notifications
         const { data: notificationsData, error: notificationsError } = await supabase
           .from("notifications")
           .select("*")
-          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${semester})`)
+          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${dbProfile.course_name},semester.eq.${semester})`)
           .order("created_at", { ascending: false });
 
-        if (notificationsError) throw notificationsError;
+        if (notificationsError) {
+          console.error("Error fetching notifications:", notificationsError);
+          throw notificationsError;
+        }
 
-        setNotifications(notificationsData);
+        console.log("Notifications fetched:", notificationsData);
+        setNotifications(notificationsData || []);
       } catch (error: any) {
         console.error("Error:", error);
+        setError(error.message);
         toast({
           title: "Error loading notifications",
           description: error.message,
@@ -103,6 +85,22 @@ export default function Notifications() {
 
     fetchData();
   }, [navigate, toast]);
+
+  if (error) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <DashboardNav />
+          <main className="flex-1 p-4 md:p-6">
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider>
