@@ -66,7 +66,19 @@ export default function FacultyNotifications() {
     console.log("FacultyNotifications component mounted");
     const fetchData = async () => {
       try {
-        // First check localStorage for faculty data
+        // First, check if user is authenticated with Supabase
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.log("No authenticated user, redirecting to faculty-auth");
+          setError("Authentication required. Please login again.");
+          navigate("/faculty-auth");
+          return;
+        }
+        
+        console.log("Authenticated user:", user);
+        
+        // Check localStorage for faculty data
         const facultyStr = localStorage.getItem('faculty');
         
         if (!facultyStr) {
@@ -139,14 +151,41 @@ export default function FacultyNotifications() {
         faculty: facultyProfile
       });
 
-      // Get the user ID from Supabase auth
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get the current authenticated user ID from Supabase
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      if (!user) {
-        throw new Error("User not authenticated");
+      if (authError || !user) {
+        console.error("Authentication error:", authError);
+        throw new Error("User not authenticated. Please log in again.");
       }
-
+      
       console.log("Current authenticated user:", user);
+
+      // First, check if the faculty user exists in auth
+      const { data: faculty, error: signInError } = await supabase.auth.signInWithPassword({
+        email: `${facultyProfile.id}@faculty.dbit.edu`, // Using a constructed email
+        password: "facultyauthpass", // Use a default password for the first-time authentication
+      });
+
+      if (signInError) {
+        console.log("Trying to create a new auth user for the faculty");
+        // Create a new auth user for the faculty if they don't exist
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: `${facultyProfile.id}@faculty.dbit.edu`,
+          password: "facultyauthpass",
+          options: {
+            data: {
+              faculty_id: facultyProfile.id,
+              role: facultyProfile.role
+            }
+          }
+        });
+
+        if (signUpError) {
+          console.error("Error creating auth user:", signUpError);
+          throw new Error("Failed to authenticate. Please contact administrator.");
+        }
+      }
 
       const notificationData = {
         title: values.title,
@@ -154,7 +193,7 @@ export default function FacultyNotifications() {
         type: 'course_specific',
         department: facultyProfile.course_name,
         semester: facultyProfile.section,
-        created_by: user.id, // Use authenticated user ID from auth
+        created_by: facultyProfile.id, // Use faculty profile ID
       };
 
       console.log("Notification data prepared:", notificationData);
