@@ -53,17 +53,6 @@ export default function AddAttendance() {
     console.log("AddAttendance component mounted - checking authentication");
     const checkAuth = async () => {
       try {
-        // First, check if user is authenticated with Supabase
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-          console.log("No authenticated user, redirecting to faculty-auth");
-          navigate("/faculty-auth");
-          return;
-        }
-        
-        console.log("Authenticated user:", user);
-        
         // Check localStorage for faculty profile data
         const facultyStr = localStorage.getItem('faculty');
         
@@ -185,15 +174,16 @@ export default function AddAttendance() {
     try {
       console.log("Processed attendance data:", data);
       
-      // Get the current authenticated user ID
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        console.error("Authentication error:", authError);
-        throw new Error("User not authenticated. Please log in again.");
+      // Get faculty ID from localStorage
+      const facultyStr = localStorage.getItem('faculty');
+      if (!facultyStr) {
+        throw new Error("Faculty profile not found. Please login again.");
       }
       
-      console.log("Current authenticated user:", user);
+      const faculty = JSON.parse(facultyStr);
+      const facultyId = faculty.id;
+      
+      console.log("Faculty ID for attendance records:", facultyId);
       
       const enrollmentNumbers = [...new Set(data.map(item => item.enrollment_number))];
       
@@ -235,7 +225,7 @@ export default function AddAttendance() {
           
           return {
             student_id: studentId,
-            faculty_id: user.id,
+            faculty_id: facultyId,
             date: item.date,
             subject: item.subject,
             status: item.status

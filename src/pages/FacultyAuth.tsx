@@ -207,38 +207,7 @@ const FacultyAuth = () => {
       }
 
       console.log('Faculty login successful:', faculty);
-
-      try {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: `${faculty.employee_id}@faculty.dbit.edu`,
-          password: "facultyauthpass",
-        });
-
-        if (signInError) {
-          console.log("Faculty auth user doesn't exist, creating one...");
-          const { error: signUpError } = await supabase.auth.signUp({
-            email: `${faculty.employee_id}@faculty.dbit.edu`,
-            password: "facultyauthpass",
-            options: {
-              data: {
-                faculty_id: faculty.id,
-                role: faculty.role
-              }
-            }
-          });
-
-          if (signUpError) {
-            console.error("Error creating auth user:", signUpError);
-          } else {
-            console.log("Created Supabase auth user for faculty");
-          }
-        } else {
-          console.log("Signed in with Supabase auth");
-        }
-      } catch (authError) {
-        console.error("Auth error:", authError);
-      }
-
+      
       localStorage.setItem('faculty', JSON.stringify(faculty));
 
       toast({
