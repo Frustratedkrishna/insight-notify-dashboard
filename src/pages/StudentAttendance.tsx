@@ -45,6 +45,10 @@ export default function StudentAttendance() {
         const profile = JSON.parse(profileStr);
         console.log("Student profile from localStorage:", profile);
         
+        if (!profile.enrollment_number) {
+          throw new Error("No enrollment number found in your profile.");
+        }
+        
         // First get the student's ID using their enrollment number
         const { data: studentData, error: studentError } = await supabase
           .from('profiles')
@@ -58,8 +62,8 @@ export default function StudentAttendance() {
         }
         
         if (!studentData) {
-          console.error("Student record not found");
-          throw new Error("Student record not found");
+          console.error("Student record not found for enrollment number:", profile.enrollment_number);
+          throw new Error(`Student record not found for enrollment number: ${profile.enrollment_number}`);
         }
         
         console.log("Found student ID:", studentData.id);
