@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardNav } from "@/components/DashboardNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,9 +19,16 @@ interface AttendanceRecord {
 
 export default function StudentAttendance() {
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [studentInfo, setStudentInfo] = useState<{ 
+    id: string; 
+    enrollment_number: string;
+    name?: string;
+  } | null>(null);
   const [stats, setStats] = useState<{ 
     present: number; 
     absent: number; 
@@ -36,24 +44,32 @@ export default function StudentAttendance() {
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        // Get student profile from localStorage
-        const profileStr = localStorage.getItem('profile');
-        if (!profileStr) {
-          throw new Error("No student profile found. Please log in again.");
+        // Try to get enrollment number from different sources
+        // 1. URL query params
+        const queryParams = new URLSearchParams(location.search);
+        let enrollmentNumber = queryParams.get('enrollment');
+        
+        // 2. If not in URL, try localStorage
+        if (!enrollmentNumber) {
+          const profileStr = localStorage.getItem('profile');
+          if (profileStr) {
+            const profile = JSON.parse(profileStr);
+            console.log("Student profile from localStorage:", profile);
+            enrollmentNumber = profile.enrollment_number;
+          }
         }
         
-        const profile = JSON.parse(profileStr);
-        console.log("Student profile from localStorage:", profile);
-        
-        if (!profile.enrollment_number) {
-          throw new Error("No enrollment number found in your profile.");
+        if (!enrollmentNumber) {
+          throw new Error("No enrollment number found. Please login or specify an enrollment number.");
         }
+        
+        console.log("Using enrollment number:", enrollmentNumber);
         
         // First get the student's ID using their enrollment number
         const { data: studentData, error: studentError } = await supabase
           .from('profiles')
-          .select('id')
-          .eq('enrollment_number', profile.enrollment_number)
+          .select('id, first_name, last_name, enrollment_number')
+          .eq('enrollment_number', enrollmentNumber)
           .maybeSingle();
         
         if (studentError) {
@@ -62,11 +78,18 @@ export default function StudentAttendance() {
         }
         
         if (!studentData) {
-          console.error("Student record not found for enrollment number:", profile.enrollment_number);
-          throw new Error(`Student record not found for enrollment number: ${profile.enrollment_number}`);
+          console.error("Student record not found for enrollment number:", enrollmentNumber);
+          throw new Error(`Student record not found for enrollment number: ${enrollmentNumber}`);
         }
         
         console.log("Found student ID:", studentData.id);
+        setStudentInfo({
+          id: studentData.id,
+          enrollment_number: studentData.enrollment_number,
+          name: studentData.first_name && studentData.last_name 
+            ? `${studentData.first_name} ${studentData.last_name}`
+            : undefined
+        });
         
         // Now fetch attendance records for this student
         const { data: attendanceData, error: attendanceError } = await supabase
@@ -131,7 +154,7 @@ export default function StudentAttendance() {
     };
     
     fetchAttendance();
-  }, [toast]);
+  }, [location.search, toast]);
 
   // Data for pie chart
   const chartData = [
@@ -178,7 +201,18 @@ export default function StudentAttendance() {
     <div className="min-h-screen">
       <DashboardNav />
       <main className="container mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Your Attendance</h1>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Attendance Report</h1>
+            {studentInfo && (
+              <p className="text-muted-foreground">
+                {studentInfo.name ? studentInfo.name : ''} 
+                {studentInfo.name ? ' | ' : ''}
+                Enrollment: {studentInfo.enrollment_number}
+              </p>
+            )}
+          </div>
+        </div>
         
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
