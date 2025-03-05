@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +15,7 @@ type FacultyRole = "admin" | "chairman" | "director" | "hod" | "class_coordinato
 
 const FacultyAuth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showAdminMessage, setShowAdminMessage] = useState(false);
@@ -27,7 +27,8 @@ const FacultyAuth = () => {
         try {
           const faculty = JSON.parse(facultyStr);
           if (faculty.employee_id) {
-            navigate('/faculty/dashboard');
+            const from = location.state?.from?.pathname || "/faculty/dashboard";
+            navigate(from, { replace: true });
           } else {
             localStorage.removeItem('faculty');
           }
@@ -38,7 +39,7 @@ const FacultyAuth = () => {
     };
 
     checkAuth();
-  }, [navigate]);
+  }, [navigate, location]);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -65,12 +66,10 @@ const FacultyAuth = () => {
     setLoading(true);
 
     try {
-      // Basic validation
       if (!firstName || !lastName || !employeeId || !password || !facultyRole) {
         throw new Error("Please fill in all required fields");
       }
 
-      // Check if faculty with this employee ID already exists
       const { data: existingFaculty, error: checkError } = await supabase
         .from('faculty_profiles')
         .select('employee_id')
@@ -86,7 +85,6 @@ const FacultyAuth = () => {
         throw new Error("A faculty member with this employee ID already exists");
       }
 
-      // Insert the faculty profile
       const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert([{
@@ -112,20 +110,17 @@ const FacultyAuth = () => {
         throw new Error("Failed to create faculty profile");
       }
 
-      // Handle profile image upload if provided
       if (profileImage && faculty.id) {
         const fileExt = profileImage.name.split('.').pop();
         const fileName = `${faculty.id}/profile.${fileExt}`;
 
-        // Check if storage bucket exists
         const { data: buckets } = await supabase.storage.listBuckets();
         const profileBucket = buckets?.find(b => b.name === 'profile-images');
         
         if (!profileBucket) {
-          // Create the bucket if it doesn't exist
           await supabase.storage.createBucket('profile-images', {
             public: true,
-            fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
+            fileSizeLimit: 1024 * 1024 * 2
           });
         }
 
@@ -159,7 +154,6 @@ const FacultyAuth = () => {
         description: "You can now login with your employee ID and password.",
       });
 
-      // Reset form
       setFirstName("");
       setLastName("");
       setEmployeeId("");
@@ -214,6 +208,37 @@ const FacultyAuth = () => {
 
       console.log('Faculty login successful:', faculty);
 
+      try {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: `${faculty.employee_id}@faculty.dbit.edu`,
+          password: "facultyauthpass",
+        });
+
+        if (signInError) {
+          console.log("Faculty auth user doesn't exist, creating one...");
+          const { error: signUpError } = await supabase.auth.signUp({
+            email: `${faculty.employee_id}@faculty.dbit.edu`,
+            password: "facultyauthpass",
+            options: {
+              data: {
+                faculty_id: faculty.id,
+                role: faculty.role
+              }
+            }
+          });
+
+          if (signUpError) {
+            console.error("Error creating auth user:", signUpError);
+          } else {
+            console.log("Created Supabase auth user for faculty");
+          }
+        } else {
+          console.log("Signed in with Supabase auth");
+        }
+      } catch (authError) {
+        console.error("Auth error:", authError);
+      }
+
       localStorage.setItem('faculty', JSON.stringify(faculty));
 
       toast({
@@ -221,7 +246,8 @@ const FacultyAuth = () => {
         description: `Logged in as ${faculty.first_name} ${faculty.last_name}`,
       });
 
-      navigate("/faculty/dashboard", { replace: true });
+      const from = location.state?.from?.pathname || "/faculty/dashboard";
+      navigate(from, { replace: true });
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
