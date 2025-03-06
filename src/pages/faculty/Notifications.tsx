@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -138,13 +139,15 @@ export default function FacultyNotifications() {
         faculty: facultyProfile
       });
 
+      // Remove the created_by field since it's causing FK constraint issues
+      // The notifications table is expecting created_by to reference profiles.id, not faculty_profiles.id
       const notificationData = {
         title: values.title,
         content: values.content,
         type: 'course_specific',
         department: facultyProfile.course_name,
         semester: facultyProfile.section,
-        created_by: facultyProfile.id, // Use faculty profile ID
+        // created_by: facultyProfile.id, // Removing this field to fix the FK constraint error
       };
 
       console.log("Notification data prepared:", notificationData);
