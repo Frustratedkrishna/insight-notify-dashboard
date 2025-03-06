@@ -38,6 +38,7 @@ interface FacultyProfile {
   course_name?: string;
   section?: string;
   department?: string;
+  year?: number;
 }
 
 const notificationSchema = z.object({
@@ -139,16 +140,37 @@ export default function FacultyNotifications() {
         faculty: facultyProfile
       });
 
-      // Remove the created_by field since it's causing FK constraint issues
-      // The notifications table is expecting created_by to reference profiles.id, not faculty_profiles.id
-      const notificationData = {
+      // Prepare notification data based on faculty role
+      const notificationData: {
+        title: string;
+        content: string;
+        type: string;
+        department?: string; 
+        semester?: string;
+        section?: string;
+      } = {
         title: values.title,
         content: values.content,
         type: 'course_specific',
-        department: facultyProfile.course_name,
-        semester: facultyProfile.section,
-        // created_by: facultyProfile.id, // Removing this field to fix the FK constraint error
       };
+      
+      // Set appropriate fields based on faculty role
+      if (facultyProfile.role === 'class_coordinator' && facultyProfile.course_name) {
+        // Class coordinator - specific to course, year+semester, and section
+        notificationData.department = facultyProfile.course_name;
+        
+        if (facultyProfile.year) {
+          const semester = String(facultyProfile.year * 2);
+          notificationData.semester = semester;
+        }
+        
+        if (facultyProfile.section) {
+          notificationData.section = facultyProfile.section;
+        }
+      } else if (facultyProfile.role === 'hod' && facultyProfile.course_name) {
+        // HOD - specific to course only (all years, all sections)
+        notificationData.department = facultyProfile.course_name;
+      }
 
       console.log("Notification data prepared:", notificationData);
 

@@ -69,15 +69,39 @@ export default function Notifications() {
         setProfile(storedProfile);
         console.log("Student profile loaded:", storedProfile);
 
-        // Convert year to semester (as string)
-        const semester = String(storedProfile.year * 2);
-        console.log("Calculated semester:", semester);
+        // Build filters for notifications
+        const filters = [];
+        
+        // Always include general notifications
+        filters.push('type.eq.general');
+        
+        // Add course-specific notifications from HOD (all sections, all years of the course)
+        if (storedProfile.course_name) {
+          filters.push(`and(type.eq.course_specific,department.eq.${storedProfile.course_name},semester.is.null)`);
+        }
+        
+        // Add year-specific notifications for this course 
+        // (notifications meant for all sections of a specific year)
+        if (storedProfile.course_name && storedProfile.year) {
+          const semester = String(storedProfile.year * 2);
+          filters.push(`and(type.eq.course_specific,department.eq.${storedProfile.course_name},semester.eq.${semester},section.is.null)`);
+        }
+        
+        // Add section-specific notifications
+        // (notifications meant for specific section from class coordinator)
+        if (storedProfile.course_name && storedProfile.year && storedProfile.section) {
+          const semester = String(storedProfile.year * 2);
+          filters.push(`and(type.eq.course_specific,department.eq.${storedProfile.course_name},semester.eq.${semester},section.eq.${storedProfile.section})`);
+        }
 
-        // Fetch notifications
+        console.log("Notification filters:", filters);
+        const filterQuery = filters.join(',');
+        
+        // Fetch notifications with combined filters
         const { data: notificationsData, error: notificationsError } = await supabase
           .from("notifications")
           .select("*")
-          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${storedProfile.course_name},semester.eq.${semester})`)
+          .or(filterQuery)
           .order("created_at", { ascending: false });
 
         if (notificationsError) {

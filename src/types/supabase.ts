@@ -35,6 +35,7 @@ export interface Notification {
   type: string;
   department?: string;
   semester?: string;
+  section?: string;
   created_by?: string;
   created_at: string;
 }

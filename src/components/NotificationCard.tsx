@@ -9,6 +9,7 @@ interface NotificationCardProps {
   type: string;
   department?: string;
   semester?: string;
+  section?: string;
 }
 
 export function NotificationCard({
@@ -18,6 +19,7 @@ export function NotificationCard({
   type,
   department,
   semester,
+  section,
 }: NotificationCardProps) {
   // Calculate year from semester - handle both numeric and string sections
   const getYear = (semester: string | undefined): number => {
@@ -50,6 +52,12 @@ export function NotificationCard({
                       ? `Section ${semester}` 
                       : `Year ${getYear(semester)}`}
                   </span>
+                </>
+              )}
+              {section && (
+                <>
+                  <span>•</span>
+                  <span>Section {section}</span>
                 </>
               )}
             </>

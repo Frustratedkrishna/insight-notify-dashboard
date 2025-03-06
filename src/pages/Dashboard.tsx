@@ -63,14 +63,39 @@ export default function Dashboard() {
 
         setProfile(profileData);
 
-        // Convert year to semester (year * 2) and convert to string for the query
-        const semester = String(profileData.year * 2);
+        // Build filters for notifications
+        const filters = [];
         
-        // Fetch notifications
+        // Always include general notifications
+        filters.push('type.eq.general');
+        
+        // Add course-specific notifications from HOD (all sections, all years of the course)
+        if (profileData.course_name) {
+          filters.push(`and(type.eq.course_specific,department.eq.${profileData.course_name},semester.is.null)`);
+        }
+        
+        // Add year-specific notifications for this course 
+        // (notifications meant for all sections of a specific year)
+        if (profileData.course_name && profileData.year) {
+          const semester = String(profileData.year * 2);
+          filters.push(`and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${semester},section.is.null)`);
+        }
+        
+        // Add section-specific notifications
+        // (notifications meant for specific section from class coordinator)
+        if (profileData.course_name && profileData.year && profileData.section) {
+          const semester = String(profileData.year * 2);
+          filters.push(`and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${semester},section.eq.${profileData.section})`);
+        }
+
+        console.log("Notification filters:", filters);
+        const filterQuery = filters.join(',');
+        
+        // Fetch notifications with combined filters
         const { data: notificationsData, error: notificationsError } = await supabase
           .from("notifications")
           .select("*")
-          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${profileData.course_name},semester.eq.${semester})`)
+          .or(filterQuery)
           .order("created_at", { ascending: false });
 
         if (notificationsError) {
