@@ -29,38 +29,55 @@ export default function Notifications() {
     const fetchData = async () => {
       try {
         // Check auth from localStorage first
+        const userStr = localStorage.getItem('user');
         const profileStr = localStorage.getItem('profile');
-        if (!profileStr) {
+        
+        if (!userStr && !profileStr) {
           setError("Authentication required. Please login again.");
           navigate("/auth");
           return;
         }
 
-        // Get profile from localStorage
-        const profile = JSON.parse(profileStr);
-        
-        // Fetch from profiles table to ensure we have the latest data
-        const { data: dbProfile, error: profileError } = await supabase
-          .from("profiles")
-          .select("course_name, year, section")
-          .eq("enrollment_number", profile.enrollment_number)
-          .maybeSingle();
+        // Try to get profile from localStorage
+        let storedProfile = null;
+        if (profileStr) {
+          storedProfile = JSON.parse(profileStr);
+        } else if (userStr) {
+          const user = JSON.parse(userStr);
           
-        if (profileError) throw profileError;
-        if (!dbProfile) throw new Error("Profile not found");
+          // Fetch from profiles table using enrollment number from user object
+          if (user.enrollment_number) {
+            const { data: dbProfile, error: profileError } = await supabase
+              .from("profiles")
+              .select("course_name, year, section")
+              .eq("enrollment_number", user.enrollment_number)
+              .maybeSingle();
+              
+            if (profileError) throw profileError;
+            if (!dbProfile) throw new Error("Profile not found");
+            
+            storedProfile = dbProfile;
+          } else {
+            throw new Error("Invalid user data");
+          }
+        }
         
-        setProfile(dbProfile);
-        console.log("Student profile loaded:", dbProfile);
+        if (!storedProfile) {
+          throw new Error("Profile data not available");
+        }
+        
+        setProfile(storedProfile);
+        console.log("Student profile loaded:", storedProfile);
 
         // Convert year to semester (as string)
-        const semester = String(dbProfile.year * 2);
+        const semester = String(storedProfile.year * 2);
         console.log("Calculated semester:", semester);
 
         // Fetch notifications
         const { data: notificationsData, error: notificationsError } = await supabase
           .from("notifications")
           .select("*")
-          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${dbProfile.course_name},semester.eq.${semester})`)
+          .or(`type.eq.general,and(type.eq.course_specific,department.eq.${storedProfile.course_name},semester.eq.${semester})`)
           .order("created_at", { ascending: false });
 
         if (notificationsError) {
