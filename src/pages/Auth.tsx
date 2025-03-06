@@ -88,29 +88,31 @@ const Auth = () => {
       const newId = crypto.randomUUID();
       console.log("Generated new ID:", newId);
 
-      // Check if 'profile-images' bucket exists, create if not
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const profileBucket = buckets?.find(b => b.name === 'profile-images');
-      
-      if (!profileBucket) {
-        console.log('Creating profile-images bucket...');
-        await supabase.storage.createBucket('profile-images', {
-          public: true,
-          fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
-        });
-      }
-
       let profileImageUrl = null;
 
-      // Upload image first if provided
+      // Upload image if provided
       if (profileImage) {
-        console.log('Uploading profile image...');
+        console.log('Preparing to upload profile image...');
         const fileExt = profileImage.name.split('.').pop();
         const fileName = `${newId}/profile.${fileExt}`;
+        const filePath = fileName;
 
+        // Check if bucket exists
+        const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+        
+        if (bucketsError) {
+          console.error('Error checking buckets:', bucketsError);
+          toast({
+            title: "Warning",
+            description: "Error checking storage buckets. Will continue with registration.",
+            variant: "destructive",
+          });
+        }
+
+        console.log('Uploading profile image to path:', filePath);
         const { error: uploadError, data: uploadData } = await supabase.storage
           .from('profile-images')
-          .upload(fileName, profileImage, {
+          .upload(filePath, profileImage, {
             upsert: true,
             cacheControl: '3600'
           });
@@ -119,15 +121,16 @@ const Auth = () => {
           console.error('Image upload error:', uploadError);
           toast({
             title: "Warning",
-            description: "Failed to upload profile image. Will continue with registration.",
+            description: "Failed to upload profile image: " + uploadError.message,
             variant: "destructive",
           });
         } else {
           console.log('Image uploaded successfully:', uploadData);
+          
           // Get the public URL for the uploaded image
           const { data: { publicUrl } } = supabase.storage
             .from('profile-images')
-            .getPublicUrl(fileName);
+            .getPublicUrl(filePath);
           
           profileImageUrl = publicUrl;
           console.log('Image public URL:', profileImageUrl);
