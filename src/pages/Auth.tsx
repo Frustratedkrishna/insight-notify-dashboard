@@ -88,6 +88,53 @@ const Auth = () => {
       const newId = crypto.randomUUID();
       console.log("Generated new ID:", newId);
 
+      // Check if 'profile-images' bucket exists, create if not
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const profileBucket = buckets?.find(b => b.name === 'profile-images');
+      
+      if (!profileBucket) {
+        console.log('Creating profile-images bucket...');
+        await supabase.storage.createBucket('profile-images', {
+          public: true,
+          fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
+        });
+      }
+
+      let profileImageUrl = null;
+
+      // Upload image first if provided
+      if (profileImage) {
+        console.log('Uploading profile image...');
+        const fileExt = profileImage.name.split('.').pop();
+        const fileName = `${newId}/profile.${fileExt}`;
+
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('profile-images')
+          .upload(fileName, profileImage, {
+            upsert: true,
+            cacheControl: '3600'
+          });
+
+        if (uploadError) {
+          console.error('Image upload error:', uploadError);
+          toast({
+            title: "Warning",
+            description: "Failed to upload profile image. Will continue with registration.",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Image uploaded successfully:', uploadData);
+          // Get the public URL for the uploaded image
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-images')
+            .getPublicUrl(fileName);
+          
+          profileImageUrl = publicUrl;
+          console.log('Image public URL:', profileImageUrl);
+        }
+      }
+
+      // Now create the profile with the image URL if available
       const insertData: ProfileInsert = {
         id: newId,
         first_name: firstName,
@@ -99,8 +146,8 @@ const Auth = () => {
         section: section || null,
         role: 'student',
         email: null,
-        profile_image_url: null,
-        verify: false // Set verify to false by default
+        profile_image_url: profileImageUrl, // Set the URL here
+        verify: false
       };
 
       console.log('Attempting to insert profile with data:', insertData);
@@ -117,40 +164,6 @@ const Auth = () => {
       }
 
       console.log('Profile created successfully:', data);
-
-      if (profileImage) {
-        const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${newId}/profile.${fileExt}`;
-
-        console.log('Uploading profile image...');
-
-        const { error: uploadError } = await supabase.storage
-          .from('profile-images')
-          .upload(fileName, profileImage);
-
-        if (uploadError) {
-          console.error('Image upload error:', uploadError);
-          toast({
-            title: "Warning",
-            description: "Profile created but failed to upload profile image. You can try uploading it later.",
-            variant: "destructive",
-          });
-        } else {
-          console.log('Image uploaded successfully');
-          const { data: { publicUrl } } = supabase.storage
-            .from('profile-images')
-            .getPublicUrl(fileName);
-
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ profile_image_url: publicUrl })
-            .eq('id', newId);
-
-          if (updateError) {
-            console.error('Error updating profile with image URL:', updateError);
-          }
-        }
-      }
 
       toast({
         title: "Success!",

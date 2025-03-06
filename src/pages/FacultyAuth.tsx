@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,19 @@ const FacultyAuth = () => {
         throw new Error("A faculty member with this employee ID already exists");
       }
 
+      // Check if 'profile-images' bucket exists, create if not
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const profileBucket = buckets?.find(b => b.name === 'profile-images');
+      
+      if (!profileBucket) {
+        console.log('Creating profile-images bucket...');
+        await supabase.storage.createBucket('profile-images', {
+          public: true,
+          fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
+        });
+      }
+
+      // Create faculty profile first
       const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert([{
@@ -96,7 +110,8 @@ const FacultyAuth = () => {
           department: department || null,
           course_name: course || null,
           year: year ? parseInt(year) : null,
-          section: section || null
+          section: section || null,
+          profile_image_url: null // Will update this after upload
         }])
         .select()
         .single();
@@ -110,24 +125,18 @@ const FacultyAuth = () => {
         throw new Error("Failed to create faculty profile");
       }
 
+      // If profile image provided, upload it and update the profile
       if (profileImage && faculty.id) {
         const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${faculty.id}/profile.${fileExt}`;
+        const fileName = `faculty/${faculty.id}/profile.${fileExt}`;
 
-        const { data: buckets } = await supabase.storage.listBuckets();
-        const profileBucket = buckets?.find(b => b.name === 'profile-images');
-        
-        if (!profileBucket) {
-          await supabase.storage.createBucket('profile-images', {
-            public: true,
-            fileSizeLimit: 1024 * 1024 * 2
-          });
-        }
+        console.log('Uploading faculty profile image...');
 
         const { error: uploadError } = await supabase.storage
           .from('profile-images')
           .upload(fileName, profileImage, {
-            upsert: true
+            upsert: true,
+            cacheControl: '3600'
           });
 
         if (uploadError) {
@@ -138,14 +147,26 @@ const FacultyAuth = () => {
             variant: "destructive",
           });
         } else {
+          // Get public URL and update profile
           const { data: { publicUrl } } = supabase.storage
             .from('profile-images')
             .getPublicUrl(fileName);
 
-          await supabase
+          console.log('Image uploaded, public URL:', publicUrl);
+
+          const { error: updateError } = await supabase
             .from('faculty_profiles')
             .update({ profile_image_url: publicUrl })
             .eq('id', faculty.id);
+
+          if (updateError) {
+            console.error('Error updating profile with image URL:', updateError);
+            toast({
+              title: "Warning",
+              description: "Profile image uploaded but failed to update profile. You may need to add your image later.",
+              variant: "destructive",
+            });
+          }
         }
       }
 
