@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, User, Users, Menu, FileSpreadsheet, UserCheck } from "lucide-react";
+import { Bell, LogOut, User, Users, Menu, FileSpreadsheet, UserCheck, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -111,7 +111,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
           <span className="ml-2">Feedbacks</span>
         </Button>
         
-        {facultyRole === 'class_coordinator' && (
+        {(facultyRole === 'class_coordinator' || facultyRole === 'admin') && (
           <Button
             variant="ghost"
             className="w-full md:w-auto justify-start"
@@ -122,7 +122,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
           </Button>
         )}
         
-        {(facultyRole === 'class_coordinator' || facultyRole === 'hod') && (
+        {(facultyRole === 'class_coordinator' || facultyRole === 'hod' || facultyRole === 'admin') && (
           <Button
             variant="ghost"
             className="w-full md:w-auto justify-start"
@@ -130,6 +130,17 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
           >
             <Bell className="h-4 w-4" />
             <span className="ml-2">Announcements</span>
+          </Button>
+        )}
+        
+        {facultyRole === 'admin' && (
+          <Button
+            variant="ghost"
+            className="w-full md:w-auto justify-start"
+            onClick={() => navigate("/faculty/admin-settings")}
+          >
+            <Settings className="h-4 w-4" />
+            <span className="ml-2">Admin Settings</span>
           </Button>
         )}
 

@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FacultyProfile } from "@/types/supabase";
 
-type FacultyRole = "admin" | "chairman" | "director" | "hod" | "class_coordinator";
+type FacultyRole = "chairman" | "director" | "hod" | "class_coordinator";
 
 const FacultyAuth = () => {
   const navigate = useNavigate();
@@ -372,7 +372,6 @@ const FacultyAuth = () => {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="chairman">Chairman</SelectItem>
                     <SelectItem value="director">Director</SelectItem>
                     <SelectItem value="hod">HOD</SelectItem>

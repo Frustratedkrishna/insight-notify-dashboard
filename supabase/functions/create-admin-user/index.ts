@@ -1,0 +1,79 @@
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://oimjhwhxxzuiqtxvxcrs.supabase.co";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Check if admin already exists
+    const { data: existingAdmin, error: checkError } = await supabase
+      .from('faculty_profiles')
+      .select('*')
+      .eq('employee_id', 'dbitsimsadmin@donboscoitggsipu.org')
+      .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      throw new Error(`Error checking for admin: ${checkError.message}`);
+    }
+    
+    if (existingAdmin) {
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Admin account already exists", 
+        admin: existingAdmin 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+    
+    // Create admin account
+    const { data: admin, error: insertError } = await supabase
+      .from('faculty_profiles')
+      .insert([{
+        employee_id: 'dbitsimsadmin@donboscoitggsipu.org',
+        password: 'DBITSIMSADMIN7011',
+        first_name: 'Admin',
+        last_name: 'User',
+        role: 'admin',
+        verify: true
+      }])
+      .select()
+      .single();
+    
+    if (insertError) {
+      throw new Error(`Error creating admin: ${insertError.message}`);
+    }
+    
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "Admin account created successfully", 
+      admin 
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      success: false, 
+      message: error.message 
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+});
