@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FacultyProfile } from "@/types/supabase";
+import { Loader2 } from "lucide-react";
 
 type FacultyRole = "chairman" | "director" | "hod" | "class_coordinator";
 
@@ -83,6 +83,93 @@ const FacultyAuth = () => {
       const file = e.target.files[0];
       setProfileImage(file);
       setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setShowAdminMessage(false);
+
+    try {
+      if (!employeeId || !password) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      console.log('Attempting faculty login with employee ID:', employeeId);
+
+      // Check if this is an admin login attempt
+      const isAdminLogin = employeeId === 'dbitsimsadmin@donboscoitggsipu.org' && 
+                          password === 'DBITSIMSADMIN7011';
+
+      if (isAdminLogin) {
+        console.log('Admin credentials detected, trying to create/verify admin account...');
+        
+        // Try to create admin user first or get existing admin
+        const response = await supabase.functions.invoke('create-admin-user');
+        
+        if (response.error) {
+          console.error('Error handling admin:', response.error);
+          throw new Error("Failed to verify admin account");
+        }
+        
+        console.log('Admin account response:', response.data);
+        
+        if (response.data.admin) {
+          // Admin exists or was created, store in localStorage
+          localStorage.setItem('faculty', JSON.stringify(response.data.admin));
+          
+          toast({
+            title: "Welcome, Admin!",
+            description: `Logged in as ${response.data.admin.first_name} ${response.data.admin.last_name}`,
+          });
+          
+          const from = location.state?.from?.pathname || "/faculty/dashboard";
+          navigate(from, { replace: true });
+          return;
+        } else {
+          throw new Error("Admin verification failed");
+        }
+      }
+
+      // Regular faculty login
+      const { data: faculty, error: facultyError } = await supabase
+        .from('faculty_profiles')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .eq('password', password)
+        .maybeSingle();
+
+      if (facultyError) {
+        console.error('Login error:', facultyError);
+        throw new Error("Failed to verify credentials");
+      }
+
+      if (!faculty) {
+        setShowAdminMessage(true);
+        throw new Error("Invalid credentials");
+      }
+
+      console.log('Faculty login successful:', faculty);
+      
+      localStorage.setItem('faculty', JSON.stringify(faculty));
+
+      toast({
+        title: "Welcome back!",
+        description: `Logged in as ${faculty.first_name} ${faculty.last_name}`,
+      });
+
+      const from = location.state?.from?.pathname || "/faculty/dashboard";
+      navigate(from, { replace: true });
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Invalid credentials",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -222,96 +309,6 @@ const FacultyAuth = () => {
     }
   };
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setShowAdminMessage(false);
-
-    try {
-      if (!employeeId || !password) {
-        throw new Error("Please fill in all required fields");
-      }
-
-      console.log('Attempting faculty login with employee ID:', employeeId);
-
-      const { data: faculty, error: facultyError } = await supabase
-        .from('faculty_profiles')
-        .select('*')
-        .eq('employee_id', employeeId)
-        .eq('password', password)
-        .maybeSingle();
-
-      if (facultyError) {
-        console.error('Login error:', facultyError);
-        throw new Error("Failed to verify credentials");
-      }
-
-      if (!faculty) {
-        // Try to create admin user if the credentials match admin credentials
-        if (employeeId === 'dbitsimsadmin@donboscoitggsipu.org' && password === 'DBITSIMSADMIN7011') {
-          console.log('Admin credentials detected, trying to create admin account...');
-          
-          // Invoke the edge function to create admin user
-          const response = await supabase.functions.invoke('create-admin-user');
-          console.log('Admin creation response:', response);
-          
-          if (response.error) {
-            console.error('Error creating admin:', response.error);
-            throw new Error("Failed to create admin account");
-          }
-          
-          // Try logging in again after admin creation
-          const { data: adminFaculty, error: adminError } = await supabase
-            .from('faculty_profiles')
-            .select('*')
-            .eq('employee_id', employeeId)
-            .eq('password', password)
-            .maybeSingle();
-            
-          if (adminError || !adminFaculty) {
-            console.error('Admin login error after creation:', adminError);
-            throw new Error("Admin account created but login failed");
-          }
-          
-          localStorage.setItem('faculty', JSON.stringify(adminFaculty));
-          
-          toast({
-            title: "Welcome, Admin!",
-            description: `Logged in as ${adminFaculty.first_name} ${adminFaculty.last_name}`,
-          });
-          
-          const from = location.state?.from?.pathname || "/faculty/dashboard";
-          navigate(from, { replace: true });
-          return;
-        }
-        
-        setShowAdminMessage(true);
-        throw new Error("Invalid credentials");
-      }
-
-      console.log('Faculty login successful:', faculty);
-      
-      localStorage.setItem('faculty', JSON.stringify(faculty));
-
-      toast({
-        title: "Welcome back!",
-        description: `Logged in as ${faculty.first_name} ${faculty.last_name}`,
-      });
-
-      const from = location.state?.from?.pathname || "/faculty/dashboard";
-      navigate(from, { replace: true });
-    } catch (error: any) {
-      console.error('Login error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Invalid credentials",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -366,7 +363,12 @@ const FacultyAuth = () => {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Loading..." : "Sign In"}
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : "Sign In"}
               </Button>
             </form>
           </TabsContent>

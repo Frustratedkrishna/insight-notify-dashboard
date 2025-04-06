@@ -6,10 +6,12 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function AdminSettings() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [createLoading, setCreateLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,17 +38,21 @@ export default function AdminSettings() {
 
   const handleCreateAdmin = async () => {
     try {
-      setLoading(true);
-      const response = await supabase.functions.invoke('create-admin-user');
+      setCreateLoading(true);
+      const { data, error } = await supabase.functions.invoke('create-admin-user');
       
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to create admin user');
+      if (error) {
+        throw new Error(error.message || 'Failed to create admin user');
       }
       
       toast({
         title: "Admin Creation Status",
-        description: response.data.message,
+        description: data.message,
       });
+      
+      if (data.admin) {
+        console.log("Admin account details:", data.admin);
+      }
     } catch (error: any) {
       console.error('Error creating admin:', error);
       toast({
@@ -55,12 +61,20 @@ export default function AdminSettings() {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setCreateLoading(false);
     }
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex flex-col">
+        <FacultyNavbar />
+        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   if (!isAdmin) {
@@ -98,9 +112,16 @@ export default function AdminSettings() {
               </p>
               <Button 
                 onClick={handleCreateAdmin}
-                disabled={loading}
+                disabled={createLoading}
               >
-                {loading ? "Processing..." : "Create/Verify Admin Account"}
+                {createLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Create/Verify Admin Account"
+                )}
               </Button>
             </div>
           </CardContent>

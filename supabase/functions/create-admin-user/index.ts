@@ -49,7 +49,7 @@ serve(async (req) => {
     
     console.log("Creating new admin account...");
     
-    // Create admin account
+    // Create admin account with proper verification
     const { data: admin, error: insertError } = await supabase
       .from('faculty_profiles')
       .insert([{
