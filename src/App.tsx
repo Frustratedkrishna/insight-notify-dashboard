@@ -18,6 +18,7 @@ import AddAttendance from "./pages/faculty/addattendance";
 import ViewFeedbacks from "./pages/faculty/Viewfeedbacks";
 import ApproveStudents from "./pages/faculty/ApproveStudents";
 import Announcements from "./pages/faculty/Announcements";
+import AdminSettings from "./pages/faculty/AdminSettings";
 
 // Faculty Protected Route component
 const FacultyProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -111,6 +112,11 @@ function App() {
           <Route path="/faculty/announcements" element={
             <FacultyProtectedRoute>
               <Announcements />
+            </FacultyProtectedRoute>
+          } />
+          <Route path="/faculty/admin-settings" element={
+            <FacultyProtectedRoute>
+              <AdminSettings />
             </FacultyProtectedRoute>
           } />
           <Route path="*" element={<NotFound />} />

@@ -20,6 +20,30 @@ const FacultyAuth = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showAdminMessage, setShowAdminMessage] = useState(false);
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+  
+  // Create admin account when component loads
+  useEffect(() => {
+    const createAdminAccount = async () => {
+      try {
+        setIsCreatingAdmin(true);
+        const response = await supabase.functions.invoke('create-admin-user');
+        console.log('Admin account creation response:', response);
+        
+        if (response.error) {
+          console.error('Error creating admin account:', response.error);
+        } else {
+          console.log('Admin account status:', response.data.message);
+        }
+      } catch (error) {
+        console.error('Error invoking create-admin-user function:', error);
+      } finally {
+        setIsCreatingAdmin(false);
+      }
+    };
+
+    createAdminAccount();
+  }, []);
   
   useEffect(() => {
     const checkAuth = () => {
@@ -223,6 +247,44 @@ const FacultyAuth = () => {
       }
 
       if (!faculty) {
+        // Try to create admin user if the credentials match admin credentials
+        if (employeeId === 'dbitsimsadmin@donboscoitggsipu.org' && password === 'DBITSIMSADMIN7011') {
+          console.log('Admin credentials detected, trying to create admin account...');
+          
+          // Invoke the edge function to create admin user
+          const response = await supabase.functions.invoke('create-admin-user');
+          console.log('Admin creation response:', response);
+          
+          if (response.error) {
+            console.error('Error creating admin:', response.error);
+            throw new Error("Failed to create admin account");
+          }
+          
+          // Try logging in again after admin creation
+          const { data: adminFaculty, error: adminError } = await supabase
+            .from('faculty_profiles')
+            .select('*')
+            .eq('employee_id', employeeId)
+            .eq('password', password)
+            .maybeSingle();
+            
+          if (adminError || !adminFaculty) {
+            console.error('Admin login error after creation:', adminError);
+            throw new Error("Admin account created but login failed");
+          }
+          
+          localStorage.setItem('faculty', JSON.stringify(adminFaculty));
+          
+          toast({
+            title: "Welcome, Admin!",
+            description: `Logged in as ${adminFaculty.first_name} ${adminFaculty.last_name}`,
+          });
+          
+          const from = location.state?.from?.pathname || "/faculty/dashboard";
+          navigate(from, { replace: true });
+          return;
+        }
+        
         setShowAdminMessage(true);
         throw new Error("Invalid credentials");
       }
@@ -269,6 +331,13 @@ const FacultyAuth = () => {
           </TabsList>
 
           <TabsContent value="login">
+            {isCreatingAdmin && (
+              <Alert className="mb-4">
+                <AlertDescription>
+                  Initializing admin account, please wait...
+                </AlertDescription>
+              </Alert>
+            )}
             {showAdminMessage && (
               <Alert variant="destructive">
                 <AlertDescription>

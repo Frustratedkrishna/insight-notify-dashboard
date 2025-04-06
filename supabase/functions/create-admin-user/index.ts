@@ -14,8 +14,12 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://oimjhwhxxzuiqtxvxcrs.supabase.co";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing environment variables SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+    }
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     
@@ -24,13 +28,15 @@ serve(async (req) => {
       .from('faculty_profiles')
       .select('*')
       .eq('employee_id', 'dbitsimsadmin@donboscoitggsipu.org')
-      .single();
+      .maybeSingle();
     
-    if (checkError && checkError.code !== 'PGRST116') {
+    if (checkError) {
+      console.error('Error checking for admin:', checkError);
       throw new Error(`Error checking for admin: ${checkError.message}`);
     }
     
     if (existingAdmin) {
+      console.log("Admin account already exists, returning existing account");
       return new Response(JSON.stringify({ 
         success: true, 
         message: "Admin account already exists", 
@@ -40,6 +46,8 @@ serve(async (req) => {
         status: 200,
       });
     }
+    
+    console.log("Creating new admin account...");
     
     // Create admin account
     const { data: admin, error: insertError } = await supabase
@@ -56,8 +64,11 @@ serve(async (req) => {
       .single();
     
     if (insertError) {
+      console.error('Error creating admin:', insertError);
       throw new Error(`Error creating admin: ${insertError.message}`);
     }
+    
+    console.log("Admin account created successfully:", admin);
     
     return new Response(JSON.stringify({ 
       success: true, 
@@ -68,6 +79,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error('Error in create-admin-user function:', error);
     return new Response(JSON.stringify({ 
       success: false, 
       message: error.message 
