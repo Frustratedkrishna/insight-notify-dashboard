@@ -157,6 +157,7 @@ export type Database = {
           created_by: string | null
           department: string | null
           id: string
+          section: string | null
           semester: string | null
           title: string
           type: string
@@ -167,6 +168,7 @@ export type Database = {
           created_by?: string | null
           department?: string | null
           id?: string
+          section?: string | null
           semester?: string | null
           title: string
           type: string
@@ -177,6 +179,7 @@ export type Database = {
           created_by?: string | null
           department?: string | null
           id?: string
+          section?: string | null
           semester?: string | null
           title?: string
           type?: string
