@@ -92,7 +92,7 @@ export default function FacultyNotifications() {
         // Adjust query based on faculty role
         if (faculty.role === 'class_coordinator') {
           // Class coordinators see notifications for their specific class
-          query = query.or(`type.eq.general,and(type.eq.course_specific,department.eq.${faculty.course_name},semester.eq.${faculty.section})`);
+          query = query.or(`type.eq.general,and(type.eq.course_specific,department.eq.${faculty.course_name},semester.eq.${faculty.year ? String(faculty.year * 2) : ''},section.eq.${faculty.section || ''})`);
         } else if (faculty.role === 'hod') {
           // HODs see notifications for their department
           query = query.or(`type.eq.general,and(type.eq.course_specific,department.eq.${faculty.course_name})`);
@@ -270,7 +270,7 @@ export default function FacultyNotifications() {
                   <DialogTitle>Create New Announcement</DialogTitle>
                   <DialogDescription>
                     {facultyProfile?.role === 'class_coordinator' 
-                      ? `This announcement will be visible to ${facultyProfile.course_name} - Section ${facultyProfile.section}`
+                      ? `This announcement will be visible to ${facultyProfile.course_name} - Year ${facultyProfile.year} Section ${facultyProfile.section}`
                       : `This announcement will be visible to all ${facultyProfile?.course_name} students`}
                   </DialogDescription>
                 </DialogHeader>
@@ -322,6 +322,7 @@ export default function FacultyNotifications() {
                 type={notification.type}
                 department={notification.department}
                 semester={notification.semester}
+                section={notification.section}
               />
             ))
           )}

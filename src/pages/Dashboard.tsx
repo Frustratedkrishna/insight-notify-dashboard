@@ -192,7 +192,7 @@ export default function Dashboard() {
               {notifications.length === 0 ? (
                 <p className="text-muted-foreground">No notifications to display</p>
               ) : (
-                notifications.map((notification) => (
+                notifications.slice(0, 3).map((notification) => (
                   <NotificationCard
                     key={notification.id}
                     title={notification.title}
@@ -201,6 +201,7 @@ export default function Dashboard() {
                     type={notification.type}
                     department={notification.department}
                     semester={notification.semester}
+                    section={notification.section}
                   />
                 ))
               )}

@@ -171,6 +171,7 @@ export default function Notifications() {
                   type={notification.type}
                   department={notification.department}
                   semester={notification.semester}
+                  section={notification.section}
                 />
               ))
             )}
