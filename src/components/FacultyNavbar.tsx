@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Bell, LogOut, User, Users, Menu, FileSpreadsheet, UserCheck, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,6 +118,17 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
           >
             <UserCheck className="h-4 w-4" />
             <span className="ml-2">Approve Students</span>
+          </Button>
+        )}
+        
+        {facultyRole === 'admin' && (
+          <Button
+            variant="ghost"
+            className="w-full md:w-auto justify-start"
+            onClick={() => navigate("/faculty/approve-faculty")}
+          >
+            <UserCheck className="h-4 w-4" />
+            <span className="ml-2">Approve Faculty</span>
           </Button>
         )}
         
