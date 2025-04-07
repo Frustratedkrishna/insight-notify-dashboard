@@ -21,6 +21,7 @@ export default function ApproveFaculty() {
   const [faculties, setFaculties] = useState<FacultyProfile[]>([]);
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyProfile | null>(null);
   const [showFacultyDialog, setShowFacultyDialog] = useState(false);
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -62,6 +63,8 @@ export default function ApproveFaculty() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
+      
+      console.log("Fetched faculties:", data);
       setFaculties(data || []);
     } catch (error) {
       console.error("Error fetching faculties:", error);
@@ -77,12 +80,22 @@ export default function ApproveFaculty() {
 
   const handleApprove = async (id: string) => {
     try {
-      const { error } = await supabase
+      setProcessingAction(id);
+      
+      console.log(`Approving faculty with ID: ${id}`);
+      
+      const { data, error } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error approving faculty:", error);
+        throw error;
+      }
+      
+      console.log("Update response:", data);
       
       toast({
         title: "Success",
@@ -98,24 +111,36 @@ export default function ApproveFaculty() {
       if (selectedFaculty && selectedFaculty.id === id) {
         setSelectedFaculty({ ...selectedFaculty, verify: true });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error approving faculty:", error);
       toast({
         title: "Error",
-        description: "Failed to approve faculty member",
+        description: error.message || "Failed to approve faculty member",
         variant: "destructive",
       });
+    } finally {
+      setProcessingAction(null);
     }
   };
 
   const handleRevoke = async (id: string) => {
     try {
-      const { error } = await supabase
+      setProcessingAction(id);
+      
+      console.log(`Revoking approval for faculty with ID: ${id}`);
+      
+      const { data, error } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error revoking faculty approval:", error);
+        throw error;
+      }
+      
+      console.log("Update response:", data);
       
       toast({
         title: "Success",
@@ -131,13 +156,15 @@ export default function ApproveFaculty() {
       if (selectedFaculty && selectedFaculty.id === id) {
         setSelectedFaculty({ ...selectedFaculty, verify: false });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error revoking faculty approval:", error);
       toast({
         title: "Error",
-        description: "Failed to revoke faculty member's approval",
+        description: error.message || "Failed to revoke faculty member's approval",
         variant: "destructive",
       });
+    } finally {
+      setProcessingAction(null);
     }
   };
 
@@ -266,16 +293,28 @@ export default function ApproveFaculty() {
                               variant="destructive" 
                               size="sm"
                               onClick={() => handleRevoke(faculty.id)}
+                              disabled={processingAction === faculty.id}
                             >
-                              <XCircle className="h-4 w-4 mr-1" /> Revoke
+                              {processingAction === faculty.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                              ) : (
+                                <XCircle className="h-4 w-4 mr-1" />
+                              )}
+                              Revoke
                             </Button>
                           ) : (
                             <Button 
                               variant="default" 
                               size="sm"
                               onClick={() => handleApprove(faculty.id)}
+                              disabled={processingAction === faculty.id}
                             >
-                              <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                              {processingAction === faculty.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                              )}
+                              Approve
                             </Button>
                           )
                         )}
@@ -373,15 +412,27 @@ export default function ApproveFaculty() {
                       <Button 
                         variant="destructive" 
                         onClick={() => handleRevoke(selectedFaculty.id)}
+                        disabled={processingAction === selectedFaculty.id}
                       >
-                        <XCircle className="h-4 w-4 mr-1" /> Revoke Approval
+                        {processingAction === selectedFaculty.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mr-1" />
+                        )}
+                        Revoke Approval
                       </Button>
                     ) : (
                       <Button 
                         variant="default" 
                         onClick={() => handleApprove(selectedFaculty.id)}
+                        disabled={processingAction === selectedFaculty.id}
                       >
-                        <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                        {processingAction === selectedFaculty.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                        )}
+                        Approve
                       </Button>
                     )
                   )}
