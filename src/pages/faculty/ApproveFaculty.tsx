@@ -84,6 +84,14 @@ export default function ApproveFaculty() {
       
       console.log(`Approving faculty with ID: ${id}`);
       
+      // First verify we can connect to the database
+      const { error: connectionError } = await supabase.from('faculty_profiles').select('count').limit(1);
+      if (connectionError) {
+        console.error("Connection error:", connectionError);
+        throw new Error("Database connection error: " + connectionError.message);
+      }
+      
+      // Perform the update with explicit return of data
       const { data, error } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
@@ -97,19 +105,42 @@ export default function ApproveFaculty() {
       
       console.log("Update response:", data);
       
+      // Double-check that the record was updated
+      const { data: verifiedData, error: verifyError } = await supabase
+        .from('faculty_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (verifyError) {
+        console.error("Error verifying update:", verifyError);
+      } else {
+        console.log("Verification data:", verifiedData);
+        
+        if (!verifiedData.verify) {
+          console.warn("Update might not have been applied correctly. Verify flag is still false.");
+        }
+      }
+      
       toast({
         title: "Success",
         description: "Faculty member has been approved",
       });
       
-      // Update local state
-      setFaculties(faculties.map(faculty => 
-        faculty.id === id ? { ...faculty, verify: true } : faculty
-      ));
+      // Refresh the entire faculty list to ensure we have the latest data
+      fetchFaculties();
       
       // Update selected faculty if it's the one being modified
       if (selectedFaculty && selectedFaculty.id === id) {
-        setSelectedFaculty({ ...selectedFaculty, verify: true });
+        const { data: updatedFaculty, error: fetchError } = await supabase
+          .from('faculty_profiles')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (!fetchError && updatedFaculty) {
+          setSelectedFaculty(updatedFaculty);
+        }
       }
     } catch (error: any) {
       console.error("Error approving faculty:", error);
@@ -129,6 +160,14 @@ export default function ApproveFaculty() {
       
       console.log(`Revoking approval for faculty with ID: ${id}`);
       
+      // First verify we can connect to the database
+      const { error: connectionError } = await supabase.from('faculty_profiles').select('count').limit(1);
+      if (connectionError) {
+        console.error("Connection error:", connectionError);
+        throw new Error("Database connection error: " + connectionError.message);
+      }
+      
+      // Perform the update with explicit return of data
       const { data, error } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
@@ -142,19 +181,42 @@ export default function ApproveFaculty() {
       
       console.log("Update response:", data);
       
+      // Double-check that the record was updated
+      const { data: verifiedData, error: verifyError } = await supabase
+        .from('faculty_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (verifyError) {
+        console.error("Error verifying update:", verifyError);
+      } else {
+        console.log("Verification data:", verifiedData);
+        
+        if (verifiedData.verify) {
+          console.warn("Update might not have been applied correctly. Verify flag is still true.");
+        }
+      }
+      
       toast({
         title: "Success",
         description: "Faculty member's approval has been revoked",
       });
       
-      // Update local state
-      setFaculties(faculties.map(faculty => 
-        faculty.id === id ? { ...faculty, verify: false } : faculty
-      ));
+      // Refresh the entire faculty list to ensure we have the latest data
+      fetchFaculties();
       
       // Update selected faculty if it's the one being modified
       if (selectedFaculty && selectedFaculty.id === id) {
-        setSelectedFaculty({ ...selectedFaculty, verify: false });
+        const { data: updatedFaculty, error: fetchError } = await supabase
+          .from('faculty_profiles')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (!fetchError && updatedFaculty) {
+          setSelectedFaculty(updatedFaculty);
+        }
       }
     } catch (error: any) {
       console.error("Error revoking faculty approval:", error);
