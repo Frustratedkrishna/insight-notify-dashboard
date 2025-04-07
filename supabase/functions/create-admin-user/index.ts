@@ -37,6 +37,22 @@ serve(async (req) => {
     
     if (existingAdmin) {
       console.log("Admin account already exists, returning existing account");
+      
+      // Ensure admin is always verified
+      if (existingAdmin.verify !== true) {
+        const { error: updateError } = await supabase
+          .from('faculty_profiles')
+          .update({ verify: true })
+          .eq('id', existingAdmin.id);
+          
+        if (updateError) {
+          console.error('Error updating admin verification status:', updateError);
+        } else {
+          console.log('Updated admin verification status to true');
+          existingAdmin.verify = true;
+        }
+      }
+      
       return new Response(JSON.stringify({ 
         success: true, 
         message: "Admin account already exists", 

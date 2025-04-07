@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ const FacultyAuth = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showAdminMessage, setShowAdminMessage] = useState(false);
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   
   // Create admin account when component loads
@@ -90,6 +92,7 @@ const FacultyAuth = () => {
     e.preventDefault();
     setLoading(true);
     setShowAdminMessage(false);
+    setShowVerificationMessage(false);
 
     try {
       if (!employeeId || !password) {
@@ -148,6 +151,12 @@ const FacultyAuth = () => {
       if (!faculty) {
         setShowAdminMessage(true);
         throw new Error("Invalid credentials");
+      }
+
+      // Check if faculty profile is verified
+      if (!faculty.verify) {
+        setShowVerificationMessage(true);
+        throw new Error("Your account is pending approval by an administrator");
       }
 
       console.log('Faculty login successful:', faculty);
@@ -209,7 +218,7 @@ const FacultyAuth = () => {
         });
       }
 
-      // Create faculty profile first
+      // Create faculty profile with verify set to false by default (needing admin approval)
       const { data: faculty, error: facultyError } = await supabase
         .from('faculty_profiles')
         .insert([{
@@ -222,7 +231,8 @@ const FacultyAuth = () => {
           course_name: course || null,
           year: year ? parseInt(year) : null,
           section: section || null,
-          profile_image_url: null // Will update this after upload
+          profile_image_url: null, // Will update this after upload
+          verify: false // Faculty needs to be verified by admin
         }])
         .select()
         .single();
@@ -283,7 +293,7 @@ const FacultyAuth = () => {
 
       toast({
         title: "Registration successful!",
-        description: "You can now login with your employee ID and password.",
+        description: "Your account has been created and is pending approval by an administrator.",
       });
 
       setFirstName("");
@@ -339,6 +349,13 @@ const FacultyAuth = () => {
               <Alert variant="destructive">
                 <AlertDescription>
                   Your faculty profile has not been set up yet. Please contact the administrator to get your profile created.
+                </AlertDescription>
+              </Alert>
+            )}
+            {showVerificationMessage && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Your account is pending approval by an administrator. Please check back later.
                 </AlertDescription>
               </Alert>
             )}
