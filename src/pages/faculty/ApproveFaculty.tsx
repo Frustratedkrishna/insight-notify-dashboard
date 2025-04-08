@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { FacultyNavbar } from '@/components/FacultyNavbar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -25,32 +26,35 @@ export default function ApproveFaculty() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAdminStatus = () => {
-      try {
-        const facultyStr = localStorage.getItem('faculty');
-        if (!facultyStr) {
-          setIsAdmin(false);
-          return;
-        }
-        
-        const faculty = JSON.parse(facultyStr);
-        if (faculty.role !== 'admin') {
-          setIsAdmin(false);
-          return;
-        }
-        
-        setIsAdmin(true);
-        fetchFaculties();
-      } catch (error) {
-        console.error("Error checking admin status:", error);
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     checkAdminStatus();
   }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      setLoading(true);
+      const facultyStr = localStorage.getItem('faculty');
+      if (!facultyStr) {
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+      
+      const faculty = JSON.parse(facultyStr);
+      if (faculty.role !== 'admin') {
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+      
+      setIsAdmin(true);
+      await fetchFaculties();
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setIsAdmin(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchFaculties = async () => {
     try {
@@ -61,11 +65,13 @@ export default function ApproveFaculty() {
         .order('verify', { ascending: true })
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
       console.log("Fetched faculties:", data);
       setFaculties(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching faculties:", error);
       toast({
         title: "Error",
@@ -81,20 +87,16 @@ export default function ApproveFaculty() {
     try {
       setProcessingAction(id);
       
-      console.log(`Approving faculty with ID: ${id}`);
-      
-      // Direct SQL update approach
+      // Using update to directly set the verify field to true
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
         .eq('id', id);
       
       if (error) {
-        console.error("Error updating faculty:", error);
         throw error;
       }
       
-      // Update was successful
       toast({
         title: "Success",
         description: "Faculty member has been approved",
@@ -112,8 +114,8 @@ export default function ApproveFaculty() {
         setSelectedFaculty({ ...selectedFaculty, verify: true });
       }
       
-      // Refresh the data to ensure UI is in sync with database
-      fetchFaculties();
+      // Refresh data
+      await fetchFaculties();
       
     } catch (error: any) {
       console.error("Error approving faculty:", error);
@@ -131,20 +133,16 @@ export default function ApproveFaculty() {
     try {
       setProcessingAction(id);
       
-      console.log(`Revoking approval for faculty with ID: ${id}`);
-      
-      // Direct SQL update approach
+      // Using update to directly set the verify field to false
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
         .eq('id', id);
       
       if (error) {
-        console.error("Error updating faculty:", error);
         throw error;
       }
       
-      // Update was successful
       toast({
         title: "Success",
         description: "Faculty member's approval has been revoked",
@@ -162,8 +160,8 @@ export default function ApproveFaculty() {
         setSelectedFaculty({ ...selectedFaculty, verify: false });
       }
       
-      // Refresh the data to ensure UI is in sync with database
-      fetchFaculties();
+      // Refresh data
+      await fetchFaculties();
       
     } catch (error: any) {
       console.error("Error revoking faculty approval:", error);

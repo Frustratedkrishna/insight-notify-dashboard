@@ -26,6 +26,7 @@ export interface FacultyProfile {
   created_at: string;
   updated_at: string;
   verify: boolean;
+  password: string;
 }
 
 export interface Notification {
