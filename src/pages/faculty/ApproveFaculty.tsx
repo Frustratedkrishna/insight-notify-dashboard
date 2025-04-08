@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { FacultyNavbar } from '@/components/FacultyNavbar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -83,7 +84,19 @@ export default function ApproveFaculty() {
       
       console.log(`Approving faculty with ID: ${id}`);
       
-      // Use the update method with a simple condition instead of upsert
+      // Get the faculty member first to ensure we have all required fields
+      const { data: faculty, error: fetchError } = await supabase
+        .from('faculty_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) {
+        console.error("Error fetching faculty:", fetchError);
+        throw fetchError;
+      }
+      
+      // Now update just the verify field
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
@@ -94,36 +107,22 @@ export default function ApproveFaculty() {
         throw error;
       }
       
-      // Fetch the updated faculty to reflect changes in the UI
-      const { data: updatedFaculty, error: fetchError } = await supabase
-        .from('faculty_profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (fetchError) {
-        console.error("Error fetching updated faculty:", fetchError);
-        throw fetchError;
-      }
-      
-      console.log("Updated faculty:", updatedFaculty);
-      
       // Update was successful
       toast({
         title: "Success",
         description: "Faculty member has been approved",
       });
       
-      // Update local state with the fetched updated faculty
+      // Update local state
       setFaculties(prevFaculties => 
-        prevFaculties.map(faculty => 
-          faculty.id === id ? updatedFaculty : faculty
+        prevFaculties.map(f => 
+          f.id === id ? { ...f, verify: true } : f
         )
       );
       
       // Update selected faculty if it's the one being modified
       if (selectedFaculty && selectedFaculty.id === id) {
-        setSelectedFaculty(updatedFaculty);
+        setSelectedFaculty({ ...selectedFaculty, verify: true });
       }
     } catch (error: any) {
       console.error("Error approving faculty:", error);
@@ -133,7 +132,7 @@ export default function ApproveFaculty() {
         variant: "destructive",
       });
       
-      // Always refresh the faculties list to ensure UI is in sync with database
+      // Refresh the faculties list to ensure UI is in sync with database
       fetchFaculties();
     } finally {
       setProcessingAction(null);
@@ -146,7 +145,19 @@ export default function ApproveFaculty() {
       
       console.log(`Revoking approval for faculty with ID: ${id}`);
       
-      // Use the update method with a simple condition instead of upsert
+      // Get the faculty member first to ensure we have all required fields
+      const { data: faculty, error: fetchError } = await supabase
+        .from('faculty_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) {
+        console.error("Error fetching faculty:", fetchError);
+        throw fetchError;
+      }
+      
+      // Now update just the verify field
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
@@ -157,36 +168,22 @@ export default function ApproveFaculty() {
         throw error;
       }
       
-      // Fetch the updated faculty to reflect changes in the UI
-      const { data: updatedFaculty, error: fetchError } = await supabase
-        .from('faculty_profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (fetchError) {
-        console.error("Error fetching updated faculty:", fetchError);
-        throw fetchError;
-      }
-      
-      console.log("Updated faculty:", updatedFaculty);
-      
       // Update was successful
       toast({
         title: "Success",
         description: "Faculty member's approval has been revoked",
       });
       
-      // Update local state with the fetched updated faculty
+      // Update local state
       setFaculties(prevFaculties => 
-        prevFaculties.map(faculty => 
-          faculty.id === id ? updatedFaculty : faculty
+        prevFaculties.map(f => 
+          f.id === id ? { ...f, verify: false } : f
         )
       );
       
       // Update selected faculty if it's the one being modified
       if (selectedFaculty && selectedFaculty.id === id) {
-        setSelectedFaculty(updatedFaculty);
+        setSelectedFaculty({ ...selectedFaculty, verify: false });
       }
     } catch (error: any) {
       console.error("Error revoking faculty approval:", error);
@@ -196,7 +193,7 @@ export default function ApproveFaculty() {
         variant: "destructive",
       });
       
-      // Always refresh the faculties list to ensure UI is in sync with database
+      // Refresh the faculties list to ensure UI is in sync with database
       fetchFaculties();
     } finally {
       setProcessingAction(null);
