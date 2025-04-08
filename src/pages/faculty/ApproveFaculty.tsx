@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { FacultyNavbar } from '@/components/FacultyNavbar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -84,18 +83,18 @@ export default function ApproveFaculty() {
       
       console.log(`Approving faculty with ID: ${id}`);
       
-      // First, execute the update with .eq to ensure we're targeting the correct row
-      const updateResult = await supabase
+      // Use the update method with a simple condition instead of upsert
+      const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
         .eq('id', id);
       
-      if (updateResult.error) {
-        console.error("Error updating faculty:", updateResult.error);
-        throw updateResult.error;
+      if (error) {
+        console.error("Error updating faculty:", error);
+        throw error;
       }
       
-      // Now check if the update was successful by fetching the record directly
+      // Fetch the updated faculty to reflect changes in the UI
       const { data: updatedFaculty, error: fetchError } = await supabase
         .from('faculty_profiles')
         .select('*')
@@ -109,76 +108,22 @@ export default function ApproveFaculty() {
       
       console.log("Updated faculty:", updatedFaculty);
       
-      // If the verify status is still false, try a direct upsert operation
-      if (!updatedFaculty.verify) {
-        console.log("Update didn't take effect, trying upsert operation");
-        
-        const upsertResult = await supabase
-          .from('faculty_profiles')
-          .upsert({ 
-            id: id,
-            verify: true
-          }, { 
-            onConflict: 'id',
-            ignoreDuplicates: false
-          });
-        
-        if (upsertResult.error) {
-          console.error("Error in upsert operation:", upsertResult.error);
-          throw upsertResult.error;
-        }
-        
-        // Fetch again to confirm the update
-        const { data: finalFaculty, error: finalFetchError } = await supabase
-          .from('faculty_profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
-        
-        if (finalFetchError) {
-          console.error("Error fetching faculty after upsert:", finalFetchError);
-          throw finalFetchError;
-        }
-        
-        if (!finalFaculty.verify) {
-          throw new Error("Update was not applied to the database. The verify status is still false.");
-        }
-        
-        // Update was successful
-        toast({
-          title: "Success",
-          description: "Faculty member has been approved",
-        });
-        
-        // Update local state with the fetched updated faculty
-        setFaculties(prevFaculties => 
-          prevFaculties.map(faculty => 
-            faculty.id === id ? finalFaculty : faculty
-          )
-        );
-        
-        // Update selected faculty if it's the one being modified
-        if (selectedFaculty && selectedFaculty.id === id) {
-          setSelectedFaculty(finalFaculty);
-        }
-      } else {
-        // The regular update worked
-        toast({
-          title: "Success",
-          description: "Faculty member has been approved",
-        });
-        
-        // Update local state with the fetched updated faculty
-        setFaculties(prevFaculties => 
-          prevFaculties.map(faculty => 
-            faculty.id === id ? updatedFaculty : faculty
-          )
-        );
-        
-        // Update selected faculty if it's the one being modified
-        if (selectedFaculty && selectedFaculty.id === id) {
-          setSelectedFaculty(updatedFaculty);
-        }
+      // Update was successful
+      toast({
+        title: "Success",
+        description: "Faculty member has been approved",
+      });
+      
+      // Update local state with the fetched updated faculty
+      setFaculties(prevFaculties => 
+        prevFaculties.map(faculty => 
+          faculty.id === id ? updatedFaculty : faculty
+        )
+      );
+      
+      // Update selected faculty if it's the one being modified
+      if (selectedFaculty && selectedFaculty.id === id) {
+        setSelectedFaculty(updatedFaculty);
       }
     } catch (error: any) {
       console.error("Error approving faculty:", error);
@@ -201,18 +146,18 @@ export default function ApproveFaculty() {
       
       console.log(`Revoking approval for faculty with ID: ${id}`);
       
-      // First, execute the update with .eq to ensure we're targeting the correct row
-      const updateResult = await supabase
+      // Use the update method with a simple condition instead of upsert
+      const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
         .eq('id', id);
       
-      if (updateResult.error) {
-        console.error("Error updating faculty:", updateResult.error);
-        throw updateResult.error;
+      if (error) {
+        console.error("Error updating faculty:", error);
+        throw error;
       }
       
-      // Now check if the update was successful by fetching the record directly
+      // Fetch the updated faculty to reflect changes in the UI
       const { data: updatedFaculty, error: fetchError } = await supabase
         .from('faculty_profiles')
         .select('*')
@@ -226,76 +171,22 @@ export default function ApproveFaculty() {
       
       console.log("Updated faculty:", updatedFaculty);
       
-      // If the verify status is still true, try a direct upsert operation
-      if (updatedFaculty.verify) {
-        console.log("Update didn't take effect, trying upsert operation");
-        
-        const upsertResult = await supabase
-          .from('faculty_profiles')
-          .upsert({ 
-            id: id,
-            verify: false
-          }, { 
-            onConflict: 'id',
-            ignoreDuplicates: false
-          });
-        
-        if (upsertResult.error) {
-          console.error("Error in upsert operation:", upsertResult.error);
-          throw upsertResult.error;
-        }
-        
-        // Fetch again to confirm the update
-        const { data: finalFaculty, error: finalFetchError } = await supabase
-          .from('faculty_profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
-        
-        if (finalFetchError) {
-          console.error("Error fetching faculty after upsert:", finalFetchError);
-          throw finalFetchError;
-        }
-        
-        if (finalFaculty.verify) {
-          throw new Error("Update was not applied to the database. The verify status is still true.");
-        }
-        
-        // Update was successful
-        toast({
-          title: "Success",
-          description: "Faculty member's approval has been revoked",
-        });
-        
-        // Update local state with the fetched updated faculty
-        setFaculties(prevFaculties => 
-          prevFaculties.map(faculty => 
-            faculty.id === id ? finalFaculty : faculty
-          )
-        );
-        
-        // Update selected faculty if it's the one being modified
-        if (selectedFaculty && selectedFaculty.id === id) {
-          setSelectedFaculty(finalFaculty);
-        }
-      } else {
-        // The regular update worked
-        toast({
-          title: "Success",
-          description: "Faculty member's approval has been revoked",
-        });
-        
-        // Update local state with the fetched updated faculty
-        setFaculties(prevFaculties => 
-          prevFaculties.map(faculty => 
-            faculty.id === id ? updatedFaculty : faculty
-          )
-        );
-        
-        // Update selected faculty if it's the one being modified
-        if (selectedFaculty && selectedFaculty.id === id) {
-          setSelectedFaculty(updatedFaculty);
-        }
+      // Update was successful
+      toast({
+        title: "Success",
+        description: "Faculty member's approval has been revoked",
+      });
+      
+      // Update local state with the fetched updated faculty
+      setFaculties(prevFaculties => 
+        prevFaculties.map(faculty => 
+          faculty.id === id ? updatedFaculty : faculty
+        )
+      );
+      
+      // Update selected faculty if it's the one being modified
+      if (selectedFaculty && selectedFaculty.id === id) {
+        setSelectedFaculty(updatedFaculty);
       }
     } catch (error: any) {
       console.error("Error revoking faculty approval:", error);
