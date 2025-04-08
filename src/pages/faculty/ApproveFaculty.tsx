@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { FacultyNavbar } from '@/components/FacultyNavbar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -84,19 +83,7 @@ export default function ApproveFaculty() {
       
       console.log(`Approving faculty with ID: ${id}`);
       
-      // Get the faculty member first to ensure we have all required fields
-      const { data: faculty, error: fetchError } = await supabase
-        .from('faculty_profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (fetchError) {
-        console.error("Error fetching faculty:", fetchError);
-        throw fetchError;
-      }
-      
-      // Now update just the verify field
+      // Direct SQL update approach
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
@@ -124,6 +111,10 @@ export default function ApproveFaculty() {
       if (selectedFaculty && selectedFaculty.id === id) {
         setSelectedFaculty({ ...selectedFaculty, verify: true });
       }
+      
+      // Refresh the data to ensure UI is in sync with database
+      fetchFaculties();
+      
     } catch (error: any) {
       console.error("Error approving faculty:", error);
       toast({
@@ -131,9 +122,6 @@ export default function ApproveFaculty() {
         description: error.message || "Failed to approve faculty member",
         variant: "destructive",
       });
-      
-      // Refresh the faculties list to ensure UI is in sync with database
-      fetchFaculties();
     } finally {
       setProcessingAction(null);
     }
@@ -145,19 +133,7 @@ export default function ApproveFaculty() {
       
       console.log(`Revoking approval for faculty with ID: ${id}`);
       
-      // Get the faculty member first to ensure we have all required fields
-      const { data: faculty, error: fetchError } = await supabase
-        .from('faculty_profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (fetchError) {
-        console.error("Error fetching faculty:", fetchError);
-        throw fetchError;
-      }
-      
-      // Now update just the verify field
+      // Direct SQL update approach
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
@@ -185,6 +161,10 @@ export default function ApproveFaculty() {
       if (selectedFaculty && selectedFaculty.id === id) {
         setSelectedFaculty({ ...selectedFaculty, verify: false });
       }
+      
+      // Refresh the data to ensure UI is in sync with database
+      fetchFaculties();
+      
     } catch (error: any) {
       console.error("Error revoking faculty approval:", error);
       toast({
@@ -192,9 +172,6 @@ export default function ApproveFaculty() {
         description: error.message || "Failed to revoke faculty member's approval",
         variant: "destructive",
       });
-      
-      // Refresh the faculties list to ensure UI is in sync with database
-      fetchFaculties();
     } finally {
       setProcessingAction(null);
     }
