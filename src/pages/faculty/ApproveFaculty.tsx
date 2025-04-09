@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FacultyProfile } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -86,21 +86,28 @@ export default function ApproveFaculty() {
     try {
       setProcessingAction(id);
       
-      const { error } = await supabase
+      // Log the faculty ID being approved for debugging
+      console.log("Approving faculty with ID:", id);
+      
+      const { error, data } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
       
       if (error) {
+        console.error("Update error:", error);
         throw error;
       }
+      
+      console.log("Update response:", data);
       
       toast({
         title: "Success",
         description: "Faculty member has been approved",
       });
       
-      // Update local state to reflect the change
+      // Update local state
       setFaculties(prevFaculties => 
         prevFaculties.map(f => 
           f.id === id ? { ...f, verify: true } : f
@@ -112,7 +119,7 @@ export default function ApproveFaculty() {
         setSelectedFaculty({ ...selectedFaculty, verify: true });
       }
       
-      // Refresh data
+      // Refresh data to ensure UI is in sync with database
       await fetchFaculties();
       
     } catch (error: any) {
@@ -131,21 +138,28 @@ export default function ApproveFaculty() {
     try {
       setProcessingAction(id);
       
-      const { error } = await supabase
+      // Log the faculty ID being revoked for debugging
+      console.log("Revoking approval for faculty with ID:", id);
+      
+      const { error, data } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
       
       if (error) {
+        console.error("Update error:", error);
         throw error;
       }
+      
+      console.log("Update response:", data);
       
       toast({
         title: "Success",
         description: "Faculty member's approval has been revoked",
       });
       
-      // Update local state to reflect the change
+      // Update local state
       setFaculties(prevFaculties => 
         prevFaculties.map(f => 
           f.id === id ? { ...f, verify: false } : f
@@ -157,7 +171,7 @@ export default function ApproveFaculty() {
         setSelectedFaculty({ ...selectedFaculty, verify: false });
       }
       
-      // Refresh data
+      // Refresh data to ensure UI is in sync with database
       await fetchFaculties();
       
     } catch (error: any) {
@@ -203,7 +217,10 @@ export default function ApproveFaculty() {
       <div className="min-h-screen flex flex-col">
         <FacultyNavbar />
         <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <div className="flex flex-col items-center">
+            <Loader2 className="h-8 w-8 animate-spin mb-2" />
+            <p>Loading faculty data...</p>
+          </div>
         </main>
         <Footer />
       </div>
@@ -247,7 +264,9 @@ export default function ApproveFaculty() {
                 size="sm"
                 onClick={fetchFaculties}
                 variant="outline"
+                className="flex items-center gap-1"
               >
+                <RefreshCw className="h-4 w-4" />
                 Refresh
               </Button>
             </CardTitle>
