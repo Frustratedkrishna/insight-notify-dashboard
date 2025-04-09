@@ -63,7 +63,6 @@ export default function ApproveFaculty() {
     try {
       setLoading(true);
       
-      console.log("Fetching faculties...");
       const { data, error } = await supabase
         .from('faculty_profiles')
         .select('*')
@@ -97,32 +96,12 @@ export default function ApproveFaculty() {
     
     try {
       setProcessingAction(id);
-      console.log(`Starting approval process for faculty ID: ${id}`);
       
-      // Get the current record first to verify it exists
-      const { data: facultyData, error: fetchError } = await supabase
+      // Direct update approach
+      const { error } = await supabase
         .from('faculty_profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-        
-      if (fetchError) {
-        console.error("Error fetching faculty for update:", fetchError);
-        throw fetchError;
-      }
-      
-      console.log("Faculty record to update:", facultyData);
-      
-      // Now perform the update with explicit payload
-      const { data, error } = await supabase
-        .from('faculty_profiles')
-        .update({ 
-          verify: true,
-          updated_at: new Date().toISOString()
-        })
+        .update({ verify: true })
         .eq('id', id);
-      
-      console.log("Update operation completed:", { data, error });
       
       if (error) {
         console.error("Error approving faculty:", error);
@@ -134,10 +113,7 @@ export default function ApproveFaculty() {
         description: "Faculty member has been approved",
       });
       
-      // Force reload the faculties
-      await fetchFaculties();
-      
-      // Update local state as well for immediate UI feedback
+      // Update local state for immediate UI feedback
       setFaculties(prevFaculties => 
         prevFaculties.map(f => 
           f.id === id ? { ...f, verify: true } : f
@@ -148,6 +124,9 @@ export default function ApproveFaculty() {
       if (selectedFaculty && selectedFaculty.id === id) {
         setSelectedFaculty({ ...selectedFaculty, verify: true });
       }
+      
+      // Also fetch the updated data
+      await fetchFaculties();
       
     } catch (error: any) {
       console.error("Error approving faculty:", error);
@@ -169,32 +148,12 @@ export default function ApproveFaculty() {
     
     try {
       setProcessingAction(id);
-      console.log(`Starting revocation process for faculty ID: ${id}`);
       
-      // Get the current record first to verify it exists
-      const { data: facultyData, error: fetchError } = await supabase
+      // Direct update approach
+      const { error } = await supabase
         .from('faculty_profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-        
-      if (fetchError) {
-        console.error("Error fetching faculty for update:", fetchError);
-        throw fetchError;
-      }
-      
-      console.log("Faculty record to update:", facultyData);
-      
-      // Now perform the update with explicit payload
-      const { data, error } = await supabase
-        .from('faculty_profiles')
-        .update({ 
-          verify: false,
-          updated_at: new Date().toISOString() 
-        })
+        .update({ verify: false })
         .eq('id', id);
-      
-      console.log("Update operation completed:", { data, error });
       
       if (error) {
         console.error("Error revoking faculty approval:", error);
@@ -206,10 +165,7 @@ export default function ApproveFaculty() {
         description: "Faculty member's approval has been revoked",
       });
       
-      // Force reload the faculties
-      await fetchFaculties();
-      
-      // Update local state as well for immediate UI feedback
+      // Update local state for immediate UI feedback
       setFaculties(prevFaculties => 
         prevFaculties.map(f => 
           f.id === id ? { ...f, verify: false } : f
@@ -220,6 +176,9 @@ export default function ApproveFaculty() {
       if (selectedFaculty && selectedFaculty.id === id) {
         setSelectedFaculty({ ...selectedFaculty, verify: false });
       }
+      
+      // Also fetch the updated data
+      await fetchFaculties();
       
     } catch (error: any) {
       console.error("Error revoking faculty approval:", error);
