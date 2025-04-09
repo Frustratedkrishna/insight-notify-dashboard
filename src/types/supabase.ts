@@ -24,7 +24,7 @@ export interface FacultyProfile {
   year: number | null;
   profile_image_url: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   verify: boolean;
   password: string;
 }
