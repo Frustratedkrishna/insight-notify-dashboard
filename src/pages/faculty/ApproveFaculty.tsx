@@ -51,7 +51,6 @@ export default function ApproveFaculty() {
     } catch (error) {
       console.error("Error checking admin status:", error);
       setIsAdmin(false);
-    } finally {
       setLoading(false);
     }
   };
@@ -87,7 +86,6 @@ export default function ApproveFaculty() {
     try {
       setProcessingAction(id);
       
-      // Using update to directly set the verify field to true
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
@@ -102,7 +100,7 @@ export default function ApproveFaculty() {
         description: "Faculty member has been approved",
       });
       
-      // Update local state
+      // Update local state to reflect the change
       setFaculties(prevFaculties => 
         prevFaculties.map(f => 
           f.id === id ? { ...f, verify: true } : f
@@ -133,7 +131,6 @@ export default function ApproveFaculty() {
     try {
       setProcessingAction(id);
       
-      // Using update to directly set the verify field to false
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
@@ -148,7 +145,7 @@ export default function ApproveFaculty() {
         description: "Faculty member's approval has been revoked",
       });
       
-      // Update local state
+      // Update local state to reflect the change
       setFaculties(prevFaculties => 
         prevFaculties.map(f => 
           f.id === id ? { ...f, verify: false } : f
