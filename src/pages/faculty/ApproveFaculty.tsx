@@ -25,6 +25,7 @@ export default function ApproveFaculty() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Check if the current user is an admin when component mounts
   useEffect(() => {
     checkAdminStatus();
   }, []);
@@ -33,8 +34,9 @@ export default function ApproveFaculty() {
     try {
       setLoading(true);
       const facultyStr = localStorage.getItem('faculty');
+      
       if (!facultyStr) {
-        console.log("No faculty found in localStorage");
+        console.error("No faculty found in localStorage");
         setIsAdmin(false);
         setLoading(false);
         return;
@@ -44,7 +46,7 @@ export default function ApproveFaculty() {
       console.log("Faculty from localStorage:", faculty);
       
       if (faculty.role !== 'admin') {
-        console.log("Faculty is not admin, role:", faculty.role);
+        console.error("Faculty is not admin, role:", faculty.role);
         setIsAdmin(false);
         setLoading(false);
         return;
@@ -62,6 +64,7 @@ export default function ApproveFaculty() {
   const fetchFaculties = async () => {
     try {
       setLoading(true);
+      console.log("Fetching all faculty profiles...");
       
       const { data, error } = await supabase
         .from('faculty_profiles')
@@ -74,10 +77,10 @@ export default function ApproveFaculty() {
         throw error;
       }
       
-      console.log("Faculties fetched successfully:", data);
+      console.log("Faculties fetched successfully, count:", data?.length);
       setFaculties(data || []);
     } catch (error: any) {
-      console.error("Error fetching faculties:", error);
+      console.error("Error in fetchFaculties:", error);
       toast({
         title: "Error",
         description: "Failed to load faculty profiles",
@@ -90,46 +93,50 @@ export default function ApproveFaculty() {
 
   const handleApprove = async (id: string) => {
     if (!id) {
-      console.error("Invalid faculty ID:", id);
+      console.error("Invalid faculty ID for approval:", id);
       return;
     }
     
     try {
       setProcessingAction(id);
+      console.log(`Approving faculty with ID: ${id}`);
       
-      // Direct update approach
-      const { error } = await supabase
+      // Update database
+      const { data, error } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
         .eq('id', id);
-      
+        
       if (error) {
-        console.error("Error approving faculty:", error);
+        console.error("Database error when approving faculty:", error);
         throw error;
       }
       
+      console.log("Faculty approval database response:", data);
+      
+      // Show success message
       toast({
         title: "Success",
         description: "Faculty member has been approved",
       });
       
-      // Update local state for immediate UI feedback
+      // Update local state
       setFaculties(prevFaculties => 
-        prevFaculties.map(f => 
-          f.id === id ? { ...f, verify: true } : f
+        prevFaculties.map(faculty => 
+          faculty.id === id ? { ...faculty, verify: true } : faculty
         )
       );
       
-      // Update selected faculty if it's the one being modified
+      // Update selected faculty if open in dialog
       if (selectedFaculty && selectedFaculty.id === id) {
         setSelectedFaculty({ ...selectedFaculty, verify: true });
       }
       
-      // Also fetch the updated data
+      // Refresh data from database to ensure UI is in sync
       await fetchFaculties();
       
     } catch (error: any) {
-      console.error("Error approving faculty:", error);
+      console.error("Approval error details:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to approve faculty member",
@@ -142,46 +149,50 @@ export default function ApproveFaculty() {
 
   const handleRevoke = async (id: string) => {
     if (!id) {
-      console.error("Invalid faculty ID:", id);
+      console.error("Invalid faculty ID for revocation:", id);
       return;
     }
     
     try {
       setProcessingAction(id);
+      console.log(`Revoking approval for faculty with ID: ${id}`);
       
-      // Direct update approach
-      const { error } = await supabase
+      // Update database
+      const { data, error } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
         .eq('id', id);
-      
+        
       if (error) {
-        console.error("Error revoking faculty approval:", error);
+        console.error("Database error when revoking faculty approval:", error);
         throw error;
       }
       
+      console.log("Faculty revocation database response:", data);
+      
+      // Show success message
       toast({
         title: "Success",
         description: "Faculty member's approval has been revoked",
       });
       
-      // Update local state for immediate UI feedback
+      // Update local state
       setFaculties(prevFaculties => 
-        prevFaculties.map(f => 
-          f.id === id ? { ...f, verify: false } : f
+        prevFaculties.map(faculty => 
+          faculty.id === id ? { ...faculty, verify: false } : faculty
         )
       );
       
-      // Update selected faculty if it's the one being modified
+      // Update selected faculty if open in dialog
       if (selectedFaculty && selectedFaculty.id === id) {
         setSelectedFaculty({ ...selectedFaculty, verify: false });
       }
       
-      // Also fetch the updated data
+      // Refresh data from database to ensure UI is in sync
       await fetchFaculties();
       
     } catch (error: any) {
-      console.error("Error revoking faculty approval:", error);
+      console.error("Revocation error details:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to revoke faculty member's approval",
