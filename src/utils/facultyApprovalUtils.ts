@@ -5,21 +5,26 @@ import { toast } from "@/hooks/use-toast";
 
 /**
  * Updates a faculty member's verification status in the database
+ * This implementation uses direct database calls to ensure reliability
  */
 export const updateFacultyVerificationStatus = async (
   facultyId: string, 
   verifyStatus: boolean
 ): Promise<boolean> => {
+  if (!facultyId) {
+    console.error("Missing faculty ID");
+    toast({
+      title: "Error",
+      description: "Missing faculty ID",
+      variant: "destructive",
+    });
+    return false;
+  }
+  
+  console.log(`Attempting to update faculty ${facultyId} verification to ${verifyStatus}`);
+  
   try {
-    console.log(`Updating faculty ${facultyId} verification status to ${verifyStatus}`);
-    
-    // Validate the input parameters
-    if (!facultyId) {
-      console.error("Missing faculty ID");
-      throw new Error("Missing faculty ID");
-    }
-    
-    // Perform the database update with explicit logging
+    // Direct Supabase update with detailed error handling
     const { data, error } = await supabase
       .from('faculty_profiles')
       .update({ verify: verifyStatus })
@@ -28,24 +33,31 @@ export const updateFacultyVerificationStatus = async (
     
     if (error) {
       console.error("Database error when updating faculty verification:", error);
-      throw error;
+      toast({
+        title: "Database Error",
+        description: error.message || "Failed to update faculty verification status",
+        variant: "destructive",
+      });
+      return false;
     }
-    
-    // Log the response to help debug
-    console.log("Update response:", data);
-    
+
     if (!data || data.length === 0) {
-      console.warn("No rows were updated, possibly due to permissions or missing record");
+      console.warn("No faculty record was updated. ID might be invalid:", facultyId);
+      toast({
+        title: "Update Failed",
+        description: "Faculty record could not be found or updated",
+        variant: "destructive",
+      });
       return false;
     }
     
-    console.log("Faculty verification status updated successfully");
+    console.log("Faculty verification status updated successfully:", data);
     return true;
   } catch (error: any) {
-    console.error("Error updating faculty verification status:", error);
+    console.error("Unexpected error updating faculty verification:", error);
     toast({
-      title: "Error",
-      description: error.message || "Failed to update faculty verification status",
+      title: "System Error",
+      description: "An unexpected error occurred. Please try again.",
       variant: "destructive",
     });
     return false;
@@ -87,6 +99,11 @@ export const fetchAllFacultyProfiles = async (): Promise<FacultyProfile[]> => {
  * Fetches a single faculty profile by ID
  */
 export const fetchFacultyById = async (facultyId: string): Promise<FacultyProfile | null> => {
+  if (!facultyId) {
+    console.error("Missing faculty ID for fetch");
+    return null;
+  }
+  
   try {
     console.log(`Fetching faculty profile with ID: ${facultyId}`);
     
@@ -98,7 +115,7 @@ export const fetchFacultyById = async (facultyId: string): Promise<FacultyProfil
     
     if (error) {
       console.error("Error fetching faculty:", error);
-      throw error;
+      return null;
     }
     
     return data;

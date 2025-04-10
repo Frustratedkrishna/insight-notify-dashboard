@@ -11,11 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import FacultyProfileCard from '@/components/faculty/FacultyProfileCard';
 import FacultyTable from '@/components/faculty/FacultyTable';
-import { 
-  fetchAllFacultyProfiles, 
-  updateFacultyVerificationStatus,
-  fetchFacultyById
-} from '@/utils/facultyApprovalUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function ApproveFaculty() {
@@ -28,7 +23,7 @@ export default function ApproveFaculty() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check if the current user is an admin when component mounts
+  // Load data on component mount
   useEffect(() => {
     checkAdminStatus();
   }, []);
@@ -41,7 +36,12 @@ export default function ApproveFaculty() {
       if (!facultyStr) {
         console.error("No faculty found in localStorage");
         setIsAdmin(false);
-        setLoading(false);
+        toast({
+          title: "Authentication Error",
+          description: "Please login again",
+          variant: "destructive",
+        });
+        navigate("/faculty-auth");
         return;
       }
       
@@ -51,7 +51,12 @@ export default function ApproveFaculty() {
       if (faculty.role !== 'admin') {
         console.error("Faculty is not admin, role:", faculty.role);
         setIsAdmin(false);
-        setLoading(false);
+        toast({
+          title: "Access Denied",
+          description: "Only administrators can access this page",
+          variant: "destructive",
+        });
+        navigate("/faculty/dashboard");
         return;
       }
       
@@ -60,6 +65,13 @@ export default function ApproveFaculty() {
     } catch (error) {
       console.error("Error checking admin status:", error);
       setIsAdmin(false);
+      toast({
+        title: "Error",
+        description: "Failed to verify administrator privileges",
+        variant: "destructive",
+      });
+      navigate("/faculty/dashboard");
+    } finally {
       setLoading(false);
     }
   };
@@ -67,8 +79,26 @@ export default function ApproveFaculty() {
   const loadFacultyProfiles = async () => {
     setLoading(true);
     try {
-      const facultyProfiles = await fetchAllFacultyProfiles();
-      setFaculties(facultyProfiles);
+      console.log("Fetching all faculty profiles...");
+      const { data, error } = await supabase
+        .from('faculty_profiles')
+        .select('*')
+        .order('verify', { ascending: true })
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log("Faculties fetched successfully, count:", data?.length);
+      setFaculties(data || []);
+    } catch (error) {
+      console.error("Error loading faculty profiles:", error);
+      toast({
+        title: "Data Loading Error",
+        description: "Could not load faculty profiles. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -86,7 +116,7 @@ export default function ApproveFaculty() {
     
     setProcessingAction(id);
     try {
-      // Direct database update with error handling
+      console.log(`Approving faculty ${id}`);
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: true })
@@ -119,7 +149,7 @@ export default function ApproveFaculty() {
         setSelectedFaculty({ ...selectedFaculty, verify: true });
       }
       
-      // Refresh data from database to ensure UI is in sync
+      // Refresh data to ensure UI is in sync
       await loadFacultyProfiles();
     } catch (error) {
       console.error("Error in handleApprove:", error);
@@ -145,7 +175,7 @@ export default function ApproveFaculty() {
     
     setProcessingAction(id);
     try {
-      // Direct database update with error handling
+      console.log(`Revoking faculty approval ${id}`);
       const { error } = await supabase
         .from('faculty_profiles')
         .update({ verify: false })
@@ -178,7 +208,7 @@ export default function ApproveFaculty() {
         setSelectedFaculty({ ...selectedFaculty, verify: false });
       }
       
-      // Refresh data from database to ensure UI is in sync
+      // Refresh data to ensure UI is in sync
       await loadFacultyProfiles();
     } catch (error) {
       console.error("Error in handleRevoke:", error);
