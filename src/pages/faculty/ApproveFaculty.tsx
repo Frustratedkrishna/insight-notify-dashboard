@@ -11,7 +11,12 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import FacultyProfileCard from '@/components/faculty/FacultyProfileCard';
 import FacultyTable from '@/components/faculty/FacultyTable';
-import { fetchAllFacultyProfiles, updateFacultyVerificationStatus } from '@/utils/facultyApprovalUtils';
+import { 
+  fetchAllFacultyProfiles, 
+  updateFacultyVerificationStatus,
+  fetchFacultyById
+} from '@/utils/facultyApprovalUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function ApproveFaculty() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -70,66 +75,118 @@ export default function ApproveFaculty() {
   };
 
   const handleApprove = async (id: string) => {
-    if (!id) return;
+    if (!id) {
+      toast({
+        title: "Error",
+        description: "Invalid faculty ID",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setProcessingAction(id);
     try {
-      const success = await updateFacultyVerificationStatus(id, true);
+      // Direct database update with error handling
+      const { error } = await supabase
+        .from('faculty_profiles')
+        .update({ verify: true })
+        .eq('id', id);
       
-      if (success) {
+      if (error) {
+        console.error("Error approving faculty:", error);
         toast({
-          title: "Success",
-          description: "Faculty member has been approved",
+          title: "Error",
+          description: "Failed to approve faculty member",
+          variant: "destructive",
         });
-        
-        // Update local state
-        setFaculties(prevFaculties => 
-          prevFaculties.map(faculty => 
-            faculty.id === id ? { ...faculty, verify: true } : faculty
-          )
-        );
-        
-        // Update selected faculty if open in dialog
-        if (selectedFaculty && selectedFaculty.id === id) {
-          setSelectedFaculty({ ...selectedFaculty, verify: true });
-        }
-        
-        // Refresh data from database to ensure UI is in sync
-        await loadFacultyProfiles();
+        return;
       }
+      
+      toast({
+        title: "Success",
+        description: "Faculty member has been approved",
+      });
+      
+      // Update local state
+      setFaculties(prevFaculties => 
+        prevFaculties.map(faculty => 
+          faculty.id === id ? { ...faculty, verify: true } : faculty
+        )
+      );
+      
+      // Update selected faculty if open in dialog
+      if (selectedFaculty && selectedFaculty.id === id) {
+        setSelectedFaculty({ ...selectedFaculty, verify: true });
+      }
+      
+      // Refresh data from database to ensure UI is in sync
+      await loadFacultyProfiles();
+    } catch (error) {
+      console.error("Error in handleApprove:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
       setProcessingAction(null);
     }
   };
 
   const handleRevoke = async (id: string) => {
-    if (!id) return;
+    if (!id) {
+      toast({
+        title: "Error",
+        description: "Invalid faculty ID",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setProcessingAction(id);
     try {
-      const success = await updateFacultyVerificationStatus(id, false);
+      // Direct database update with error handling
+      const { error } = await supabase
+        .from('faculty_profiles')
+        .update({ verify: false })
+        .eq('id', id);
       
-      if (success) {
+      if (error) {
+        console.error("Error revoking faculty approval:", error);
         toast({
-          title: "Success",
-          description: "Faculty member's approval has been revoked",
+          title: "Error",
+          description: "Failed to revoke faculty member's approval",
+          variant: "destructive",
         });
-        
-        // Update local state
-        setFaculties(prevFaculties => 
-          prevFaculties.map(faculty => 
-            faculty.id === id ? { ...faculty, verify: false } : faculty
-          )
-        );
-        
-        // Update selected faculty if open in dialog
-        if (selectedFaculty && selectedFaculty.id === id) {
-          setSelectedFaculty({ ...selectedFaculty, verify: false });
-        }
-        
-        // Refresh data from database to ensure UI is in sync
-        await loadFacultyProfiles();
+        return;
       }
+      
+      toast({
+        title: "Success",
+        description: "Faculty member's approval has been revoked",
+      });
+      
+      // Update local state
+      setFaculties(prevFaculties => 
+        prevFaculties.map(faculty => 
+          faculty.id === id ? { ...faculty, verify: false } : faculty
+        )
+      );
+      
+      // Update selected faculty if open in dialog
+      if (selectedFaculty && selectedFaculty.id === id) {
+        setSelectedFaculty({ ...selectedFaculty, verify: false });
+      }
+      
+      // Refresh data from database to ensure UI is in sync
+      await loadFacultyProfiles();
+    } catch (error) {
+      console.error("Error in handleRevoke:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
       setProcessingAction(null);
     }

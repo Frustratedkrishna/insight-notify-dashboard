@@ -13,14 +13,30 @@ export const updateFacultyVerificationStatus = async (
   try {
     console.log(`Updating faculty ${facultyId} verification status to ${verifyStatus}`);
     
-    const { error } = await supabase
+    // Validate the input parameters
+    if (!facultyId) {
+      console.error("Missing faculty ID");
+      throw new Error("Missing faculty ID");
+    }
+    
+    // Perform the database update with explicit logging
+    const { data, error } = await supabase
       .from('faculty_profiles')
       .update({ verify: verifyStatus })
-      .eq('id', facultyId);
+      .eq('id', facultyId)
+      .select();
     
     if (error) {
       console.error("Database error when updating faculty verification:", error);
       throw error;
+    }
+    
+    // Log the response to help debug
+    console.log("Update response:", data);
+    
+    if (!data || data.length === 0) {
+      console.warn("No rows were updated, possibly due to permissions or missing record");
+      return false;
     }
     
     console.log("Faculty verification status updated successfully");
@@ -64,5 +80,30 @@ export const fetchAllFacultyProfiles = async (): Promise<FacultyProfile[]> => {
       variant: "destructive",
     });
     return [];
+  }
+};
+
+/**
+ * Fetches a single faculty profile by ID
+ */
+export const fetchFacultyById = async (facultyId: string): Promise<FacultyProfile | null> => {
+  try {
+    console.log(`Fetching faculty profile with ID: ${facultyId}`);
+    
+    const { data, error } = await supabase
+      .from('faculty_profiles')
+      .select('*')
+      .eq('id', facultyId)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching faculty:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error: any) {
+    console.error("Error in fetchFacultyById:", error);
+    return null;
   }
 };
