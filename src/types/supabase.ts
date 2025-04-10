@@ -25,7 +25,7 @@ export interface FacultyProfile {
   profile_image_url: string | null;
   created_at: string;
   updated_at: string | null;
-  verify: boolean | null;
+  verify: boolean;
   password: string;
 }
 

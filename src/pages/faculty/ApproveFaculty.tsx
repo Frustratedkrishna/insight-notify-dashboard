@@ -4,16 +4,14 @@ import { FacultyNavbar } from '@/components/FacultyNavbar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FacultyProfile } from '@/types/supabase';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Loader2, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Loader2, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import FacultyProfileCard from '@/components/faculty/FacultyProfileCard';
+import FacultyTable from '@/components/faculty/FacultyTable';
+import { fetchAllFacultyProfiles, updateFacultyVerificationStatus } from '@/utils/facultyApprovalUtils';
 
 export default function ApproveFaculty() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -53,7 +51,7 @@ export default function ApproveFaculty() {
       }
       
       setIsAdmin(true);
-      await fetchFaculties();
+      await loadFacultyProfiles();
     } catch (error) {
       console.error("Error checking admin status:", error);
       setIsAdmin(false);
@@ -61,143 +59,77 @@ export default function ApproveFaculty() {
     }
   };
 
-  const fetchFaculties = async () => {
+  const loadFacultyProfiles = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      console.log("Fetching all faculty profiles...");
-      
-      const { data, error } = await supabase
-        .from('faculty_profiles')
-        .select('*')
-        .order('verify', { ascending: true })
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error("Error fetching faculties:", error);
-        throw error;
-      }
-      
-      console.log("Faculties fetched successfully, count:", data?.length);
-      setFaculties(data || []);
-    } catch (error: any) {
-      console.error("Error in fetchFaculties:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load faculty profiles",
-        variant: "destructive",
-      });
+      const facultyProfiles = await fetchAllFacultyProfiles();
+      setFaculties(facultyProfiles);
     } finally {
       setLoading(false);
     }
   };
 
   const handleApprove = async (id: string) => {
-    if (!id) {
-      console.error("Invalid faculty ID for approval:", id);
-      return;
-    }
+    if (!id) return;
     
+    setProcessingAction(id);
     try {
-      setProcessingAction(id);
-      console.log(`Approving faculty with ID: ${id}`);
+      const success = await updateFacultyVerificationStatus(id, true);
       
-      // Update database
-      const { data, error } = await supabase
-        .from('faculty_profiles')
-        .update({ verify: true })
-        .eq('id', id);
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Faculty member has been approved",
+        });
         
-      if (error) {
-        console.error("Database error when approving faculty:", error);
-        throw error;
+        // Update local state
+        setFaculties(prevFaculties => 
+          prevFaculties.map(faculty => 
+            faculty.id === id ? { ...faculty, verify: true } : faculty
+          )
+        );
+        
+        // Update selected faculty if open in dialog
+        if (selectedFaculty && selectedFaculty.id === id) {
+          setSelectedFaculty({ ...selectedFaculty, verify: true });
+        }
+        
+        // Refresh data from database to ensure UI is in sync
+        await loadFacultyProfiles();
       }
-      
-      console.log("Faculty approval database response:", data);
-      
-      // Show success message
-      toast({
-        title: "Success",
-        description: "Faculty member has been approved",
-      });
-      
-      // Update local state
-      setFaculties(prevFaculties => 
-        prevFaculties.map(faculty => 
-          faculty.id === id ? { ...faculty, verify: true } : faculty
-        )
-      );
-      
-      // Update selected faculty if open in dialog
-      if (selectedFaculty && selectedFaculty.id === id) {
-        setSelectedFaculty({ ...selectedFaculty, verify: true });
-      }
-      
-      // Refresh data from database to ensure UI is in sync
-      await fetchFaculties();
-      
-    } catch (error: any) {
-      console.error("Approval error details:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to approve faculty member",
-        variant: "destructive",
-      });
     } finally {
       setProcessingAction(null);
     }
   };
 
   const handleRevoke = async (id: string) => {
-    if (!id) {
-      console.error("Invalid faculty ID for revocation:", id);
-      return;
-    }
+    if (!id) return;
     
+    setProcessingAction(id);
     try {
-      setProcessingAction(id);
-      console.log(`Revoking approval for faculty with ID: ${id}`);
+      const success = await updateFacultyVerificationStatus(id, false);
       
-      // Update database
-      const { data, error } = await supabase
-        .from('faculty_profiles')
-        .update({ verify: false })
-        .eq('id', id);
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Faculty member's approval has been revoked",
+        });
         
-      if (error) {
-        console.error("Database error when revoking faculty approval:", error);
-        throw error;
+        // Update local state
+        setFaculties(prevFaculties => 
+          prevFaculties.map(faculty => 
+            faculty.id === id ? { ...faculty, verify: false } : faculty
+          )
+        );
+        
+        // Update selected faculty if open in dialog
+        if (selectedFaculty && selectedFaculty.id === id) {
+          setSelectedFaculty({ ...selectedFaculty, verify: false });
+        }
+        
+        // Refresh data from database to ensure UI is in sync
+        await loadFacultyProfiles();
       }
-      
-      console.log("Faculty revocation database response:", data);
-      
-      // Show success message
-      toast({
-        title: "Success",
-        description: "Faculty member's approval has been revoked",
-      });
-      
-      // Update local state
-      setFaculties(prevFaculties => 
-        prevFaculties.map(faculty => 
-          faculty.id === id ? { ...faculty, verify: false } : faculty
-        )
-      );
-      
-      // Update selected faculty if open in dialog
-      if (selectedFaculty && selectedFaculty.id === id) {
-        setSelectedFaculty({ ...selectedFaculty, verify: false });
-      }
-      
-      // Refresh data from database to ensure UI is in sync
-      await fetchFaculties();
-      
-    } catch (error: any) {
-      console.error("Revocation error details:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to revoke faculty member's approval",
-        variant: "destructive",
-      });
     } finally {
       setProcessingAction(null);
     }
@@ -206,27 +138,6 @@ export default function ApproveFaculty() {
   const handleViewFaculty = (faculty: FacultyProfile) => {
     setSelectedFaculty(faculty);
     setShowFacultyDialog(true);
-  };
-
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`;
-  };
-
-  const getRoleDisplay = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Administrator';
-      case 'chairman':
-        return 'Chairman';
-      case 'director':
-        return 'Director';
-      case 'hod':
-        return 'Head of Department';
-      case 'class_coordinator':
-        return 'Class Coordinator';
-      default:
-        return role;
-    }
   };
 
   if (loading) {
@@ -279,7 +190,7 @@ export default function ApproveFaculty() {
               <span>Approve Faculty Members</span>
               <Button 
                 size="sm"
-                onClick={fetchFaculties}
+                onClick={loadFacultyProfiles}
                 variant="outline"
                 className="flex items-center gap-1"
               >
@@ -295,74 +206,13 @@ export default function ApproveFaculty() {
             {faculties.length === 0 ? (
               <p className="text-center text-gray-500 py-4">No faculty profiles found</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Employee ID</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {faculties.map((faculty) => (
-                    <TableRow key={faculty.id}>
-                      <TableCell>
-                        <Button 
-                          variant="link" 
-                          className="p-0 h-auto font-normal text-left"
-                          onClick={() => handleViewFaculty(faculty)}
-                        >
-                          {`${faculty.first_name} ${faculty.last_name}`}
-                        </Button>
-                      </TableCell>
-                      <TableCell>{faculty.employee_id}</TableCell>
-                      <TableCell>{getRoleDisplay(faculty.role)}</TableCell>
-                      <TableCell>
-                        {faculty.verify ? (
-                          <Badge className="bg-green-500">Approved</Badge>
-                        ) : (
-                          <Badge variant="destructive">Pending</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {faculty.role !== 'admin' && (
-                          faculty.verify ? (
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleRevoke(faculty.id)}
-                              disabled={processingAction === faculty.id}
-                            >
-                              {processingAction === faculty.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                              ) : (
-                                <XCircle className="h-4 w-4 mr-1" />
-                              )}
-                              Revoke
-                            </Button>
-                          ) : (
-                            <Button 
-                              variant="default" 
-                              size="sm"
-                              onClick={() => handleApprove(faculty.id)}
-                              disabled={processingAction === faculty.id}
-                            >
-                              {processingAction === faculty.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                              )}
-                              Approve
-                            </Button>
-                          )
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <FacultyTable
+                faculties={faculties}
+                onViewFaculty={handleViewFaculty}
+                onApprove={handleApprove}
+                onRevoke={handleRevoke}
+                processingAction={processingAction}
+              />
             )}
           </CardContent>
         </Card>
@@ -385,100 +235,12 @@ export default function ApproveFaculty() {
           </DialogHeader>
           
           {selectedFaculty && (
-            <ScrollArea className="max-h-[70vh] pr-4">
-              <div className="flex flex-col items-center mb-6">
-                <Avatar className="h-32 w-32 mb-4">
-                  <AvatarImage 
-                    src={selectedFaculty.profile_image_url || ''} 
-                    alt={`${selectedFaculty.first_name} ${selectedFaculty.last_name}`} 
-                  />
-                  <AvatarFallback className="text-2xl">
-                    {getInitials(selectedFaculty.first_name, selectedFaculty.last_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <h3 className="text-xl font-semibold">{`${selectedFaculty.first_name} ${selectedFaculty.last_name}`}</h3>
-                <Badge className={selectedFaculty.verify ? "bg-green-500 mt-2" : "bg-red-500 mt-2"}>
-                  {selectedFaculty.verify ? "Approved" : "Pending Approval"}
-                </Badge>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Employee ID</h4>
-                  <p>{selectedFaculty.employee_id}</p>
-                </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Role</h4>
-                  <p>{getRoleDisplay(selectedFaculty.role)}</p>
-                </div>
-                
-                {selectedFaculty.department && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Department</h4>
-                    <p>{selectedFaculty.department}</p>
-                  </div>
-                )}
-                
-                {selectedFaculty.course_name && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Course</h4>
-                    <p>{selectedFaculty.course_name}</p>
-                  </div>
-                )}
-                
-                {selectedFaculty.year && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Year</h4>
-                    <p>{selectedFaculty.year}</p>
-                  </div>
-                )}
-                
-                {selectedFaculty.section && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Section</h4>
-                    <p>{selectedFaculty.section}</p>
-                  </div>
-                )}
-                
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Account Created</h4>
-                  <p>{new Date(selectedFaculty.created_at).toLocaleString()}</p>
-                </div>
-                
-                <div className="flex gap-2 justify-center mt-4">
-                  {selectedFaculty.role !== 'admin' && (
-                    selectedFaculty.verify ? (
-                      <Button 
-                        variant="destructive" 
-                        onClick={() => handleRevoke(selectedFaculty.id)}
-                        disabled={processingAction === selectedFaculty.id}
-                      >
-                        {processingAction === selectedFaculty.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                        ) : (
-                          <XCircle className="h-4 w-4 mr-1" />
-                        )}
-                        Revoke Approval
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="default" 
-                        onClick={() => handleApprove(selectedFaculty.id)}
-                        disabled={processingAction === selectedFaculty.id}
-                      >
-                        {processingAction === selectedFaculty.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                        ) : (
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                        )}
-                        Approve
-                      </Button>
-                    )
-                  )}
-                </div>
-              </div>
-            </ScrollArea>
+            <FacultyProfileCard 
+              faculty={selectedFaculty} 
+              onApprove={handleApprove}
+              onRevoke={handleRevoke}
+              processingAction={processingAction}
+            />
           )}
         </DialogContent>
       </Dialog>
