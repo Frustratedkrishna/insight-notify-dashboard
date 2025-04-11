@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminRoleCheckProps {
   children: React.ReactNode;
@@ -52,6 +53,7 @@ const AdminRoleCheck: React.FC<AdminRoleCheckProps> = ({ children }) => {
         return;
       }
       
+      console.log("Admin access confirmed for user:", faculty.id);
       setIsAdmin(true);
     } catch (error) {
       console.error("Error checking admin status:", error);
@@ -72,7 +74,7 @@ const AdminRoleCheck: React.FC<AdminRoleCheckProps> = ({ children }) => {
       <div className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
         <div className="flex flex-col items-center">
           <Loader2 className="h-8 w-8 animate-spin mb-2" />
-          <p>Loading faculty data...</p>
+          <p>Verifying admin credentials...</p>
         </div>
       </div>
     );

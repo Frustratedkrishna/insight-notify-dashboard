@@ -23,6 +23,8 @@ const FacultyDetailDialog: React.FC<FacultyDetailDialogProps> = ({
   onRevoke,
   processingAction
 }) => {
+  if (!selectedFaculty) return null;
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh]">
@@ -40,14 +42,12 @@ const FacultyDetailDialog: React.FC<FacultyDetailDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        {selectedFaculty && (
-          <FacultyProfileCard 
-            faculty={selectedFaculty} 
-            onApprove={onApprove}
-            onRevoke={onRevoke}
-            processingAction={processingAction}
-          />
-        )}
+        <FacultyProfileCard 
+          faculty={selectedFaculty} 
+          onApprove={onApprove}
+          onRevoke={onRevoke}
+          processingAction={processingAction}
+        />
       </DialogContent>
     </Dialog>
   );

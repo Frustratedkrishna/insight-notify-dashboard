@@ -2,27 +2,169 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Loader2 } from 'lucide-react';
 import { FacultyProfile } from '@/types/supabase';
 import FacultyTable from '@/components/faculty/FacultyTable';
 import FacultyDetailDialog from '@/components/faculty/FacultyDetailDialog';
-import { useFacultyApproval } from '@/hooks/useFacultyApproval';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const FacultyApprovalManager: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [faculties, setFaculties] = useState<FacultyProfile[]>([]);
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyProfile | null>(null);
   const [showFacultyDialog, setShowFacultyDialog] = useState(false);
-  
-  const { 
-    loading, 
-    faculties, 
-    processingAction,
-    loadFacultyProfiles,
-    handleApprove,
-    handleRevoke 
-  } = useFacultyApproval();
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const { toast } = useToast();
 
+  // Load faculty profiles directly without using custom hook
+  const loadFacultyProfiles = async () => {
+    setLoading(true);
+    try {
+      console.log("Fetching all faculty profiles...");
+      
+      const { data, error } = await supabase
+        .from('faculty_profiles')
+        .select('*')
+        .order('verify', { ascending: true })
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching faculties:", error);
+        toast({
+          title: "Data Loading Error",
+          description: "Could not load faculty profiles. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log("Faculties fetched successfully, count:", data?.length);
+      setFaculties(data || []);
+    } catch (error: any) {
+      console.error("Error in fetchAllFacultyProfiles:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load faculty profiles",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Direct approach for approving faculty
+  const handleApprove = async (id: string) => {
+    if (!id) {
+      toast({
+        title: "Error",
+        description: "Invalid faculty ID",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setProcessingAction(id);
+    try {
+      console.log(`Approving faculty ${id}`);
+      
+      const { data, error } = await supabase
+        .from('faculty_profiles')
+        .update({ verify: true })
+        .eq('id', id)
+        .select();
+      
+      if (error) {
+        console.error("Database error when approving faculty:", error);
+        toast({
+          title: "Database Error",
+          description: error.message || "Failed to approve faculty",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Faculty approval successful:", data);
+      toast({
+        title: "Success",
+        description: "Faculty member has been approved",
+      });
+      
+      // Update local state
+      setFaculties(prev => 
+        prev.map(faculty => 
+          faculty.id === id ? { ...faculty, verify: true } : faculty
+        )
+      );
+    } catch (error: any) {
+      console.error("Error in handleApprove:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  // Direct approach for revoking faculty
+  const handleRevoke = async (id: string) => {
+    if (!id) {
+      toast({
+        title: "Error",
+        description: "Invalid faculty ID",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setProcessingAction(id);
+    try {
+      console.log(`Revoking faculty approval ${id}`);
+      
+      const { data, error } = await supabase
+        .from('faculty_profiles')
+        .update({ verify: false })
+        .eq('id', id)
+        .select();
+      
+      if (error) {
+        console.error("Database error when revoking faculty approval:", error);
+        toast({
+          title: "Database Error",
+          description: error.message || "Failed to revoke faculty approval",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Faculty revocation successful:", data);
+      toast({
+        title: "Success",
+        description: "Faculty member's approval has been revoked",
+      });
+      
+      // Update local state
+      setFaculties(prev => 
+        prev.map(faculty => 
+          faculty.id === id ? { ...faculty, verify: false } : faculty
+        )
+      );
+    } catch (error: any) {
+      console.error("Error in handleRevoke:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  // Load faculty profiles when component mounts
   useEffect(() => {
-    // Load faculty profiles when component mounts
     loadFacultyProfiles();
   }, []);
 
@@ -32,7 +174,12 @@ const FacultyApprovalManager: React.FC = () => {
   };
 
   if (loading) {
-    return <p className="text-center py-8">Loading faculty data...</p>;
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
+        <p>Loading faculty data...</p>
+      </div>
+    );
   }
 
   return (
