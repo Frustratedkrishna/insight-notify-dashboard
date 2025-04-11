@@ -116,8 +116,8 @@ export const fetchRegistrationSettings = async (): Promise<{
       };
     }
     
-    // Use TypeScript type assertion to access the properties
-    const settingsData = data as {
+    // First cast to unknown, then to our expected type to avoid TypeScript errors
+    const settingsData = data as unknown as {
       allow_faculty_registration: boolean;
       allow_student_registration: boolean;
     };
