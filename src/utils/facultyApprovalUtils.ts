@@ -46,14 +46,16 @@ export const updateRegistrationAccess = async (
       allowStudentRegistration 
     });
     
+    // We need to use the correct table name 'system_settings' but with a special approach
+    // since it's not in the TypeScript types yet
     const { error } = await supabase
-      .from('system_settings')
+      .from('system_settings' as any)
       .upsert({
         id: 'registration_settings',
         allow_faculty_registration: allowFacultyRegistration,
         allow_student_registration: allowStudentRegistration,
         updated_at: new Date().toISOString()
-      });
+      } as any);
     
     if (error) {
       console.error("Error updating registration settings:", error);
@@ -90,13 +92,15 @@ export const fetchRegistrationSettings = async (): Promise<{
   allowStudentRegistration: boolean;
 }> => {
   try {
+    // We need to use the correct table name 'system_settings' but with a special approach
+    // since it's not in the TypeScript types yet
     const { data, error } = await supabase
-      .from('system_settings')
+      .from('system_settings' as any)
       .select('*')
       .eq('id', 'registration_settings')
-      .single();
+      .maybeSingle();
     
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found" error
+    if (error) {
       console.error("Error fetching registration settings:", error);
       return {
         allowFacultyRegistration: true,
@@ -112,9 +116,12 @@ export const fetchRegistrationSettings = async (): Promise<{
       };
     }
     
+    // Use TypeScript type assertion to access the properties
+    const settingsData = data as any;
+    
     return {
-      allowFacultyRegistration: data.allow_faculty_registration,
-      allowStudentRegistration: data.allow_student_registration
+      allowFacultyRegistration: settingsData.allow_faculty_registration,
+      allowStudentRegistration: settingsData.allow_student_registration
     };
   } catch (error: any) {
     console.error("Error in fetchRegistrationSettings:", error);
