@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Database } from "@/integrations/supabase/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
+import { fetchRegistrationSettings } from "@/utils/facultyApprovalUtils";
 
 type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
 
@@ -18,6 +20,31 @@ const Auth = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [verificationPending, setVerificationPending] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
+  const [registrationDisabled, setRegistrationDisabled] = useState(false);
+  const [checkingRegistration, setCheckingRegistration] = useState(true);
+  
+  // Check if registration is allowed
+  useEffect(() => {
+    const checkRegistrationAccess = async () => {
+      try {
+        setCheckingRegistration(true);
+        const settings = await fetchRegistrationSettings();
+        setRegistrationDisabled(!settings.allowStudentRegistration);
+        
+        // Force switch to login tab if registration is disabled
+        if (!settings.allowStudentRegistration && activeTab === "register") {
+          setActiveTab("login");
+        }
+      } catch (error) {
+        console.error("Error checking registration access:", error);
+      } finally {
+        setCheckingRegistration(false);
+      }
+    };
+    
+    checkRegistrationAccess();
+  }, [activeTab]);
   
   useEffect(() => {
     const checkAuth = () => {
@@ -269,10 +296,12 @@ const Auth = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
+            <TabsTrigger value="register" disabled={registrationDisabled || checkingRegistration}>
+              Register {checkingRegistration && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
@@ -304,123 +333,141 @@ const Auth = () => {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Loading..." : "Sign In"}
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : "Sign In"}
               </Button>
             </form>
           </TabsContent>
 
           <TabsContent value="register">
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div className="flex justify-center mb-4">
-                <div className="relative">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src={imagePreview || ""} />
-                    <AvatarFallback>Upload</AvatarFallback>
-                  </Avatar>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
+            {registrationDisabled ? (
+              <Alert className="mb-4">
+                <AlertDescription>
+                  Registration is currently disabled by the administrator. Please contact the admin for assistance.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="flex justify-center mb-4">
+                  <div className="relative">
+                    <Avatar className="w-24 h-24">
+                      <AvatarImage src={imagePreview || ""} />
+                      <AvatarFallback>Upload</AvatarFallback>
+                    </Avatar>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="enrollmentNumber">Enrollment Number</Label>
                   <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    id="enrollmentNumber"
+                    value={enrollmentNumber}
+                    onChange={(e) => setEnrollmentNumber(e.target.value)}
                     required
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="password">Password</Label>
                   <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="enrollmentNumber">Enrollment Number</Label>
-                <Input
-                  id="enrollmentNumber"
-                  value={enrollmentNumber}
-                  onChange={(e) => setEnrollmentNumber(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="course">Course</Label>
-                <Input
-                  id="course"
-                  value={course}
-                  onChange={(e) => setCourse(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="year">Year</Label>
+                  <Label htmlFor="course">Course</Label>
                   <Input
-                    id="year"
-                    type="number"
-                    min="1"
-                    max="4"
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
+                    id="course"
+                    value={course}
+                    onChange={(e) => setCourse(e.target.value)}
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="year">Year</Label>
+                    <Input
+                      id="year"
+                      type="number"
+                      min="1"
+                      max="4"
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="section">Section</Label>
+                    <Input
+                      id="section"
+                      value={section}
+                      onChange={(e) => setSection(e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="section">Section</Label>
+                  <Label htmlFor="aadharNumber">Aadhar Number</Label>
                   <Input
-                    id="section"
-                    value={section}
-                    onChange={(e) => setSection(e.target.value)}
+                    id="aadharNumber"
+                    value={aadharNumber}
+                    onChange={(e) => setAadharNumber(e.target.value)}
                   />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="aadharNumber">Aadhar Number</Label>
-                <Input
-                  id="aadharNumber"
-                  value={aadharNumber}
-                  onChange={(e) => setAadharNumber(e.target.value)}
-                />
-              </div>
+                <div>
+                  <Label htmlFor="abcId">ABC ID</Label>
+                  <Input
+                    id="abcId"
+                    value={abcId}
+                    onChange={(e) => setAbcId(e.target.value)}
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="abcId">ABC ID</Label>
-                <Input
-                  id="abcId"
-                  value={abcId}
-                  onChange={(e) => setAbcId(e.target.value)}
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Creating Account..." : "Sign Up"}
-              </Button>
-            </form>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : "Sign Up"}
+                </Button>
+              </form>
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FacultyProfile } from "@/types/supabase";
 import { Loader2 } from "lucide-react";
+import { fetchRegistrationSettings } from "@/utils/facultyApprovalUtils";
 
 type FacultyRole = "chairman" | "director" | "hod" | "class_coordinator";
 
@@ -23,6 +22,31 @@ const FacultyAuth = () => {
   const [showAdminMessage, setShowAdminMessage] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
+  const [registrationDisabled, setRegistrationDisabled] = useState(false);
+  const [checkingRegistration, setCheckingRegistration] = useState(true);
+  
+  // Check if registration is allowed
+  useEffect(() => {
+    const checkRegistrationAccess = async () => {
+      try {
+        setCheckingRegistration(true);
+        const settings = await fetchRegistrationSettings();
+        setRegistrationDisabled(!settings.allowFacultyRegistration);
+        
+        // Force switch to login tab if registration is disabled
+        if (!settings.allowFacultyRegistration && activeTab === "register") {
+          setActiveTab("login");
+        }
+      } catch (error) {
+        console.error("Error checking registration access:", error);
+      } finally {
+        setCheckingRegistration(false);
+      }
+    };
+    
+    checkRegistrationAccess();
+  }, [activeTab]);
   
   // Create admin account when component loads
   useEffect(() => {
@@ -67,6 +91,8 @@ const FacultyAuth = () => {
 
     checkAuth();
   }, [navigate, location]);
+
+  // ... keep existing code (state variables for registration form)
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -333,13 +359,16 @@ const FacultyAuth = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
+            <TabsTrigger value="register" disabled={registrationDisabled || checkingRegistration}>
+              Register {checkingRegistration && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
+            {/* ... keep existing code (login form alerts) */}
             {isCreatingAdmin && (
               <Alert className="mb-4">
                 <AlertDescription>
@@ -393,134 +422,143 @@ const FacultyAuth = () => {
           </TabsContent>
 
           <TabsContent value="register">
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div className="flex justify-center mb-4">
-                <div className="relative">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src={imagePreview || ""} />
-                    <AvatarFallback>Upload</AvatarFallback>
-                  </Avatar>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="employeeId">Employee ID</Label>
-                <Input
-                  id="employeeId"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="password">Password (min. 6 characters)</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="facultyRole">Role</Label>
-                <Select 
-                  value={facultyRole} 
-                  onValueChange={(value: FacultyRole) => setFacultyRole(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="chairman">Chairman</SelectItem>
-                    <SelectItem value="director">Director</SelectItem>
-                    <SelectItem value="hod">HOD</SelectItem>
-                    <SelectItem value="class_coordinator">Class Coordinator</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {facultyRole === 'hod' && (
-                <div>
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
-
-              {facultyRole === 'class_coordinator' && (
-                <>
-                  <div>
-                    <Label htmlFor="course">Course</Label>
+            {registrationDisabled ? (
+              <Alert className="mb-4">
+                <AlertDescription>
+                  Registration is currently disabled by the administrator. Please contact the admin for assistance.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                {/* ... keep existing code (registration form) */}
+                <div className="flex justify-center mb-4">
+                  <div className="relative">
+                    <Avatar className="w-24 h-24">
+                      <AvatarImage src={imagePreview || ""} />
+                      <AvatarFallback>Upload</AvatarFallback>
+                    </Avatar>
                     <Input
-                      id="course"
-                      value={course}
-                      onChange={(e) => setCourse(e.target.value)}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="year">Year</Label>
+                    <Label htmlFor="lastName">Last Name</Label>
                     <Input
-                      id="year"
-                      type="number"
-                      min="1"
-                      max="4"
-                      value={year}
-                      onChange={(e) => setYear(e.target.value)}
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
                       required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="section">Section</Label>
-                    <Input
-                      id="section"
-                      value={section}
-                      onChange={(e) => setSection(e.target.value)}
-                      required
-                    />
-                  </div>
-                </>
-              )}
+                </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Loading..." : "Sign Up"}
-              </Button>
-            </form>
+                <div>
+                  <Label htmlFor="employeeId">Employee ID</Label>
+                  <Input
+                    id="employeeId"
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="password">Password (min. 6 characters)</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="facultyRole">Role</Label>
+                  <Select 
+                    value={facultyRole} 
+                    onValueChange={(value: FacultyRole) => setFacultyRole(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="chairman">Chairman</SelectItem>
+                      <SelectItem value="director">Director</SelectItem>
+                      <SelectItem value="hod">HOD</SelectItem>
+                      <SelectItem value="class_coordinator">Class Coordinator</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {facultyRole === 'hod' && (
+                  <div>
+                    <Label htmlFor="department">Department</Label>
+                    <Input
+                      id="department"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
+                {facultyRole === 'class_coordinator' && (
+                  <>
+                    <div>
+                      <Label htmlFor="course">Course</Label>
+                      <Input
+                        id="course"
+                        value={course}
+                        onChange={(e) => setCourse(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="year">Year</Label>
+                      <Input
+                        id="year"
+                        type="number"
+                        min="1"
+                        max="4"
+                        value={year}
+                        onChange={(e) => setYear(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="section">Section</Label>
+                      <Input
+                        id="section"
+                        value={section}
+                        onChange={(e) => setSection(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </>
+                )}
+
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Loading..." : "Sign Up"}
+                </Button>
+              </form>
+            )}
           </TabsContent>
         </Tabs>
       </div>
