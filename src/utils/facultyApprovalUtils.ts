@@ -46,8 +46,7 @@ export const updateRegistrationAccess = async (
       allowStudentRegistration 
     });
     
-    // We need to use the correct table name 'system_settings' but with a special approach
-    // since it's not in the TypeScript types yet
+    // Use type assertion to work around TypeScript's type checking for tables not in the schema
     const { error } = await supabase
       .from('system_settings' as any)
       .upsert({
@@ -55,6 +54,8 @@ export const updateRegistrationAccess = async (
         allow_faculty_registration: allowFacultyRegistration,
         allow_student_registration: allowStudentRegistration,
         updated_at: new Date().toISOString()
+      }, { 
+        onConflict: 'id' 
       } as any);
     
     if (error) {
@@ -92,8 +93,7 @@ export const fetchRegistrationSettings = async (): Promise<{
   allowStudentRegistration: boolean;
 }> => {
   try {
-    // We need to use the correct table name 'system_settings' but with a special approach
-    // since it's not in the TypeScript types yet
+    // Use type assertion for the system_settings table
     const { data, error } = await supabase
       .from('system_settings' as any)
       .select('*')
@@ -117,7 +117,10 @@ export const fetchRegistrationSettings = async (): Promise<{
     }
     
     // Use TypeScript type assertion to access the properties
-    const settingsData = data as any;
+    const settingsData = data as {
+      allow_faculty_registration: boolean;
+      allow_student_registration: boolean;
+    };
     
     return {
       allowFacultyRegistration: settingsData.allow_faculty_registration,
