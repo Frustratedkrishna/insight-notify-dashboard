@@ -17,9 +17,11 @@ export function Footer() {
           <div className="flex flex-col items-center md:items-start">
             <div className="flex items-center mb-4">
               {/* College Logo */}
-              <div className="w-12 h-12 bg-red-600 flex items-center justify-center rounded-full mr-3">
-                <span className="text-white font-bold text-xl">DBIT</span>
-              </div>
+              <img 
+                src="/lovable-uploads/f87edee9-06c8-4b4a-9c20-5eefdefe1ada.png" 
+                alt="DBIT Logo" 
+                className="h-12 w-12 mr-3"
+              />
               <div>
                 <h3 className="font-bold text-lg">Don Bosco Institute of Technology</h3>
               </div>

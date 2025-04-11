@@ -54,7 +54,7 @@ export const updateRegistrationAccess = async (
         allow_faculty_registration: allowFacultyRegistration,
         allow_student_registration: allowStudentRegistration,
         updated_at: new Date().toISOString()
-      }, { 
+      } as any, { 
         onConflict: 'id' 
       } as any);
     
