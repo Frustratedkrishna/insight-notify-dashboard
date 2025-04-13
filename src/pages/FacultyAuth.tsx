@@ -180,10 +180,7 @@ const FacultyAuth = () => {
       }
 
       // Check if faculty profile is verified
-      if (!faculty.verify) {
-        setShowVerificationMessage(true);
-        throw new Error("Your account is pending approval by an administrator");
-      }
+    
 
       console.log('Faculty login successful:', faculty);
       
