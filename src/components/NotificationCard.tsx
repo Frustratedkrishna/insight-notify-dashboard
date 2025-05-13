@@ -44,7 +44,7 @@ export function NotificationCard({
   return (
     <>
       <Card 
-        className="transition-all hover:shadow-md cursor-pointer border-gray-200 hover:border-red-200 group"
+        className="transition-all hover:shadow-md cursor-pointer border-gray-200 hover:border-red-200 group bg-white"
         onClick={() => setIsModalOpen(true)}
       >
         <CardHeader className="pb-2">
@@ -81,7 +81,7 @@ export function NotificationCard({
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground pt-2 space-y-1">

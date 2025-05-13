@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DashboardNav } from "@/components/DashboardNav";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationCard } from "@/components/NotificationCard";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Notification } from "@/types/supabase";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -147,8 +147,8 @@ export default function Notifications() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <DashboardNav />
-        <main className="flex-1">
-          <div className="max-w-3xl mx-auto px-4 py-8">
+        <main className="flex-1 flex justify-center">
+          <div className="w-full max-w-4xl px-4 py-8">
             <div className="mb-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-red-50">
@@ -158,7 +158,7 @@ export default function Notifications() {
               </div>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               {loading ? (
                 Array(3).fill(0).map((_, i) => (
                   <div key={i} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
