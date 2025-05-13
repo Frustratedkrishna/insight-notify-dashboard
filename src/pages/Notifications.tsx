@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Notification } from "@/types/supabase";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Bell } from "lucide-react";
 
 interface Profile {
   course_name: string;
@@ -147,12 +147,18 @@ export default function Notifications() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <DashboardNav />
-        <main className="flex-1 p-4 md:p-6">
-          <h1 className="text-2xl font-bold mb-6 text-red-600">Notifications</h1>
-          <div className="space-y-4">
+        <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Bell className="h-6 w-6 text-red-600" />
+              <h1 className="text-2xl font-bold text-red-600">Notifications</h1>
+            </div>
+          </div>
+          
+          <div className="grid gap-4 md:gap-6">
             {loading ? (
               Array(3).fill(0).map((_, i) => (
-                <div key={i} className="mb-4 border rounded-lg p-4">
+                <div key={i} className="bg-white border rounded-lg p-4 shadow-sm">
                   <Skeleton className="h-6 w-3/4 mb-2" />
                   <Skeleton className="h-4 w-1/4 mb-4" />
                   <Skeleton className="h-4 w-full mb-2" />
@@ -160,7 +166,11 @@ export default function Notifications() {
                 </div>
               ))
             ) : notifications.length === 0 ? (
-              <p className="text-muted-foreground">No notifications to display</p>
+              <div className="bg-white border rounded-lg p-8 text-center">
+                <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg font-medium text-muted-foreground">No notifications to display</p>
+                <p className="text-sm text-muted-foreground mt-2">Check back later for updates</p>
+              </div>
             ) : (
               notifications.map((notification) => (
                 <NotificationCard
@@ -172,6 +182,7 @@ export default function Notifications() {
                   department={notification.department}
                   semester={notification.semester}
                   section={notification.section}
+                  createdBy={notification.created_by}
                 />
               ))
             )}
