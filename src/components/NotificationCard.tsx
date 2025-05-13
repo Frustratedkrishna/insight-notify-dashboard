@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Bell, CalendarIcon, GraduationCap, UserRound } from "lucide-react";
 
 interface NotificationCardProps {
   title: string;
@@ -43,39 +44,39 @@ export function NotificationCard({
   return (
     <>
       <Card 
-        className="mb-4 transition-all hover:shadow-md cursor-pointer"
+        className="transition-all hover:shadow-md cursor-pointer border-gray-200 hover:border-red-200 group"
         onClick={() => setIsModalOpen(true)}
       >
-        <CardHeader>
-          <CardTitle className="text-lg">{title}</CardTitle>
-          <div className="flex gap-2 text-sm text-muted-foreground">
-            <span>{formatDistanceToNow(new Date(createdAt), { addSuffix: true })}</span>
-            {type === "course_specific" && (
-              <>
-                <span>•</span>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg text-gray-900 group-hover:text-red-600">{title}</CardTitle>
+          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <CalendarIcon className="h-3.5 w-3.5" />
+              <span>{formatDistanceToNow(new Date(createdAt), { addSuffix: true })}</span>
+            </div>
+            
+            {type === "course_specific" && department && (
+              <div className="flex items-center gap-1">
+                <GraduationCap className="h-3.5 w-3.5" />
                 <span>{department}</span>
-                {semester && (
-                  <>
-                    <span>•</span>
-                    <span>
-                      {isNaN(Number(semester)) 
-                        ? `Section ${semester}` 
-                        : `Year ${getYear(semester)}`}
-                    </span>
-                  </>
-                )}
-                {section && (
-                  <>
-                    <span>•</span>
-                    <span>Section {section}</span>
-                  </>
-                )}
-              </>
+              </div>
+            )}
+            
+            {semester && !isNaN(Number(semester)) && (
+              <div className="flex items-center gap-1 text-emerald-600">
+                <span>Year {getYear(semester)}</span>
+              </div>
+            )}
+            
+            {section && (
+              <div className="flex items-center gap-1 text-blue-600">
+                <span>Section {section}</span>
+              </div>
             )}
           </div>
         </CardHeader>
         <CardContent>
-          <p className="line-clamp-3">{content}</p>
+          <p className="line-clamp-3 text-gray-700">{content}</p>
         </CardContent>
       </Card>
 
@@ -83,24 +84,43 @@ export function NotificationCard({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground pt-2">
-              <span className="block">Posted {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}</span>
-              {createdBy && <span className="block mt-1">Faculty ID: {createdBy}</span>}
+            <DialogDescription className="text-sm text-muted-foreground pt-2 space-y-1">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                <span>Posted {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}</span>
+              </div>
+              
+              {createdBy && (
+                <div className="flex items-center gap-2">
+                  <UserRound className="h-4 w-4" />
+                  <span>Faculty ID: {createdBy}</span>
+                </div>
+              )}
+              
               {type === "course_specific" && department && (
-                <span className="block mt-1">Department: {department}</span>
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  <span>Department: {department}</span>
+                </div>
               )}
-              {semester && (
-                <span className="block mt-1">
-                  Year: {getYear(semester)}
-                </span>
+              
+              {semester && !isNaN(Number(semester)) && (
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  <span>Year: {getYear(semester)}</span>
+                </div>
               )}
+              
               {section && (
-                <span className="block mt-1">Section: {section}</span>
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  <span>Section: {section}</span>
+                </div>
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-4">
-            <p className="whitespace-pre-wrap">{content}</p>
+          <div className="mt-4 px-1">
+            <p className="whitespace-pre-wrap text-gray-700">{content}</p>
           </div>
         </DialogContent>
       </Dialog>

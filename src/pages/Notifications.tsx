@@ -147,45 +147,51 @@ export default function Notifications() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <DashboardNav />
-        <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Bell className="h-6 w-6 text-red-600" />
-              <h1 className="text-2xl font-bold text-red-600">Notifications</h1>
-            </div>
-          </div>
-          
-          <div className="grid gap-4 md:gap-6">
-            {loading ? (
-              Array(3).fill(0).map((_, i) => (
-                <div key={i} className="bg-white border rounded-lg p-4 shadow-sm">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/4 mb-4" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-5/6" />
+        <main className="flex-1">
+          <div className="max-w-3xl mx-auto px-4 py-8">
+            <div className="mb-8 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-red-50">
+                  <Bell className="h-6 w-6 text-red-600" />
                 </div>
-              ))
-            ) : notifications.length === 0 ? (
-              <div className="bg-white border rounded-lg p-8 text-center">
-                <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">No notifications to display</p>
-                <p className="text-sm text-muted-foreground mt-2">Check back later for updates</p>
+                <h1 className="text-2xl font-bold text-red-600">Notifications</h1>
               </div>
-            ) : (
-              notifications.map((notification) => (
-                <NotificationCard
-                  key={notification.id}
-                  title={notification.title}
-                  content={notification.content}
-                  createdAt={notification.created_at}
-                  type={notification.type}
-                  department={notification.department}
-                  semester={notification.semester}
-                  section={notification.section}
-                  createdBy={notification.created_by}
-                />
-              ))
-            )}
+            </div>
+            
+            <div className="space-y-4">
+              {loading ? (
+                Array(3).fill(0).map((_, i) => (
+                  <div key={i} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/4 mb-4" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-5/6" />
+                  </div>
+                ))
+              ) : notifications.length === 0 ? (
+                <div className="bg-white border border-gray-200 rounded-lg p-10 shadow-sm text-center">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <Bell className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No notifications</h3>
+                  <p className="text-sm text-muted-foreground">Check back later for updates</p>
+                </div>
+              ) : (
+                notifications.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    title={notification.title}
+                    content={notification.content}
+                    createdAt={notification.created_at}
+                    type={notification.type}
+                    department={notification.department}
+                    semester={notification.semester}
+                    section={notification.section}
+                    createdBy={notification.created_by}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </main>
       </div>
