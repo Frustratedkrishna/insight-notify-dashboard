@@ -84,7 +84,7 @@ export function NotificationCard({
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-white">
+        <DialogContent className="sm:max-w-lg bg-white mx-auto left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full fixed">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Bell className="h-5 w-5 text-red-500" />
