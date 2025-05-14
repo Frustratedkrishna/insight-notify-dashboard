@@ -132,8 +132,8 @@ export default function Notifications() {
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <DashboardNav />
-          <main className="flex-1 flex flex-col items-center p-4 md:p-6">
-            <div className="w-full max-w-4xl">
+          <main className="flex-1 flex flex-col items-center">
+            <div className="w-full max-w-3xl mx-auto px-4 py-6">
               <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
@@ -147,10 +147,10 @@ export default function Notifications() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gray-50">
         <DashboardNav />
         <main className="flex-1 flex justify-center">
-          <div className="w-full max-w-4xl px-4 md:px-6 py-8">
+          <div className="w-full max-w-3xl mx-auto px-4 md:px-6 py-8">
             <div className="mb-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-red-50">

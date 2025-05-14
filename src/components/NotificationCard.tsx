@@ -44,7 +44,7 @@ export function NotificationCard({
   return (
     <>
       <Card 
-        className="transition-all hover:shadow-lg cursor-pointer border-gray-200 hover:border-red-300 group bg-white hover:transform hover:-translate-y-1 duration-200"
+        className="transition-all hover:shadow-lg cursor-pointer border-gray-200 hover:border-red-300 group bg-white hover:transform hover:-translate-y-1 duration-200 mx-auto"
         onClick={() => setIsModalOpen(true)}
       >
         <CardHeader className="pb-2">
