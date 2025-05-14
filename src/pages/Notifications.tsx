@@ -132,8 +132,8 @@ export default function Notifications() {
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <DashboardNav />
-          <main className="flex-1 flex flex-col items-center">
-            <div className="w-full max-w-3xl mx-auto px-4 py-6">
+          <main className="flex-1 flex justify-center items-center p-4">
+            <div className="w-full max-w-3xl">
               <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
@@ -149,50 +149,52 @@ export default function Notifications() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
         <DashboardNav />
-        <main className="flex-1 flex justify-center">
-          <div className="w-full max-w-3xl mx-auto px-4 md:px-6 py-8">
-            <div className="mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-red-50">
+        <main className="flex-1 p-4 md:p-8 lg:p-12 flex justify-center">
+          <div className="w-full max-w-3xl">
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+              <div className="flex items-center gap-3 border-b pb-4 mb-6">
+                <div className="p-3 rounded-full bg-red-50">
                   <Bell className="h-6 w-6 text-red-600" />
                 </div>
-                <h1 className="text-2xl font-bold text-red-600">Notifications</h1>
+                <h1 className="text-2xl font-bold text-gray-800">Notifications & Announcements</h1>
               </div>
-            </div>
             
-            <div className="grid grid-cols-1 gap-6">
-              {loading ? (
-                Array(3).fill(0).map((_, i) => (
-                  <div key={i} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-                    <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-1/4 mb-4" />
-                    <Skeleton className="h-4 w-full mb-2" />
-                    <Skeleton className="h-4 w-5/6" />
+              <div className="space-y-4">
+                {loading ? (
+                  Array(3).fill(0).map((_, i) => (
+                    <div key={i} className="bg-white border border-gray-100 rounded-lg p-5 shadow-sm">
+                      <Skeleton className="h-6 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-1/4 mb-4" />
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-5/6" />
+                    </div>
+                  ))
+                ) : notifications.length === 0 ? (
+                  <div className="bg-white border border-gray-200 rounded-lg p-10 shadow-sm text-center">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <Bell className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-xl font-medium text-gray-900 mb-1">No notifications</h3>
+                    <p className="text-muted-foreground">Check back later for updates</p>
                   </div>
-                ))
-              ) : notifications.length === 0 ? (
-                <div className="bg-white border border-gray-200 rounded-lg p-10 shadow-sm text-center">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                    <Bell className="h-6 w-6 text-muted-foreground" />
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {notifications.map((notification) => (
+                      <NotificationCard
+                        key={notification.id}
+                        title={notification.title}
+                        content={notification.content}
+                        createdAt={notification.created_at}
+                        type={notification.type}
+                        department={notification.department}
+                        semester={notification.semester}
+                        section={notification.section}
+                        createdBy={notification.created_by}
+                      />
+                    ))}
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">No notifications</h3>
-                  <p className="text-sm text-muted-foreground">Check back later for updates</p>
-                </div>
-              ) : (
-                notifications.map((notification) => (
-                  <NotificationCard
-                    key={notification.id}
-                    title={notification.title}
-                    content={notification.content}
-                    createdAt={notification.created_at}
-                    type={notification.type}
-                    department={notification.department}
-                    semester={notification.semester}
-                    section={notification.section}
-                    createdBy={notification.created_by}
-                  />
-                ))
-              )}
+                )}
+              </div>
             </div>
           </div>
         </main>
