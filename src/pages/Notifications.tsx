@@ -132,11 +132,13 @@ export default function Notifications() {
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <DashboardNav />
-          <main className="flex-1 p-4 md:p-6">
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+          <main className="flex-1 flex flex-col items-center p-4 md:p-6">
+            <div className="w-full max-w-4xl">
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </div>
           </main>
         </div>
       </SidebarProvider>
@@ -148,7 +150,7 @@ export default function Notifications() {
       <div className="min-h-screen flex w-full">
         <DashboardNav />
         <main className="flex-1 flex justify-center">
-          <div className="w-full max-w-4xl px-4 py-8">
+          <div className="w-full max-w-4xl px-4 md:px-6 py-8">
             <div className="mb-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-red-50">
@@ -158,7 +160,7 @@ export default function Notifications() {
               </div>
             </div>
             
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
               {loading ? (
                 Array(3).fill(0).map((_, i) => (
                   <div key={i} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">

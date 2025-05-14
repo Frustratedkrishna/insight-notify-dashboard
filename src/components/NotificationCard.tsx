@@ -44,11 +44,14 @@ export function NotificationCard({
   return (
     <>
       <Card 
-        className="transition-all hover:shadow-md cursor-pointer border-gray-200 hover:border-red-200 group bg-white"
+        className="transition-all hover:shadow-lg cursor-pointer border-gray-200 hover:border-red-300 group bg-white hover:transform hover:-translate-y-1 duration-200"
         onClick={() => setIsModalOpen(true)}
       >
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg text-gray-900 group-hover:text-red-600">{title}</CardTitle>
+          <CardTitle className="text-lg text-gray-900 group-hover:text-red-600 flex items-center gap-2">
+            <Bell className="h-4 w-4 text-red-500" />
+            {title}
+          </CardTitle>
           <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <CalendarIcon className="h-3.5 w-3.5" />
@@ -83,7 +86,10 @@ export function NotificationCard({
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-lg bg-white">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Bell className="h-5 w-5 text-red-500" />
+              {title}
+            </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground pt-2 space-y-1">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4" />
