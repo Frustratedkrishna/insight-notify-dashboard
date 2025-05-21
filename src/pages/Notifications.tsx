@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,14 +85,16 @@ export default function Notifications() {
         // Add year-specific notifications for this course 
         // (notifications meant for all sections of a specific year)
         if (storedProfile.course_name && storedProfile.year) {
-          const semester = String(storedProfile.year * 2);
+          const semester = String(storedProfile.year * 2); // Semester for a given year
+          // HODs can send for a specific year to all sections. Class coordinators for specific section.
+          // This filter targets HOD notifications for a whole year of a course
           filters.push(`and(type.eq.course_specific,department.eq.${storedProfile.course_name},semester.eq.${semester},section.is.null)`);
         }
         
         // Add section-specific notifications
         // (notifications meant for specific section from class coordinator)
         if (storedProfile.course_name && storedProfile.year && storedProfile.section) {
-          const semester = String(storedProfile.year * 2);
+          const semester = String(storedProfile.year * 2); // Semester for a given year
           filters.push(`and(type.eq.course_specific,department.eq.${storedProfile.course_name},semester.eq.${semester},section.eq.${storedProfile.section})`);
         }
 
@@ -147,8 +148,10 @@ export default function Notifications() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
         <DashboardNav />
-        <main className="flex-1 p-4 md:p-6">
-          <div className="max-w-4xl mx-auto">
+        {/* Updated main element to use flexbox for centering its child */}
+        <main className="flex-1 p-4 md:p-6 flex flex-col items-center">
+          {/* Updated div to work with parent's flex centering */}
+          <div className="w-full max-w-4xl">
             <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 mb-8">
               <NotificationsHeader />
               <div className="space-y-3">
@@ -159,7 +162,7 @@ export default function Notifications() {
                 ) : (
                   <NotificationsList 
                     notifications={notifications} 
-                    className="max-h-[70vh] overflow-y-auto pr-2"
+                    className="max-h-[70vh] overflow-y-auto pr-2" // pr-2 for scrollbar space if needed
                   />
                 )}
               </div>
