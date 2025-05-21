@@ -9,7 +9,7 @@ interface NotificationsListProps {
 
 export function NotificationsList({ notifications, className = "" }: NotificationsListProps) {
   return (
-    <div className={`grid grid-cols-1 gap-3 ${className}`}>
+    <div className={`grid grid-cols-1 gap-4 ${className}`}>
       {notifications.map((notification) => (
         <NotificationCard
           key={notification.id}
