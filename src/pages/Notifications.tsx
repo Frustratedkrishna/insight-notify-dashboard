@@ -147,17 +147,20 @@ export default function Notifications() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
         <DashboardNav />
-        <main className="flex-1 p-4 md:p-8 lg:p-12 flex justify-center">
+        <main className="flex-1 p-4 md:p-6 flex justify-center">
           <div className="w-full max-w-3xl">
-            <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 mb-8">
               <NotificationsHeader />
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {loading ? (
                   <NotificationsLoading />
                 ) : notifications.length === 0 ? (
                   <NotificationsEmpty />
                 ) : (
-                  <NotificationsList notifications={notifications} />
+                  <NotificationsList 
+                    notifications={notifications} 
+                    className="max-h-[70vh] overflow-y-auto pr-2"
+                  />
                 )}
               </div>
             </div>

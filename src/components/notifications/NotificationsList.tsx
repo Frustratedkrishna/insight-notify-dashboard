@@ -4,11 +4,12 @@ import { Notification } from "@/types/supabase";
 
 interface NotificationsListProps {
   notifications: Notification[];
+  className?: string;
 }
 
-export function NotificationsList({ notifications }: NotificationsListProps) {
+export function NotificationsList({ notifications, className = "" }: NotificationsListProps) {
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div className={`grid grid-cols-1 gap-3 ${className}`}>
       {notifications.map((notification) => (
         <NotificationCard
           key={notification.id}

@@ -44,11 +44,11 @@ export function NotificationCard({
   return (
     <>
       <Card 
-        className="transition-all hover:shadow-lg cursor-pointer border-gray-100 hover:border-red-200 group bg-white shadow-sm hover:transform hover:-translate-y-1 duration-200"
+        className="transition-all hover:shadow-md cursor-pointer bg-white border-l-4 border-l-red-500 hover:border-l-red-600 group"
         onClick={() => setIsModalOpen(true)}
       >
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg text-gray-800 group-hover:text-red-600 flex items-center gap-2">
+        <CardHeader className="pb-2 pt-4 px-4">
+          <CardTitle className="text-base text-gray-800 group-hover:text-red-600 flex items-center gap-2 font-medium">
             <Bell className="h-4 w-4 text-red-500" />
             {title}
           </CardTitle>
@@ -78,8 +78,8 @@ export function NotificationCard({
             )}
           </div>
         </CardHeader>
-        <CardContent>
-          <p className="line-clamp-3 text-gray-700">{content}</p>
+        <CardContent className="px-4 pb-4 pt-0">
+          <p className="line-clamp-2 text-gray-700 text-sm">{content}</p>
         </CardContent>
       </Card>
 

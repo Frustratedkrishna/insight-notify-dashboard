@@ -10,7 +10,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationsList } from "@/components/notifications/NotificationsList";
 import { Footer } from "@/components/Footer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Bell } from "lucide-react";
 import { Notification, Profile } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
 import { useNavigate as useNav } from "react-router-dom";
@@ -123,7 +123,15 @@ export default function Dashboard() {
   }, [navigate, toast]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse space-y-4 w-full max-w-md">
+          <div className="h-12 bg-gray-200 rounded-md"></div>
+          <div className="h-64 bg-gray-200 rounded-md"></div>
+          <div className="h-40 bg-gray-200 rounded-md"></div>
+        </div>
+      </div>
+    );
   }
 
   if (!profile) {
@@ -132,9 +140,9 @@ export default function Dashboard() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex flex-col w-full">
+      <div className="min-h-screen flex flex-col w-full bg-gray-50">
         <DashboardNav />
-        <main className="flex-1 p-6 space-y-6 flex justify-center">
+        <main className="flex-1 p-4 md:p-6 space-y-6 flex justify-center">
           <div className="w-full max-w-4xl space-y-6">
             {!profile.verify && (
               <Alert variant="destructive">
@@ -145,60 +153,70 @@ export default function Dashboard() {
               </Alert>
             )}
 
-            <Card>
+            <Card className="shadow-sm border-gray-100">
               <CardHeader>
-                <CardTitle>Student Profile</CardTitle>
+                <CardTitle className="text-xl">Student Profile</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-24 w-24">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <Avatar className="h-20 w-20 border">
                     <AvatarImage 
                       src={profile.profile_image_url}
                       alt="Profile" 
                     />
-                    <AvatarFallback>
-                      {profile.first_name[0]}
-                      {profile.last_name[0]}
+                    <AvatarFallback className="text-lg bg-red-100 text-red-600">
+                      {profile.first_name?.[0]}
+                      {profile.last_name?.[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h2 className="text-2xl font-bold">
+                    <h2 className="text-xl font-semibold">
                       {profile.first_name} {profile.last_name}
                     </h2>
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 text-sm">
                       Enrollment: {profile.enrollment_number}
                     </p>
                   </div>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <h3 className="font-semibold">Course</h3>
-                    <p>{profile.course_name}</p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h3 className="font-medium text-sm text-gray-600">Course</h3>
+                    <p className="mt-1">{profile.course_name}</p>
                   </div>
-                  <div>
-                    <h3 className="font-semibold">Year</h3>
-                    <p>{profile.year}</p>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h3 className="font-medium text-sm text-gray-600">Year</h3>
+                    <p className="mt-1">{profile.year}</p>
                   </div>
-                  <div>
-                    <h3 className="font-semibold">Section</h3>
-                    <p>{profile.section}</p>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h3 className="font-medium text-sm text-gray-600">Section</h3>
+                    <p className="mt-1">{profile.section}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="shadow-sm border-gray-100">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Notifications</CardTitle>
-                <Button variant="outline" onClick={() => navigate('/notifications')}>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Bell className="h-5 w-5 text-red-500" />
+                  <span>Notifications</span>
+                </CardTitle>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/notifications')}
+                  className="text-sm h-9"
+                >
                   View All
                 </Button>
               </CardHeader>
               <CardContent className="bg-gray-50 rounded-b-lg p-4">
                 {notifications.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">No notifications to display</p>
+                  <p className="text-muted-foreground text-center py-8">No notifications to display</p>
                 ) : (
-                  <NotificationsList notifications={notifications.slice(0, 3)} />
+                  <NotificationsList 
+                    notifications={notifications.slice(0, 3)} 
+                    className="max-h-[400px] overflow-y-auto pr-2"
+                  />
                 )}
               </CardContent>
             </Card>

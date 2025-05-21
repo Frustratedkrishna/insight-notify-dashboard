@@ -1,14 +1,15 @@
 
 import { Bell } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 export function NotificationsEmpty() {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-10 shadow-sm text-center">
-      <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-        <Bell className="h-8 w-8 text-muted-foreground" />
+    <Card className="p-8 shadow-sm text-center">
+      <div className="mx-auto w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center mb-3">
+        <Bell className="h-7 w-7 text-gray-400" />
       </div>
-      <h3 className="text-xl font-medium text-gray-900 mb-1">No notifications</h3>
-      <p className="text-muted-foreground">Check back later for updates</p>
-    </div>
+      <h3 className="text-lg font-medium text-gray-800 mb-1">No notifications</h3>
+      <p className="text-muted-foreground text-sm">Check back later for updates</p>
+    </Card>
   );
 }
