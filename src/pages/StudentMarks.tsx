@@ -10,6 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Search, FileText, TrendingUp, TrendingDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/Footer";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface StudentMarkData {
   id: string;
@@ -29,7 +37,7 @@ interface StudentMarkData {
   };
 }
 
-export default function Marks() {
+export default function StudentMarks() {
   const [searchEnrollment, setSearchEnrollment] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();

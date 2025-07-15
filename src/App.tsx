@@ -19,6 +19,7 @@ import ViewFeedbacks from "./pages/faculty/Viewfeedbacks";
 import ApproveStudents from "./pages/faculty/ApproveStudents";
 import Announcements from "./pages/faculty/Announcements";
 import AdminSettings from "./pages/faculty/AdminSettings";
+import UploadMarks from "./pages/faculty/UploadMarks";
 
 // Faculty Protected Route component
 const FacultyProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -117,6 +118,11 @@ function App() {
           <Route path="/faculty/admin-settings" element={
             <FacultyProtectedRoute>
               <AdminSettings />
+            </FacultyProtectedRoute>
+          } />
+          <Route path="/faculty/upload-marks" element={
+            <FacultyProtectedRoute>
+              <UploadMarks />
             </FacultyProtectedRoute>
           } />
           <Route path="*" element={<NotFound />} />

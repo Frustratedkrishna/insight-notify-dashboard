@@ -52,3 +52,27 @@ export interface Student {
   section: string;
   verify: boolean;
 }
+
+export interface MarksBatch {
+  id: string;
+  faculty_id: string;
+  course_name: string;
+  section: string;
+  year: number;
+  exam_type: string;
+  minimum_marks: number;
+  upload_date: string;
+  created_at: string;
+}
+
+export interface StudentMark {
+  id: string;
+  batch_id: string;
+  enrollment_number: string;
+  student_name: string;
+  subject_marks: Record<string, number>;
+  total_marks: number;
+  percentage: number;
+  result_status: 'PASS' | 'FAIL' | 'RE_EXAMINATION';
+  created_at: string;
+}
