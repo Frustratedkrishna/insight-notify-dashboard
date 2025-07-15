@@ -1,17 +1,12 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardNav } from "@/components/DashboardNav";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { Notification } from "@/types/supabase";
-
-// Import refactored components
-import { NotificationsLoading } from "@/components/notifications/NotificationsLoading";
-import { NotificationsEmpty } from "@/components/notifications/NotificationsEmpty";
-import { NotificationsList } from "@/components/notifications/NotificationsList";
-import { NotificationsError } from "@/components/notifications/NotificationsError";
-import { NotificationsHeader } from "@/components/notifications/NotificationsHeader";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { NotificationsDesktop } from "@/components/notifications/NotificationsDesktop";
+import { NotificationsMobile } from "@/components/notifications/NotificationsMobile";
 
 interface Profile {
   course_name: string;
@@ -22,6 +17,7 @@ interface Profile {
 export default function Notifications() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,47 +127,22 @@ export default function Notifications() {
     fetchData();
   }, [navigate, toast]);
 
-  if (error) {
+  // Render appropriate component based on screen size
+  if (isMobile) {
     return (
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <DashboardNav />
-          <main className="flex-1 flex items-center justify-center p-6">
-            <div className="w-full max-w-2xl">
-              <NotificationsError error={error} />
-            </div>
-          </main>
-        </div>
-      </SidebarProvider>
+      <NotificationsMobile 
+        notifications={notifications}
+        loading={loading}
+        error={error}
+      />
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
-        <DashboardNav />
-        <main className="flex-1 flex flex-col items-center justify-start min-h-screen py-8 px-4">
-          <div className="w-full max-w-5xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100">
-                <NotificationsHeader />
-              </div>
-              <div className="p-6">
-                {loading ? (
-                  <NotificationsLoading />
-                ) : notifications.length === 0 ? (
-                  <NotificationsEmpty />
-                ) : (
-                  <NotificationsList 
-                    notifications={notifications} 
-                    className="max-h-[calc(100vh-280px)] overflow-y-auto pr-2"
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+    <NotificationsDesktop 
+      notifications={notifications}
+      loading={loading}
+      error={error}
+    />
   );
 }
