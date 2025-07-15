@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,8 +136,8 @@ export default function Notifications() {
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <DashboardNav />
-          <main className="flex-1 p-4 md:p-6">
-            <div className="container mx-auto max-w-4xl">
+          <main className="flex-1 flex items-center justify-center p-6">
+            <div className="w-full max-w-2xl">
               <NotificationsError error={error} />
             </div>
           </main>
@@ -151,9 +150,9 @@ export default function Notifications() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
         <DashboardNav />
-        <main className="flex-1 p-4 md:p-6">
-          <div className="container mx-auto max-w-4xl">
-            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+        <main className="flex-1 flex items-start justify-center p-6">
+          <div className="w-full max-w-4xl">
+            <div className="bg-white rounded-xl shadow-sm p-6">
               <NotificationsHeader />
               <div className="space-y-3">
                 {loading ? (
