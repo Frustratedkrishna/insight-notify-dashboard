@@ -38,44 +38,71 @@ export default function UploadMarks() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get faculty profile
-  const { data: facultyProfile } = useQuery({
+  // Get faculty profile with better error handling
+  const { data: facultyProfile, isLoading: profileLoading } = useQuery({
     queryKey: ["faculty-profile"],
     queryFn: async () => {
-      const faculty = localStorage.getItem('faculty');
-      if (!faculty) throw new Error("No faculty data found");
-      
-      const facultyData = JSON.parse(faculty);
-      const { data, error } = await supabase
-        .from("faculty_profiles")
-        .select("*")
-        .eq("employee_id", facultyData.employee_id)
-        .single();
+      try {
+        const faculty = localStorage.getItem('faculty');
+        if (!faculty) {
+          throw new Error("No faculty data found in localStorage");
+        }
+        
+        const facultyData = JSON.parse(faculty);
+        console.log("Faculty data from localStorage:", facultyData);
+        
+        const { data, error } = await supabase
+          .from("faculty_profiles")
+          .select("*")
+          .eq("employee_id", facultyData.employee_id)
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          console.error("Error fetching faculty profile:", error);
+          throw error;
+        }
+        
+        console.log("Faculty profile from database:", data);
+        return data;
+      } catch (error) {
+        console.error("Error in faculty profile query:", error);
+        throw error;
+      }
     },
   });
 
   const uploadMarksMutation = useMutation({
     mutationFn: async (marksData: ParsedMarksData[]) => {
-      if (!facultyProfile) throw new Error("Faculty profile not found");
+      if (!facultyProfile) {
+        throw new Error("Faculty profile not found");
+      }
+
+      console.log("Starting marks upload with faculty profile:", facultyProfile);
 
       // Create marks batch
+      const batchData = {
+        faculty_id: facultyProfile.id,
+        course_name: facultyProfile.course_name || 'Default Course',
+        section: facultyProfile.section || 'Default Section',
+        year: facultyProfile.year || 1,
+        exam_type: examType,
+        minimum_marks: minimumMarks,
+      };
+
+      console.log("Creating batch with data:", batchData);
+
       const { data: batch, error: batchError } = await supabase
         .from("marks_batches")
-        .insert({
-          faculty_id: facultyProfile.id,
-          course_name: facultyProfile.course_name!,
-          section: facultyProfile.section!,
-          year: facultyProfile.year!,
-          exam_type: examType,
-          minimum_marks: minimumMarks,
-        })
+        .insert(batchData)
         .select()
         .single();
 
-      if (batchError) throw batchError;
+      if (batchError) {
+        console.error("Error creating batch:", batchError);
+        throw batchError;
+      }
+
+      console.log("Batch created successfully:", batch);
 
       // Insert student marks
       const studentMarksData = marksData.map(mark => ({
@@ -88,12 +115,18 @@ export default function UploadMarks() {
         result_status: mark.result_status,
       }));
 
+      console.log("Inserting student marks:", studentMarksData);
+
       const { error: marksError } = await supabase
         .from("student_marks")
         .insert(studentMarksData);
 
-      if (marksError) throw marksError;
+      if (marksError) {
+        console.error("Error inserting student marks:", marksError);
+        throw marksError;
+      }
 
+      console.log("Student marks inserted successfully");
       return batch;
     },
     onSuccess: () => {
@@ -107,6 +140,7 @@ export default function UploadMarks() {
       setExamType("");
     },
     onError: (error: any) => {
+      console.error("Upload error:", error);
       toast({
         title: "Error uploading marks",
         description: error.message,
@@ -172,6 +206,7 @@ export default function UploadMarks() {
         description: `${parsedData.length} student records found`,
       });
     } catch (error) {
+      console.error("File parsing error:", error);
       toast({
         title: "Error parsing file",
         description: "Please check the file format and try again",
@@ -199,8 +234,34 @@ export default function UploadMarks() {
       return;
     }
 
+    if (!facultyProfile) {
+      toast({
+        title: "Faculty profile not loaded",
+        description: "Please wait for your profile to load or refresh the page",
+        variant: "destructive",
+      });
+      return;
+    }
+
     uploadMarksMutation.mutate(previewData);
   };
+
+  if (profileLoading) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex flex-col w-full">
+          <FacultyNavbar />
+          <main className="flex-1 p-6 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-muted-foreground">Loading faculty profile...</p>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -304,7 +365,7 @@ export default function UploadMarks() {
 
                   <Button 
                     onClick={handleUpload}
-                    disabled={uploadMarksMutation.isPending}
+                    disabled={uploadMarksMutation.isPending || !facultyProfile}
                     className="w-full"
                   >
                     <FileSpreadsheet className="h-4 w-4 mr-2" />
