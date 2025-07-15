@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, User, Users, Menu, FileSpreadsheet, UserCheck, Settings } from "lucide-react";
+import { Bell, LogOut, User, Users, Menu, FileSpreadsheet, UserCheck, Settings, GraduationCap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,95 +62,104 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
     console.log("Faculty role in navbar:", facultyRole);
     
     return (
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 md:p-0">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 p-4 md:p-0">
         <Button
           variant="ghost"
-          className="w-full md:w-auto justify-start"
+          className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
           onClick={() => navigate("/faculty/dashboard")}
         >
-          <User className="h-4 w-4" />
-          <span className="ml-2">Profile</span>
+          <User className="h-3 w-3 md:h-4 md:w-4" />
+          <span className="ml-1 md:ml-2">Profile</span>
         </Button>
 
         <Button
           variant="ghost"
-          className="w-full md:w-auto justify-start"
+          className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
           onClick={() => {
             console.log("Navigating to faculty notifications");
             navigate("/faculty/notifications");
           }}
         >
-          <Bell className="h-4 w-4" />
-          <span className="ml-2">Notifications</span>
+          <Bell className="h-3 w-3 md:h-4 md:w-4" />
+          <span className="ml-1 md:ml-2">Notifications</span>
         </Button>
 
         <Button
           variant="ghost"
-          className="w-full md:w-auto justify-start"
+          className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
           onClick={() => navigate("/faculty/addattendance")}
         >
-          <FileSpreadsheet className="h-4 w-4" />
-          <span className="ml-2">Add Attendance</span>
+          <FileSpreadsheet className="h-3 w-3 md:h-4 md:w-4" />
+          <span className="ml-1 md:ml-2">Add Attendance</span>
         </Button>
 
         <Button
           variant="ghost"
-          className="w-full md:w-auto justify-start"
+          className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
+          onClick={() => navigate("/faculty/upload-marks")}
+        >
+          <GraduationCap className="h-3 w-3 md:h-4 md:w-4" />
+          <span className="ml-1 md:ml-2">Add Marks</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
           onClick={() => navigate("/faculty/viewstudent")}
         >
-          <Users className="h-4 w-4" />
-          <span className="ml-2">Students</span>
+          <Users className="h-3 w-3 md:h-4 md:w-4" />
+          <span className="ml-1 md:ml-2">Students</span>
         </Button>
         
         <Button
           variant="ghost"
-          className="w-full md:w-auto justify-start"
+          className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
           onClick={() => navigate("/faculty/viewfeedbacks")}
         >
-          <Users className="h-4 w-4" />
-          <span className="ml-2">Feedbacks</span>
+          <Users className="h-3 w-3 md:h-4 md:w-4" />
+          <span className="ml-1 md:ml-2">Feedbacks</span>
         </Button>
         
         {(facultyRole === 'class_coordinator' || facultyRole === 'admin') && (
           <Button
             variant="ghost"
-            className="w-full md:w-auto justify-start"
+            className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
             onClick={() => navigate("/faculty/approve-students")}
           >
-            <UserCheck className="h-4 w-4" />
-            <span className="ml-2">Approve Students</span>
+            <UserCheck className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="ml-1 md:ml-2">Approve Students</span>
           </Button>
         )}
         
         {(facultyRole === 'class_coordinator' || facultyRole === 'hod' || facultyRole === 'admin') && (
           <Button
             variant="ghost"
-            className="w-full md:w-auto justify-start"
+            className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
             onClick={() => navigate("/faculty/announcements")}
           >
-            <Bell className="h-4 w-4" />
-            <span className="ml-2">Announcements</span>
+            <Bell className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="ml-1 md:ml-2">Announcements</span>
           </Button>
         )}
         
         {facultyRole === 'admin' && (
           <Button
             variant="ghost"
-            className="w-full md:w-auto justify-start"
+            className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
             onClick={() => navigate("/faculty/admin-settings")}
           >
-            <Settings className="h-4 w-4" />
-            <span className="ml-2">Admin Settings</span>
+            <Settings className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="ml-1 md:ml-2">Admin Settings</span>
           </Button>
         )}
 
         <Button
           variant="ghost"
-          className="w-full md:w-auto justify-start"
+          className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
           onClick={handleSignOut}
         >
-          <LogOut className="h-4 w-4" />
-          <span className="ml-2">Sign Out</span>
+          <LogOut className="h-3 w-3 md:h-4 md:w-4" />
+          <span className="ml-1 md:ml-2">Sign Out</span>
         </Button>
       </div>
     );
@@ -183,7 +192,11 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
               </SheetContent>
             </Sheet>
           ) : (
-            <NavContent />
+            <div className="flex-1 flex justify-end overflow-x-auto">
+              <div className="flex items-center min-w-0">
+                <NavContent />
+              </div>
+            </div>
           )}
         </div>
       </div>
