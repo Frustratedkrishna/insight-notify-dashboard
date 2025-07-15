@@ -150,11 +150,13 @@ export default function Notifications() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
         <DashboardNav />
-        <main className="flex-1 flex items-start justify-center p-6">
-          <div className="w-full max-w-4xl">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <NotificationsHeader />
-              <div className="space-y-3">
+        <main className="flex-1 flex flex-col items-center justify-start min-h-screen py-8 px-4">
+          <div className="w-full max-w-5xl mx-auto">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              <div className="p-6 border-b border-gray-100">
+                <NotificationsHeader />
+              </div>
+              <div className="p-6">
                 {loading ? (
                   <NotificationsLoading />
                 ) : notifications.length === 0 ? (
@@ -162,7 +164,7 @@ export default function Notifications() {
                 ) : (
                   <NotificationsList 
                     notifications={notifications} 
-                    className="max-h-[70vh] overflow-y-auto pr-2"
+                    className="max-h-[calc(100vh-280px)] overflow-y-auto pr-2"
                   />
                 )}
               </div>
