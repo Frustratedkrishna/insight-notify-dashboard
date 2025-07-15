@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,8 +137,10 @@ export default function Notifications() {
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <DashboardNav />
-          <main className="flex-1 flex justify-center items-center p-4">
-            <NotificationsError error={error} />
+          <main className="flex-1 p-4 md:p-6">
+            <div className="container mx-auto max-w-4xl">
+              <NotificationsError error={error} />
+            </div>
           </main>
         </div>
       </SidebarProvider>
@@ -148,11 +151,9 @@ export default function Notifications() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
         <DashboardNav />
-        {/* Updated main element to use flexbox for centering its child */}
-        <main className="flex-1 p-4 md:p-6 flex justify-center">
-          {/* Removed mx-auto as parent flex container now handles centering */}
-          <div className="w-full max-w-4xl"> 
-            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 mb-8">
+        <main className="flex-1 p-4 md:p-6">
+          <div className="container mx-auto max-w-4xl">
+            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
               <NotificationsHeader />
               <div className="space-y-3">
                 {loading ? (
