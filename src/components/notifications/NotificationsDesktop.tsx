@@ -30,7 +30,7 @@ export function NotificationsDesktop({ notifications, loading, error }: Notifica
             <DashboardSidebar />
           </div>
         </div>
-        <main className="flex-1 flex items-center justify-center p-6">
+        <main className="flex-1 flex items-center justify-start p-6">
           <NotificationsError error={error} />
         </main>
       </div>
@@ -52,8 +52,8 @@ export function NotificationsDesktop({ notifications, loading, error }: Notifica
           <DashboardSidebar />
         </div>
       </div>
-      <main className="flex-1 flex justify-center p-6">
-        <div className="w-full max-w-4xl">
+      <main className="flex-1 p-6">
+        <div className="max-w-4xl">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-100">
               <NotificationsHeader />
