@@ -1,6 +1,5 @@
 
-import { DashboardNav } from "@/components/DashboardNav";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { NotificationsLoading } from "@/components/notifications/NotificationsLoading";
 import { NotificationsEmpty } from "@/components/notifications/NotificationsEmpty";
 import { NotificationsList } from "@/components/notifications/NotificationsList";
@@ -19,7 +18,7 @@ export function NotificationsDesktop({ notifications, loading, error }: Notifica
     return (
       <div className="min-h-screen flex flex-col w-full">
         <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-14 items-center">
+          <div className="container flex h-14 items-center justify-between">
             <div className="flex items-center mr-4">
               <img 
                 src="/lovable-uploads/f87edee9-06c8-4b4a-9c20-5eefdefe1ada.png" 
@@ -28,6 +27,7 @@ export function NotificationsDesktop({ notifications, loading, error }: Notifica
               />
               <span className="font-semibold">DBIT SIMS</span>
             </div>
+            <DashboardSidebar />
           </div>
         </div>
         <main className="flex-1 flex items-center justify-center p-6">
@@ -40,7 +40,7 @@ export function NotificationsDesktop({ notifications, loading, error }: Notifica
   return (
     <div className="min-h-screen flex flex-col w-full bg-gray-50">
       <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
+        <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center mr-4">
             <img 
               src="/lovable-uploads/f87edee9-06c8-4b4a-9c20-5eefdefe1ada.png" 
@@ -49,6 +49,7 @@ export function NotificationsDesktop({ notifications, loading, error }: Notifica
             />
             <span className="font-semibold">DBIT SIMS</span>
           </div>
+          <DashboardSidebar />
         </div>
       </div>
       <main className="flex-1 flex justify-center p-6">
