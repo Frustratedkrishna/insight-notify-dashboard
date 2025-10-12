@@ -6,7 +6,7 @@ import { Separator } from "./ui/separator";
 export function Footer() {
   const developers = [
     { name: "Krishna Khurana", portfolioUrl: "https://krishnakhurana.us.kg", linkedinUrl: "https://linkedin.com/in/dev1" },
-    { name: "Daksh Gulati", portfolioUrl: "#", linkedinUrl: "https://linkedin.com/in/dev2" },
+    { name: "Prabhmeet Singh", portfolioUrl: "#", linkedinUrl: "https://linkedin.com/in/dev2" },
     { name: "Taranpreet Singh", portfolioUrl: "#", linkedinUrl: "https://linkedin.com/in/dev3" }
   ];
 
