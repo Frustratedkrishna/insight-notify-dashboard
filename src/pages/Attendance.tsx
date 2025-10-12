@@ -113,8 +113,11 @@ export default function Attendance() {
                           nameKey="subject"
                           cx="50%"
                           cy="50%"
-                          outerRadius={80}
-                          label
+                          outerRadius={120}
+                          label={({ subject, value, total }) => 
+                            `${subject}: ${((value / total) * 100).toFixed(1)}%`
+                          }
+                          labelLine={true}
                         >
                           {processedData?.map((entry: any, index: number) => (
                             <Cell
@@ -123,7 +126,11 @@ export default function Attendance() {
                             />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                          formatter={(value: any, name: any, props: any) => 
+                            `${value}/${props.payload.total} classes (${((value / props.payload.total) * 100).toFixed(1)}%)`
+                          }
+                        />
                         <ChartLegend>
                           <ChartLegendContent />
                         </ChartLegend>
