@@ -170,11 +170,7 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
       <div className="container mx-auto">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-3">
-            <img 
-              src="/lovable-uploads/f87edee9-06c8-4b4a-9c20-5eefdefe1ada.png" 
-              alt="DBIT Logo" 
-              className="h-10 w-10"
-            />
+            <span className="text-2xl font-bold text-primary">SIMS</span>
             <div className="font-semibold text-primary">Faculty Dashboard</div>
           </div>
           

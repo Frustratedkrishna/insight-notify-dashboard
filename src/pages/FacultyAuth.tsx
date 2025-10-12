@@ -128,8 +128,8 @@ const FacultyAuth = () => {
       console.log('Attempting faculty login with employee ID:', employeeId);
 
       // Check if this is an admin login attempt
-      const isAdminLogin = employeeId === 'dbitsimsadmin@donboscoitggsipu.org' && 
-                          password === 'DBITSIMSADMIN7011';
+      const isAdminLogin = employeeId === 'simsadmin@donboscoitggsipu.org' && 
+                          password === 'SIMSADMIN7011';
 
       if (isAdminLogin) {
         console.log('Admin credentials detected, trying to create/verify admin account...');
@@ -349,7 +349,7 @@ const FacultyAuth = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Faculty Portal - DBIT SIMS
+            Faculty Portal - SIMS
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Student? <a href="/" className="font-medium text-indigo-600 hover:text-indigo-500">Login here</a>

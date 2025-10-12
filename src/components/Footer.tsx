@@ -16,12 +16,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="flex flex-col items-center md:items-start">
             <div className="flex items-center mb-4">
-              {/* College Logo */}
-              <img 
-                src="/lovable-uploads/f87edee9-06c8-4b4a-9c20-5eefdefe1ada.png" 
-                alt="DBIT Logo" 
-                className="h-12 w-12 mr-3"
-              />
+              <span className="text-3xl font-bold text-primary mr-3">SIMS</span>
               <div>
                 <h3 className="font-bold text-lg">Don Bosco Institute of Technology</h3>
               </div>
