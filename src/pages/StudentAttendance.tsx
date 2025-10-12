@@ -10,6 +10,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { Button } from "@/components/ui/button";
+import { Calendar, TrendingUp, CheckCircle2, XCircle, Search } from "lucide-react";
+import { Footer } from "@/components/Footer";
 
 interface AttendanceRecord {
   id: string;
@@ -201,13 +203,19 @@ export default function StudentAttendance() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted/20">
         <DashboardNav />
-        <main className="container mx-auto p-6">
-          <div className="space-y-4">
-            <Skeleton className="h-12 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-            <Skeleton className="h-48 w-full" />
+        <main className="flex-1 container mx-auto p-4 md:p-8">
+          <div className="space-y-6">
+            <Skeleton className="h-16 w-[300px]" />
+            <Skeleton className="h-6 w-[250px]" />
+            <div className="grid gap-4 md:grid-cols-4">
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+            </div>
+            <Skeleton className="h-96 w-full" />
           </div>
         </main>
       </div>
@@ -215,201 +223,255 @@ export default function StudentAttendance() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted/20">
       <DashboardNav />
-      <main className="container mx-auto p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Attendance Report</h1>
-            {studentInfo && (
-              <p className="text-muted-foreground">
-                {studentInfo.name ? studentInfo.name : ''} 
-                {studentInfo.name ? ' | ' : ''}
-                Enrollment: {studentInfo.enrollment_number}
-              </p>
-            )}
-          </div>
+      <main className="flex-1 container mx-auto p-4 md:p-8 space-y-8">
+        <div className="space-y-2 animate-fade-in">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Attendance Report
+          </h1>
+          {studentInfo && (
+            <p className="text-lg text-muted-foreground">
+              {studentInfo.name && <span className="font-semibold">{studentInfo.name}</span>}
+              {studentInfo.name && <span className="mx-2">|</span>}
+              <span>Enrollment: {studentInfo.enrollment_number}</span>
+            </p>
+          )}
         </div>
         
         {!enrollmentNumber && !error && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Enter Enrollment Number</CardTitle>
+          <Card className="border-2 border-dashed shadow-lg animate-fade-in">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-primary" />
+                Enter Enrollment Number
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleManualSearch} className="flex gap-4">
+            <CardContent className="pt-6">
+              <form onSubmit={handleManualSearch} className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <input
                     type="text"
                     value={enrollmentInput}
                     onChange={(e) => setEnrollmentInput(e.target.value)}
                     placeholder="Enter your enrollment number"
-                    className="w-full p-2 border rounded"
+                    className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   />
                 </div>
-                <Button type="submit">View Attendance</Button>
+                <Button type="submit" size="lg" className="gap-2">
+                  <Search className="h-4 w-4" />
+                  View Attendance
+                </Button>
               </form>
             </CardContent>
           </Card>
         )}
         
         {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
+          <Alert variant="destructive" className="animate-fade-in border-2">
+            <AlertDescription className="text-base">{error}</AlertDescription>
           </Alert>
         )}
         
         {!error && enrollmentNumber && (
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Overall Attendance Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {stats.total === 0 ? (
-                  <div className="flex items-center justify-center h-48">
-                    <p className="text-gray-500">No attendance data available</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex justify-center">
-                      <ResponsiveContainer width="100%" height={200}>
-                        <PieChart>
-                          <Pie
-                            data={chartData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {chartData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div className="bg-gray-100 p-3 rounded-md">
-                        <p className="text-sm text-gray-500">Total Classes</p>
-                        <p className="text-xl font-bold">{stats.total}</p>
-                      </div>
-                      <div className="bg-green-100 p-3 rounded-md">
-                        <p className="text-sm text-gray-500">Present</p>
-                        <p className="text-xl font-bold text-green-600">{stats.present}</p>
-                      </div>
-                      <div className="bg-red-100 p-3 rounded-md">
-                        <p className="text-sm text-gray-500">Absent</p>
-                        <p className="text-xl font-bold text-red-600">{stats.absent}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-blue-50 p-4 rounded-md text-center">
-                      <p className="text-sm text-gray-500 mb-1">Overall Attendance Percentage</p>
-                      <p className={`text-2xl font-bold ${
-                        getAttendancePercentage(stats.present, stats.total) >= 75 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {getAttendancePercentage(stats.present, stats.total)}%
-                      </p>
+          <div className="space-y-6 animate-fade-in">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="border-l-4 border-l-primary hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Overall Attendance</p>
+                      <p className="text-3xl font-bold">{getAttendancePercentage(stats.present, stats.total)}%</p>
                       {getAttendancePercentage(stats.present, stats.total) < 75 && (
-                        <p className="text-sm text-red-500 mt-1">
-                          Your attendance is below 75%. Please improve your attendance.
-                        </p>
+                        <p className="text-xs text-red-500 mt-1">Below 75%</p>
                       )}
                     </div>
+                    <div className="p-3 bg-primary/10 rounded-full">
+                      <TrendingUp className="h-6 w-6 text-primary" />
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Subject-wise Attendance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Object.keys(stats.subjectWise).length === 0 ? (
-                  <p className="text-gray-500 text-center py-10">No subject-wise data available</p>
-                ) : (
-                  <div className="space-y-4">
-                    {Object.entries(stats.subjectWise).map(([subject, data]) => {
-                      const percentage = getAttendancePercentage(data.present, data.total);
-                      return (
-                        <div key={subject} className="p-3 rounded-md border">
-                          <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-medium">{subject}</h3>
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              percentage >= 75 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {percentage}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${percentage >= 75 ? 'bg-green-500' : 'bg-red-500'}`}
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                          <div className="flex justify-between text-xs mt-1 text-gray-500">
-                            <span>Present: {data.present}</span>
-                            <span>Absent: {data.absent}</span>
-                            <span>Total: {data.total}</span>
-                          </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Classes Present</p>
+                      <p className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.present}</p>
+                    </div>
+                    <div className="p-3 bg-green-500/10 rounded-full">
+                      <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-red-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Classes Absent</p>
+                      <p className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.absent}</p>
+                    </div>
+                    <div className="p-3 bg-red-500/10 rounded-full">
+                      <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Total Classes</p>
+                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.total}</p>
+                    </div>
+                    <div className="p-3 bg-blue-500/10 rounded-full">
+                      <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {stats.total === 0 ? (
+              <Card className="border-2 border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
+                  <Calendar className="h-16 w-16 text-muted-foreground/50" />
+                  <p className="text-xl text-muted-foreground">No attendance data available</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <div className="grid gap-6 lg:grid-cols-3">
+                  {/* Chart Section */}
+                  <Card className="lg:col-span-2 shadow-lg border-2">
+                    <CardHeader className="border-b bg-muted/30">
+                      <CardTitle className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+                        Overall Attendance Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={chartData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={70}
+                              outerRadius={100}
+                              paddingAngle={5}
+                              dataKey="value"
+                              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            >
+                              {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Subject Details */}
+                  <Card className="shadow-lg border-2">
+                    <CardHeader className="border-b bg-muted/30">
+                      <CardTitle>Subject-wise Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      {Object.keys(stats.subjectWise).length === 0 ? (
+                        <p className="text-muted-foreground text-center py-10">No subject-wise data available</p>
+                      ) : (
+                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                          {Object.entries(stats.subjectWise).map(([subject, data]) => {
+                            const percentage = getAttendancePercentage(data.present, data.total);
+                            return (
+                              <div key={subject} className="space-y-2 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-semibold text-sm">{subject}</span>
+                                  <span className={`text-lg font-bold px-2 py-1 rounded ${
+                                    percentage >= 75 ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                                  }`}>
+                                    {percentage}%
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                  <span>Present: {data.present}</span>
+                                  <span>Absent: {data.absent}</span>
+                                  <span>Total: {data.total}</span>
+                                </div>
+                                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                                  <div 
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                      percentage >= 75 ? 'bg-green-500' : 'bg-red-500'
+                                    }`}
+                                    style={{ width: `${percentage}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Attendance Records</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {attendance.length === 0 ? (
-                  <p className="text-gray-500 text-center py-10">No attendance records found</p>
-                ) : (
-                  <div className="overflow-auto max-h-[400px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Subject</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {attendance.map((record) => (
-                          <TableRow key={record.id}>
-                            <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
-                            <TableCell>{record.subject}</TableCell>
-                            <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                record.status === 'present' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Attendance Records Table */}
+                <Card className="shadow-lg border-2">
+                  <CardHeader className="border-b bg-muted/30">
+                    <CardTitle>Attendance Records</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    {attendance.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-10">No attendance records found</p>
+                    ) : (
+                      <div className="overflow-auto max-h-[400px] rounded-lg border">
+                        <Table>
+                          <TableHeader className="sticky top-0 bg-muted/50 backdrop-blur">
+                            <TableRow>
+                              <TableHead className="font-semibold">Date</TableHead>
+                              <TableHead className="font-semibold">Subject</TableHead>
+                              <TableHead className="font-semibold">Status</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {attendance.map((record) => (
+                              <TableRow key={record.id} className="hover:bg-muted/50 transition-colors">
+                                <TableCell className="font-medium">{new Date(record.date).toLocaleDateString()}</TableCell>
+                                <TableCell>{record.subject}</TableCell>
+                                <TableCell>
+                                  <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+                                    record.status === 'present' 
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                  }`}>
+                                    {record.status === 'present' ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                                    {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }
