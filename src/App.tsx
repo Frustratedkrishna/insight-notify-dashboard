@@ -11,7 +11,9 @@ import StudentAttendance from "./pages/StudentAttendance";
 import Notifications from "./pages/Notifications";
 import Marks from "./pages/Marks";
 import Attendance from "./pages/Attendance";
+import Voting from "./pages/Voting";
 import FacultyDashboard from "./pages/faculty/Dashboard";
+import ManageElections from "./pages/faculty/ManageElections";
 import FacultyNotifications from "./pages/faculty/Notifications";
 import ViewStudents from "./pages/faculty/viewstudent";
 import AddAttendance from "./pages/faculty/addattendance";
@@ -73,6 +75,7 @@ function App() {
           <Route path="/attendance" element={<StudentAttendance />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/marks" element={<Marks />} />
+          <Route path="/voting" element={<Voting />} />
           
           {/* Faculty protected routes */}
           <Route path="/faculty/dashboard" element={
@@ -123,6 +126,11 @@ function App() {
           <Route path="/faculty/upload-marks" element={
             <FacultyProtectedRoute>
               <UploadMarks />
+            </FacultyProtectedRoute>
+          } />
+          <Route path="/faculty/manage-elections" element={
+            <FacultyProtectedRoute>
+              <ManageElections />
             </FacultyProtectedRoute>
           } />
           <Route path="*" element={<NotFound />} />

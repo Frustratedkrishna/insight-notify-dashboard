@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -58,6 +58,77 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      candidates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          election_id: string
+          id: string
+          name: string
+          photo_url: string | null
+          position: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          election_id: string
+          id?: string
+          name: string
+          photo_url?: string | null
+          position?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          election_id?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidates_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elections: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_date: string
+          id: string
+          start_date: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          start_date: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       faculty_profiles: {
         Row: {
@@ -362,12 +433,52 @@ export type Database = {
         }
         Relationships: []
       }
+      votes: {
+        Row: {
+          candidate_id: string
+          election_id: string
+          id: string
+          user_id: string
+          voted_at: string | null
+        }
+        Insert: {
+          candidate_id: string
+          election_id: string
+          id?: string
+          user_id: string
+          voted_at?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          election_id?: string
+          id?: string
+          user_id?: string
+          voted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
+      update_election_status: { Args: never; Returns: undefined }
     }
     Enums: {
       faculty_role:

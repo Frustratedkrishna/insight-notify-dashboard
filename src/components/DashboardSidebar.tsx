@@ -1,4 +1,4 @@
-import { Clock, LineChart, Bell, User, LogOut } from "lucide-react";
+import { Clock, LineChart, Bell, User, LogOut, Vote } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -75,6 +75,17 @@ export function DashboardSidebar() {
         >
           <Bell className="h-4 w-4" />
           <span className="ml-2">Notifications</span>
+        </Button>
+      </Link>
+
+      <Link to="/voting" className="w-full md:w-auto">
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          type="button"
+        >
+          <Vote className="h-4 w-4" />
+          <span className="ml-2">Voting</span>
         </Button>
       </Link>
 

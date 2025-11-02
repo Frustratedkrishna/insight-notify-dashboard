@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, User, Users, Menu, FileSpreadsheet, UserCheck, Settings, GraduationCap } from "lucide-react";
+import { Bell, LogOut, User, Users, Menu, FileSpreadsheet, UserCheck, Settings, GraduationCap, Vote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -143,14 +143,25 @@ export function FacultyNavbar({ role }: FacultyNavbarProps) {
         )}
         
         {facultyRole === 'admin' && (
-          <Button
-            variant="ghost"
-            className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
-            onClick={() => navigate("/faculty/admin-settings")}
-          >
-            <Settings className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="ml-1 md:ml-2">Admin Settings</span>
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
+              onClick={() => navigate("/faculty/admin-settings")}
+            >
+              <Settings className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="ml-1 md:ml-2">Admin Settings</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              className="w-full md:w-auto justify-start text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 h-8 md:h-9"
+              onClick={() => navigate("/faculty/manage-elections")}
+            >
+              <Vote className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="ml-1 md:ml-2">Manage Elections</span>
+            </Button>
+          </>
         )}
 
         <Button
