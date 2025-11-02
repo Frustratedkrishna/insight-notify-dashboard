@@ -226,61 +226,10 @@ export default function ManageElections() {
                   </CardTitle>
                   <CardDescription>Create and manage college club elections</CardDescription>
                 </div>
-                <Dialog open={showElectionDialog} onOpenChange={setShowElectionDialog}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Election
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New Election</DialogTitle>
-                      <DialogDescription>Add a new club election</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="title">Title</Label>
-                        <Input
-                          id="title"
-                          value={electionForm.title}
-                          onChange={(e) => setElectionForm({...electionForm, title: e.target.value})}
-                          placeholder="e.g., Tech Club President Election"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea
-                          id="description"
-                          value={electionForm.description}
-                          onChange={(e) => setElectionForm({...electionForm, description: e.target.value})}
-                          placeholder="Election details..."
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="start_date">Start Date</Label>
-                        <Input
-                          id="start_date"
-                          type="datetime-local"
-                          value={electionForm.start_date}
-                          onChange={(e) => setElectionForm({...electionForm, start_date: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="end_date">End Date</Label>
-                        <Input
-                          id="end_date"
-                          type="datetime-local"
-                          value={electionForm.end_date}
-                          onChange={(e) => setElectionForm({...electionForm, end_date: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button onClick={handleCreateElection}>Create Election</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                <Button onClick={() => setShowElectionDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Election
+                </Button>
               </div>
             </CardHeader>
 
@@ -346,6 +295,57 @@ export default function ManageElections() {
             </CardContent>
           </Card>
         </main>
+
+        {/* Create Election Dialog */}
+        <Dialog open={showElectionDialog} onOpenChange={setShowElectionDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Election</DialogTitle>
+              <DialogDescription>Add a new club election</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={electionForm.title}
+                  onChange={(e) => setElectionForm({...electionForm, title: e.target.value})}
+                  placeholder="e.g., Tech Club President Election"
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={electionForm.description}
+                  onChange={(e) => setElectionForm({...electionForm, description: e.target.value})}
+                  placeholder="Election details..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="start_date">Start Date</Label>
+                <Input
+                  id="start_date"
+                  type="datetime-local"
+                  value={electionForm.start_date}
+                  onChange={(e) => setElectionForm({...electionForm, start_date: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="end_date">End Date</Label>
+                <Input
+                  id="end_date"
+                  type="datetime-local"
+                  value={electionForm.end_date}
+                  onChange={(e) => setElectionForm({...electionForm, end_date: e.target.value})}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleCreateElection}>Create Election</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Add Candidate Dialog */}
         <Dialog open={showCandidateDialog} onOpenChange={setShowCandidateDialog}>
