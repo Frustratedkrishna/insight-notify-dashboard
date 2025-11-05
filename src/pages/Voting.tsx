@@ -78,13 +78,14 @@ export default function Voting() {
         setCandidates(candidatesData);
       }
 
-      // Fetch user's votes
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      // Fetch user's votes using enrollment number
+      const studentData = localStorage.getItem('studentProfile');
+      if (studentData) {
+        const student = JSON.parse(studentData);
         const { data: votesData, error: votesError } = await supabase
           .from('votes')
           .select('election_id, candidate_id')
-          .eq('user_id', user.id);
+          .eq('enrollment_number', student.enrollment_number);
 
         if (votesError) throw votesError;
         setUserVotes(votesData || []);
@@ -101,18 +102,20 @@ export default function Voting() {
     try {
       setVotingInProgress(electionId);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const studentData = localStorage.getItem('studentProfile');
+      if (!studentData) {
         toast.error('Please log in to vote');
         return;
       }
 
+      const student = JSON.parse(studentData);
       const { error } = await supabase
         .from('votes')
         .insert({
           election_id: electionId,
           candidate_id: candidateId,
-          user_id: user.id
+          user_id: student.id,
+          enrollment_number: student.enrollment_number
         });
 
       if (error) {

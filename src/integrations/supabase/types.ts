@@ -437,6 +437,7 @@ export type Database = {
         Row: {
           candidate_id: string
           election_id: string
+          enrollment_number: string | null
           id: string
           user_id: string
           voted_at: string | null
@@ -444,6 +445,7 @@ export type Database = {
         Insert: {
           candidate_id: string
           election_id: string
+          enrollment_number?: string | null
           id?: string
           user_id: string
           voted_at?: string | null
@@ -451,6 +453,7 @@ export type Database = {
         Update: {
           candidate_id?: string
           election_id?: string
+          enrollment_number?: string | null
           id?: string
           user_id?: string
           voted_at?: string | null
