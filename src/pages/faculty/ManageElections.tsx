@@ -84,6 +84,12 @@ export default function ManageElections() {
   };
 
   const handleCreateElection = async () => {
+    // Validate form
+    if (!electionForm.title || !electionForm.start_date || !electionForm.end_date) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('elections')
@@ -97,7 +103,7 @@ export default function ManageElections() {
       fetchElections();
     } catch (error: any) {
       console.error('Error creating election:', error);
-      toast.error('Failed to create election');
+      toast.error(error.message || 'Failed to create election');
     }
   };
 
