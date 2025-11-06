@@ -18,19 +18,19 @@ export function Footer() {
             <div className="flex items-center mb-4">
               <span className="text-3xl font-bold text-primary mr-3">SIMS</span>
               <div>
-                <h3 className="font-bold text-lg">Don Bosco Institute of Technology</h3>
+                <h3 className="font-bold text-lg"></h3>
               </div>
             </div>
             <p className="text-sm text-gray-600 text-center md:text-left">
-              Premier Engineering College in Delhi offering quality education since 1989
+              
             </p>
           </div>
           
           <div className="flex flex-col items-center">
             <h3 className="font-semibold text-lg mb-4">Address</h3>
             <p className="text-sm text-gray-600 text-center md:text-left">
-              Adjacent to Sukhdev Vihar,<br />
-              New Delhi, Delhi,<br />
+              <br />
+              <br />
               India
             </p>
           </div>
@@ -60,7 +60,7 @@ export function Footer() {
         <Separator className="my-6" />
         
         <div className="text-center text-sm text-gray-600 mb-4">
-          &copy; {new Date().getFullYear()} Don Bosco Institute of Technology. All rights reserved.
+          &copy; {new Date().getFullYear()} SIMS. All rights reserved.
         </div>
         
         <div className="flex flex-wrap justify-center gap-6">
