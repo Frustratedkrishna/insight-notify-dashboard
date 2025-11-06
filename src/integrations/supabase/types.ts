@@ -97,6 +97,44 @@ export type Database = {
           },
         ]
       }
+      document_chunks: {
+        Row: {
+          chunk_index: number
+          chunk_text: string
+          created_at: string | null
+          document_id: string
+          embedding: string | null
+          id: string
+          page_number: number | null
+        }
+        Insert: {
+          chunk_index: number
+          chunk_text: string
+          created_at?: string | null
+          document_id: string
+          embedding?: string | null
+          id?: string
+          page_number?: number | null
+        }
+        Update: {
+          chunk_index?: number
+          chunk_text?: string
+          created_at?: string | null
+          document_id?: string
+          embedding?: string | null
+          id?: string
+          page_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "study_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       elections: {
         Row: {
           created_at: string | null
@@ -408,6 +446,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      study_documents: {
+        Row: {
+          created_at: string | null
+          enrollment_number: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          student_id: string
+          upload_date: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enrollment_number: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          student_id: string
+          upload_date?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enrollment_number?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          student_id?: string
+          upload_date?: string | null
+        }
+        Relationships: []
       }
       system_settings: {
         Row: {
