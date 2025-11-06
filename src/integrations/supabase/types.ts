@@ -552,6 +552,22 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      match_document_chunks: {
+        Args: {
+          match_count: number
+          match_threshold: number
+          query_embedding: string
+          student_enrollment: string
+        }
+        Returns: {
+          chunk_index: number
+          chunk_text: string
+          document_id: string
+          file_name: string
+          id: string
+          similarity: number
+        }[]
+      }
       update_election_status: { Args: never; Returns: undefined }
     }
     Enums: {

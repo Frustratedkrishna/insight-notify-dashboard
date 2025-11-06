@@ -12,6 +12,7 @@ import Notifications from "./pages/Notifications";
 import Marks from "./pages/Marks";
 import Attendance from "./pages/Attendance";
 import Voting from "./pages/Voting";
+import AskAI from "./pages/AskAI";
 import FacultyDashboard from "./pages/faculty/Dashboard";
 import ManageElections from "./pages/faculty/ManageElections";
 import FacultyNotifications from "./pages/faculty/Notifications";
@@ -76,6 +77,7 @@ function App() {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/marks" element={<Marks />} />
           <Route path="/voting" element={<Voting />} />
+          <Route path="/ask-ai" element={<AskAI />} />
           
           {/* Faculty protected routes */}
           <Route path="/faculty/dashboard" element={
